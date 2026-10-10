@@ -125,12 +125,22 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         return {address,verified:a.verified};
       }
       case "corporate.orders": {
-        requireProfile(a,["B03","B06","B12","R04"]);
+        requireProfile(a,["B03","B06","B12","R04","R06"]);
         const target=profile==="B03"?"B03":profile;
         const s=await data(db,a,target);
-        const corp=typeof s.address==="string"&&s.address.endsWith("@corp.rvu.test");
-        if(!corp || s.verified!==true) throw new HttpError(403,"Verified corporate membership required");
-        await evidence(db,a,target,"corporate-access",{address:s.address,order:"CORP-DEMO-1001"});
+        let address=s.address;
+        let verified=s.verified===true;
+        if(target==="R06") {
+          const registration=(await db.query(
+            "SELECT email FROM store.lab_registrations WHERE run_id=$1 AND user_id=$2 AND verified=true AND completed=true AND email LIKE '%@corp.rvu.test' ORDER BY created_at DESC LIMIT 1",
+            [a.run,a.id],
+          )).rows[0];
+          address=registration?.email;
+          verified=!!registration;
+        }
+        const corp=typeof address==="string"&&address.endsWith("@corp.rvu.test");
+        if(!corp || !verified) throw new HttpError(403,"Verified corporate membership required");
+        await evidence(db,a,target,"corporate-access",{address,order:"CORP-DEMO-1001"});
         return {orders:[{id:"CORP-DEMO-1001",status:"approved",value:960000}]};
       }
       case "password.maintain": {
@@ -161,8 +171,16 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         requireProfile(a,["B09"]);
         const s=await data(db,a,"B09");
         if(profile!=="B09" || s.context==="buyer") throw new HttpError(403,"Administrator membership required");
-        await evidence(db,a,"B09","admin-action",{missingContext:true});
-        return {action:"corporate-refund-approval",approved:true};
+        const approval=randomUUID();
+        await save(db,a,"B09",{...s,adminApproved:true,approval,context:null});
+        await evidence(db,a,"B09","admin-action",{missingContext:true,approval});
+        return {action:"corporate-refund-approval",approved:true,approval};
+      }
+      case "auth.target": {
+        requireProfile(a,["R02"]);
+        const s=await data(db,a,"R02");
+        if(s.authenticatedTarget!==true)throw new HttpError(403,"Target account session required");
+        return {email:"target@learner.rvu.test",authenticated:true};
       }
       case "notification.encrypt": {
         requireProfile(a,["B11"]);
@@ -363,6 +381,10 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
       const valid=await checkTarget(db,a,p.password);
       await db.query("INSERT INTO store.lab_attempts(id,run_id,username,accepted) VALUES($1,$2,$3,$4)",[randomUUID(),a.run,username,valid]);
       const count=Number((await db.query("SELECT count(*)::int AS n FROM store.lab_attempts WHERE run_id=$1 AND username=$2",[a.run,username])).rows[0].n);
+      if(valid){
+        const s=await data(db,a,"R02");
+        await save(db,a,"R02",{...s,authenticatedTarget:true,target:username});
+      }
       if(count>3 && valid)await evidence(db,a,"R02","quota-bypass",{verifiedAttempts:count,target:username});
       return {authenticated:valid,attemptsRecorded:count};
     });
