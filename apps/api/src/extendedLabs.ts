@@ -22,7 +22,7 @@ type Context = { app:FastifyInstance; pool:Pool; userRoute:UserRoute; actor:(db:
 const obj = z.record(z.string(),z.unknown());
 const sleep = (n:number) => new Promise<void>(resolve=>setTimeout(resolve,n));
 const requireProfile = (a:Actor, profiles:string[]) => {
-  if (a.profile!=="secure-baseline" && a.profile!=="open-playground" && !profiles.includes(a.profile)) throw new HttpError(404,"Feature not available in this training run");
+  if (a.profile!=="secure-baseline" && a.profile!=="open-playground" && !profiles.includes(a.profile)) throw new HttpError(404,"Service is not available");
 };
 const fail = (message:string):never => {throw new HttpError(409,message);};
 const colleagueFor = (a:Actor):string => a.profile==="open-playground"
@@ -165,7 +165,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         const isOwn=target===a.email;
         if(hasWeakness(a.profile,"B07") && supplied===undefined) {
           const updated=await db.query("UPDATE store.users SET password_hash=$3 WHERE run_id=$1 AND email=$2 RETURNING id",[a.run,target,await passwordHash(newPassword)]);
-          if(!updated.rowCount)throw new HttpError(404,"No such training account");
+          if(!updated.rowCount)throw new HttpError(404,"Account not found");
           if(!isOwn)await evidence(db,a,"B07","foreign-password-change",{target});
           return {updated:true,usedSupportBranch:true};
         }
@@ -229,12 +229,12 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         const raw=z.string().min(3).max(420).parse(p.address);
         // Legacy delivery parses the final @; identity adapter stores first 255.
         const recipient=raw.slice(raw.lastIndexOf("@")+1).toLowerCase();
-        if(recipient!=="learner.rvu.test") throw new HttpError(400,"Only learner-owned local mailboxes can receive training mail");
+        if(recipient!=="learner.rvu.test") throw new HttpError(400,"This mailbox is not eligible for local delivery");
         if(!hasWeakness(a.profile,"B06")&&raw.length>254) throw new HttpError(400,"Address too long");
         const stored=hasWeakness(a.profile,"B06")?raw.slice(0,255):raw;
         const s=await data(db,a,"B06"),code=token();
         await save(db,a,"B06",{...s,address:stored,verification:hash(code),verified:false,raw});
-        await message(db,a,a.email,"Legacy onboarding verification","Your training code: "+code);
+        await message(db,a,a.email,"Business address verification","Your verification code: "+code);
         return {storedAddress:stored,deliveryMailbox:a.email,codeSent:true};
       }
       case "legacy.verify": {
@@ -263,7 +263,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         if(!hasWeakness(a.profile,"B12")) fail("Encoded mailbox local parts are forbidden");
         const code=token(),s=await data(db,a,"B12");
         await save(db,a,"B12",{...s,address:raw,recipient:destination,verification:hash(code),verified:false});
-        await message(db,a,a.email,"Corporate verification","Your training code: "+code);
+        await message(db,a,a.email,"Corporate verification","Your verification code: "+code);
         return {validatedAddress:raw,deliveryMailbox:destination};
       }
       case "parser.verify": {
@@ -284,13 +284,13 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         requireProfile(a,["R05"]);
         const destination=z.string().email().parse(p.email);
         const target=(await db.query("SELECT id FROM store.users WHERE run_id=$1 AND email=$2",[a.run,destination])).rows[0];
-        if(!target)throw new HttpError(404,"Training account not found");
+        if(!target)throw new HttpError(404,"Account not found");
         const code=hasWeakness(a.profile,"R05")
           ? createHash("sha256").update("legacy-time-reset:"+a.run+":"+Math.floor(Date.now()/1000)).digest("hex")
           : token();
         await db.query("INSERT INTO store.lab_resets(id,run_id,user_id,token_hash,expires_at) VALUES($1,$2,$3,$4,now()+interval '15 minutes')",
           [randomUUID(),a.run,target.id,hash(code)]);
-        if(destination===a.email)await message(db,a,a.email,"Account recovery","Your training code: "+code);
+        if(destination===a.email)await message(db,a,a.email,"Account recovery","Your verification code: "+code);
         return {requested:true};
       }
       case "reset.complete": {
@@ -322,7 +322,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         if(!r.completed && r.token===null) await evidence(db,a,"R06","partial-confirm",{registrationId:id,priorToken:null});
         return {verified:true};
       }
-      default: throw new HttpError(404,"Unknown training operation");
+      default: throw new HttpError(404,"Unknown business service");
     }
   });
   // Race workflows must release the initial transaction before the window;
@@ -338,7 +338,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
     await sleep(p.delayMs);
     return transaction(pool,async db=>{
       const a=await actor(db,req,true);
-      if(a.run!==initial.run||a.id!==initial.actorId) fail("Training run changed");
+      if(a.run!==initial.run||a.id!==initial.actorId) fail("Your account session has changed");
       const c=await cart(db,a);
       if(!hasWeakness(a.profile,"R03") && c.version!==initial.version)fail("Cart changed while payment was being authorized");
       const delivered=c.items.reduce((n:number,x:{price:string;quantity:number})=>n+Number(x.price)*x.quantity,0);
@@ -364,12 +364,12 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
     await sleep(delayMs);
     return transaction(pool,async db=>{
       const a=await actor(db,req,true);
-      if(a.run!==prepared.run||a.id!==prepared.id)fail("Training run changed");
+      if(a.run!==prepared.run||a.id!==prepared.id)fail("Your account session has changed");
       const s=await data(db,a,"R04");
       const recipient=prepared.recipient.endsWith("@learner.rvu.test") ? a.email : null;
       if(recipient){
         const deliveredCode=hasWeakness(a.profile,"R04")?String(s.plain):prepared.code;
-        await message(db,a,recipient,"Email change confirmation","Your training code: "+deliveredCode);
+        await message(db,a,recipient,"Email change confirmation","Your verification code: "+deliveredCode);
       }
       return {recipient:recipient?"owned mailbox":"unavailable",pendingAddress:s.address,delivered:!!recipient};
     });
@@ -386,7 +386,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
     await sleep(p.delayMs);
     return transaction(pool,async db=>{
       const a=await actor(db,req,true);
-      if(a.run!==prepared.run||a.id!==prepared.actor)fail("Training run changed");
+      if(a.run!==prepared.run||a.id!==prepared.actor)fail("Your account session has changed");
       await db.query("UPDATE store.lab_registrations SET token=coalesce(token,$2),completed=true WHERE id=$1",[prepared.id,prepared.code]);
       return {registrationId:prepared.id,completed:true};
     });
@@ -413,7 +413,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
     await sleep(p.delayMs);
     return transaction(pool,async db=>{
       const a=await actor(db,req,true);
-      if(a.run!==checked.run||a.id!==checked.actor)fail("Training run changed");
+      if(a.run!==checked.run||a.id!==checked.actor)fail("Your account session has changed");
       const username=colleagueFor(a);
       if(p.email && p.email!==username)throw new HttpError(404,"Account not found");
       const valid=await checkTarget(db,a,p.password);
