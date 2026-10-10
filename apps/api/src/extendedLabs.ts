@@ -147,7 +147,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         if(!isOwn) throw new HttpError(403,"Changing another account requires staff authorization");
         if(typeof supplied!=="string") fail("Current password is required");
         const current=(await db.query("SELECT password_hash FROM store.users WHERE run_id=$1 AND id=$2",[a.run,a.id])).rows[0];
-        if(!await passwordValid(supplied,current.password_hash)) throw new HttpError(403,"Incorrect current password");
+        if(!await passwordValid(z.string().parse(supplied),current.password_hash)) throw new HttpError(403,"Incorrect current password");
         await db.query("UPDATE store.users SET password_hash=$3 WHERE run_id=$1 AND id=$2",[a.run,a.id,await passwordHash(newPassword)]);
         return {updated:true,usedSupportBranch:false};
       }
