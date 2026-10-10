@@ -43,6 +43,14 @@ assert.match(signedIn.user.colleagueEmail,/^colleague-[a-f0-9]{32}@learner\.rvu\
 const directory = await request("/api/business/status");
 assert.equal(directory.profile, undefined, "Learner must not discover internal profile");
 assert.equal(directory.states, undefined, "Learner must not receive lab state or tokens");
+const freshQuote=await request("/api/quotes","POST",{dock:true,support:true});
+const modifiedQuote=await fetch(origin+"/api/quotes/"+freshQuote.id+"/accept",{
+  method:"POST",
+  headers:{Origin:origin,Cookie:cookie,"X-CSRF-Token":csrf,"Content-Type":"application/json"},
+  body:JSON.stringify({quotedTotal:100}),
+});
+assert.equal(modifiedQuote.status,409,"Storefront custom quotes must be server-priced");
+
 const unregistered = await fetch(origin + "/api/register", {
   method:"POST",
   headers: {Origin:origin,"Content-Type":"application/json"},
