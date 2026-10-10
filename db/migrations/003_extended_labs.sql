@@ -1,7 +1,7 @@
 -- Version 3: isolated training entities for the additional 13 scenario families.
 ALTER TABLE store.runs DROP CONSTRAINT runs_profile_check;
 ALTER TABLE store.runs ADD CONSTRAINT runs_profile_check
- CHECK (profile IN ('secure-baseline','B01','B02','B03','B04','B05','B06','B07','B08','B09','B10','B11','B12','R01','R02','R03','R04','R05','R06'));
+ CHECK (profile IN ('secure-baseline','B01','B02','B03','B04','B05','B06','B07','B08','B09','B10','B11','B12','R01','R02','R03','R04','R05','R06','open-playground'));
 CREATE TABLE store.lab_states(
  run_id uuid NOT NULL REFERENCES store.runs,
  user_id uuid NOT NULL,
