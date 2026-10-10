@@ -94,6 +94,11 @@ jobs:
           exit 1
       - name: Exercise real proxy, application and PostgreSQL
         run: node scripts/smoke.mjs
+      - name: Exercise eight extended profiles through the real Docker proxy
+        run: node scripts/smoke-extended.mjs
+        env:
+          RVU_DISPOSABLE_CI: 'yes'
+          RVU_CI_INSTRUCTOR_PASSWORD: CI-local-instructor-Password-Only-2026
       - name: Render storefront and account services in headless Chrome
         run: |
           browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
