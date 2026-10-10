@@ -89,10 +89,10 @@ test("expired/reset session returns the storefront to sign-in", async () => {
   await user.click(screen.getByRole("button", { name: "Your account" }));
   let modal = within(screen.getByRole("dialog"));
   await user.type(
-    modal.getByLabelText("Email address"),
-    "alex@learner.rvu.test",
+    modal.getByLabelText("Username"),
+    "rvu",
   );
-  await user.type(modal.getByLabelText("Password"), "Studio-Local-2026!");
+  await user.type(modal.getByLabelText("Password"), "rvucamp");
   await user.click(modal.getByRole("button", { name: "Sign in" }));
   await waitFor(() => assert.ok(!screen.queryByRole("dialog")));
   await store.pool.query("DELETE FROM store.sessions");
@@ -118,10 +118,10 @@ test("React → Fastify → SQL: search, login, bag, promotion, payment, order a
   await user.click(screen.getByRole("button", { name: "Your account" }));
   let modal = within(screen.getByRole("dialog"));
   await user.type(
-    modal.getByLabelText("Email address"),
-    "alex@learner.rvu.test",
+    modal.getByLabelText("Username"),
+    "rvu",
   );
-  await user.type(modal.getByLabelText("Password"), "Studio-Local-2026!");
+  await user.type(modal.getByLabelText("Password"), "rvucamp");
   await user.click(modal.getByRole("button", { name: "Sign in" }));
   await waitFor(() => assert.ok(!screen.queryByRole("dialog")));
   await user.click(
