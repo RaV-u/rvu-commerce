@@ -69,6 +69,20 @@ before(async()=>{
 });
 after(async()=>{await store?.app.close();await control?.app.close();await socket?.stop();await wasm?.close();});
 
+
+test("instructor proof details are isolated from unauthenticated and student services",async()=>{
+  await fresh("B03");
+  await act("email.update",{address:"buyer@corp.rvu.test"});
+  await act("corporate.orders");
+  const evidenceLog=await call(admin,"GET","/api/instructor/evidence/events");
+  assert.ok(evidenceLog.events.some((e:{scenario:string})=>e.scenario==="B03"));
+  const unauthorized=await control.app.inject({method:"GET",url:"/api/instructor/evidence/events",headers:{origin:"http://127.0.0.1:8081"}});
+  assert.equal(unauthorized.statusCode,401);
+  const student=await store.app.inject({method:"GET",url:"/api/instructor/evidence/events",headers:{origin:"http://localhost:8080",cookie:alex.cookie}});
+  assert.equal(student.statusCode,404);
+  await fresh("secure-baseline");
+  assert.equal((await call(admin,"GET","/api/instructor/evidence/events")).events.length,0);
+});
 test("baseline denies negative quantities and signed-32 arithmetic wrap",async()=>{
   await fresh("secure-baseline");
   await act("cart.reconcile",{lines:[{sku:"vista-27",quantity:1},{sku:"arc-light",quantity:-1}]},409);
