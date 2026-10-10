@@ -5,6 +5,7 @@ import {
   ShoppingBag,
   Search,
   UserRound,
+  Building2,
   Wallet as WalletIcon,
   Plus,
   Minus,
@@ -30,6 +31,7 @@ import {
   type Message,
 } from "./api.ts";
 import { Modal } from "./components/Modal.tsx";
+import { AccountServices } from "./Services.tsx";
 const blankCart: Cart = {
   version: 0,
   items: [],
@@ -178,9 +180,12 @@ export function App() {
       const s = await api<Session>("/login", "POST", data);
       setSession(s);
       setCsrf(s.csrf);
+      setOrders([]);
+      setMessages([]);
+      setSelected(null);
       await refresh(s);
       setPanel(null);
-      setNotice("Your account is ready. Welcome to RVU.");
+      setNotice("Signed in as "+(s.user?.username??"customer")+".");
     });
   }
   async function createQuote(e: FormEvent<HTMLFormElement>) {
@@ -255,7 +260,7 @@ export function App() {
             Gift cards
           </button>
           <button onClick={() => setPanel("policy")}>Our approach</button>
-          <a href="/services">Account services</a>
+          <button onClick={() => session.user ? void perform(() => account("services")) : setPanel("login")}>My Account</button>
         </nav>
         <div className="header-actions">
           <button
@@ -274,7 +279,7 @@ export function App() {
           >
             <UserRound size={20} />
             <span>
-              {session.user ? session.user.name.split(" ")[0] : "Sign in"}
+              {session.user ? (session.user.username ?? session.user.name.split(" ")[0]) : "Sign in"}
             </span>
           </button>
           <button
@@ -295,7 +300,7 @@ export function App() {
           <a href="#collection" onClick={() => setMenuOpen(false)}>Shop the collection</a>
           <button onClick={() => {setCategory("Gift cards");setMenuOpen(false);document.getElementById("collection")?.scrollIntoView({behavior:"smooth"});}}>Gift cards</button>
           <button onClick={() => {setPanel("quote");setMenuOpen(false);}}>Custom workstation</button>
-          <a href="/services" onClick={()=>setMenuOpen(false)}>Account services</a>
+          <button onClick={() => {setMenuOpen(false); if(session.user)void perform(()=>account("services"));else setPanel("login");}}>My Account</button>
           <button onClick={() => {setPanel("policy");setMenuOpen(false);}}>Our approach</button>
         </nav>
       )}
@@ -559,9 +564,9 @@ export function App() {
           <div className="demo-note">
             RVU Commerce · Guest account access
             <br />
-            Username: <strong>rvu</strong>
+            Usernames: <strong>rvu</strong> or <strong>rvu_2</strong>
             <br />
-            Password: <strong>rvucamp</strong>
+            Password (both): <strong>rvucamp</strong>
           </div>
         </Modal>
       )}
@@ -829,8 +834,8 @@ export function App() {
           close={() => setPanel(null)}
         >
           <div className="account-top">
-            <p className="muted">Signed in as rvu · Account inbox: {session.user?.email}</p>
-            {session.user?.colleagueEmail && <p className="muted">Workspace directory · Company colleague: {session.user.colleagueEmail}</p>}
+            <p className="muted">Signed in as {session.user?.username??"customer"} · Account inbox: {session.user?.email}</p>
+            {session.user?.colleagueEmail && <p className="muted">Linked company account: {session.user.colleagueEmail}</p>}
             <button
               className="text-link"
               disabled={busy}
@@ -841,6 +846,9 @@ export function App() {
                   setCsrf();
                   setCart(blankCart);
                   setWallet({ balance: 0, transactions: [] });
+                  setOrders([]);
+                  setMessages([]);
+                  setSelected(null);
                   setPanel(null);
                 })
               }
@@ -853,6 +861,7 @@ export function App() {
               { id: "orders", icon: Package, label: "Orders" },
               { id: "wallet", icon: WalletIcon, label: "Wallet" },
               { id: "inbox", icon: Mail, label: "Inbox" },
+              { id: "services", icon: Building2, label: "Services" },
             ].map((t) => (
               <button
                 key={t.id}
@@ -968,10 +977,7 @@ export function App() {
                       {new Date(m.created_at).toLocaleDateString()}
                     </span>
                     <h3>{m.subject}</h3>
-                    <p>
-                      Your account is almost ready. Confirm this fictional email
-                      address to start shopping.
-                    </p>
+                    <p>{m.body}</p>
                     {!session.user?.verified ? (
                       <button
                         className="primary"
@@ -1006,6 +1012,7 @@ export function App() {
               )}
             </>
           )}
+          {tab === "services" && session.user && <AccountServices user={session.user} />}
         </Modal>
       )}
       {selected && (

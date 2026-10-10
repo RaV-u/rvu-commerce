@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState,type FormEvent} from "react";
-import {api,setCsrf,type Session} from "./api.ts";
+import {api,type User} from "./api.ts";
 type Operation={section:string;title:string;description:string;path:string;body:Record<string,unknown>};
 const operations:Operation[]=[
   {section:"Buying",title:"Express purchase",description:"Settle a reviewed bag after processing time.",path:"/business/checkout",body:{delayMs:120}},
@@ -53,24 +53,17 @@ function summarizeResponse(response:string):[string,string][] {
     });
   } catch {return [];}
 }
-export function Services(){
-  const [session,setSession]=useState<Session>({user:null});
-  const [ready,setReady]=useState(false);
+export function AccountServices({user}:{user:User}){
   const [choice,setChoice]=useState(0);
-  const [payload,setPayload]=useState(accountDefaults(operations[0]));
+  const [payload,setPayload]=useState(accountDefaults(operations[0],user));
   const [response,setResponse]=useState("");
   const [error,setError]=useState("");
   const [sending,setSending]=useState(false);
   const op=operations[choice];
   const categories=useMemo(()=>Array.from(new Set(operations.map(x=>x.section))),[]);
   useEffect(()=>{
-    let mounted=true;
-    void api<Session>("/session").then(s=>{
-      if(mounted){setCsrf(s.csrf);setSession(s);setPayload(accountDefaults(operations[0],s.user));}
-    }).catch(()=>{if(mounted)setError("Please sign in from the storefront first.");})
-      .finally(()=>{if(mounted)setReady(true);});
-    return ()=>{mounted=false;};
-  },[]);
+    setChoice(0);setPayload(accountDefaults(operations[0],user));setError("");setResponse("");
+  },[user.id]);
   function updateField(key:string, raw:string) {
     const next=JSON.parse(payload) as Record<string,unknown>;
     const sample=op.body[key];
@@ -92,23 +85,16 @@ export function Services(){
     }catch(e){setError((e as Error).message);}
     finally{setSending(false);}
   }
-  return <div className="service-page">
-    <header className="service-header">
-      <a href="/" aria-label="Return to RVU Commerce"><img src="/brand/rvu-commerce.svg" alt="RVU Commerce" width="220" height="56"/></a>
-      <a href="/">← Back to the collection</a>
-    </header>
-    <main className="service-content">
-      <div className="service-intro"><span className="service-eyebrow">RVU BUSINESS SERVICES</span>
-        <h1>Work, connected.</h1>
-        <p>Manage business purchases, account access, company workspaces and support requests. Keep your purchases, company contacts and account settings in one place.</p>
-        {session.user?.colleagueEmail && <p className="service-workspace-peer">Company directory · Colleague: <strong>{session.user.colleagueEmail}</strong></p>}
-      </div>
-      {!ready?<p>Checking your account…</p>:!session.user?.verified?
-        <section className="service-signed-out"><h2>Sign in to use your account services.</h2><p>Sign in from the shop to manage your account and company services. You won't need to sign in again here.</p><a href="/">Go to the store →</a></section>:
+  return <section className="account-services" aria-label="Account and business services">
+    <div className="service-intro">
+      <span className="service-eyebrow">ACCOUNT & BUSINESS SERVICES</span>
+      <p>Manage your contact details, business purchases, workspace and account access.</p>
+      {user.colleagueEmail && <p className="service-workspace-peer">Linked company account: <strong>{user.colleagueEmail}</strong></p>}
+    </div>
         <div className="service-columns">
           <aside className="service-menu"><p>Service directory</p>
             {categories.map(group=><div key={group} className="service-group"><h2>{group}</h2>
-              {operations.map((o,i)=>o.section===group?<button type="button" key={i} className={choice===i?"chosen":""} onClick={()=>{setChoice(i);setPayload(accountDefaults(o,session.user));setError("");setResponse("");}}>{o.title}</button>:null)}
+              {operations.map((o,i)=>o.section===group?<button type="button" key={i} className={choice===i?"chosen":""} onClick={()=>{setChoice(i);setPayload(accountDefaults(o,user));setError("");setResponse("");}}>{o.title}</button>:null)}
             </div>)}
           </aside>
           <section className="service-workspace" aria-live="polite">
@@ -148,8 +134,6 @@ export function Services(){
               <details><summary>View technical details</summary><pre>{response}</pre></details>
             </div>}
           </section>
-        </div>}
-    </main>
-    <footer className="service-footer footer-mentorship"><span>RVU Mentorship Camp</span><span>By: Ramez Medhat</span><a href="https://rv-u.tech" target="_blank" rel="noopener noreferrer">rv-u.tech ↗</a></footer>
-  </div>;
+        </div>
+  </section>;
 }
