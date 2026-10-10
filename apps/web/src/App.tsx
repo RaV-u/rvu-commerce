@@ -263,6 +263,7 @@ export function App() {
             Gift cards
           </button>
           <button onClick={() => setPanel("policy")}>Our approach</button>
+          <a href="/services">Account services</a>
         </nav>
         <div className="header-actions">
           <button
@@ -302,6 +303,7 @@ export function App() {
           <a href="#collection" onClick={() => setMenuOpen(false)}>Shop the collection</a>
           <button onClick={() => {setCategory("Gift cards");setMenuOpen(false);document.getElementById("collection")?.scrollIntoView({behavior:"smooth"});}}>Gift cards</button>
           <button onClick={() => {setPanel("quote");setMenuOpen(false);}}>Custom workstation</button>
+          <a href="/services" onClick={()=>setMenuOpen(false)}>Account services</a>
           <button onClick={() => {setPanel("policy");setMenuOpen(false);}}>Our approach</button>
         </nav>
       )}
