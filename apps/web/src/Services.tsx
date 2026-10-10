@@ -23,6 +23,15 @@ const operations:Operation[]=[
   {section:"Support",title:"Company account sign-in",description:"Submit a login attempt to the protected business account.",path:"/business/login-verification",body:{password:"",delayMs:80}},
 ];
 function pretty(value:unknown){return JSON.stringify(value,null,2);}
+// Pre-populate self-service forms with the private mailbox assigned to this
+// sign-in, rather than the retired shared demo customer's address.
+function accountDefaults(op:Operation, userEmail?:string) {
+  const body:Record<string,unknown>={...op.body};
+  for(const [key,value] of Object.entries(body)){
+    if(value==="alex@learner.rvu.test" && userEmail)body[key]=userEmail;
+  }
+  return pretty(body);
+}
 function humanize(name:string):string {
   return name.replace(/([a-z])([A-Z])/g,"$1 $2").replace(/(^|\s)\w/g,c=>c.toUpperCase());
 }
@@ -30,7 +39,7 @@ export function Services(){
   const [session,setSession]=useState<Session>({user:null});
   const [ready,setReady]=useState(false);
   const [choice,setChoice]=useState(0);
-  const [payload,setPayload]=useState(pretty(operations[0].body));
+  const [payload,setPayload]=useState(accountDefaults(operations[0]));
   const [response,setResponse]=useState("");
   const [error,setError]=useState("");
   const [sending,setSending]=useState(false);
@@ -39,7 +48,7 @@ export function Services(){
   useEffect(()=>{
     let mounted=true;
     void api<Session>("/session").then(s=>{
-      if(mounted){setCsrf(s.csrf);setSession(s);}
+      if(mounted){setCsrf(s.csrf);setSession(s);setPayload(accountDefaults(operations[0],s.user?.email));}
     }).catch(()=>{if(mounted)setError("Please sign in from the storefront first.");})
       .finally(()=>{if(mounted)setReady(true);});
     return ()=>{mounted=false;};
@@ -76,11 +85,11 @@ export function Services(){
         <p>Manage business purchases, account access, company workspaces and support requests. These services run entirely on fictional data in your local installation.</p>
       </div>
       {!ready?<p>Checking your account…</p>:!session.user?.verified?
-        <section className="service-signed-out"><h2>Sign in to use your account services.</h2><p>Open the store, sign in as your fictional training customer and verify your email before returning here.</p><a href="/">Go to the store →</a></section>:
+        <section className="service-signed-out"><h2>Sign in to use your account services.</h2><p>Sign in once on the storefront using the RVU classroom access, then return here. No separate registration or mailbox verification is needed.</p><a href="/">Go to the store →</a></section>:
         <div className="service-columns">
           <aside className="service-menu"><p>Service directory</p>
             {categories.map(group=><div key={group} className="service-group"><h2>{group}</h2>
-              {operations.map((o,i)=>o.section===group?<button type="button" key={i} className={choice===i?"chosen":""} onClick={()=>{setChoice(i);setPayload(pretty(o.body));setError("");setResponse("");}}>{o.title}</button>:null)}
+              {operations.map((o,i)=>o.section===group?<button type="button" key={i} className={choice===i?"chosen":""} onClick={()=>{setChoice(i);setPayload(accountDefaults(o,session.user?.email));setError("");setResponse("");}}>{o.title}</button>:null)}
             </div>)}
           </aside>
           <section className="service-workspace" aria-live="polite">
