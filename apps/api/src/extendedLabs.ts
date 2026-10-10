@@ -83,13 +83,13 @@ export const extendedLabels:Record<string,string> = {
 export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
   // Only instructor endpoints may reveal scenario identity, state and evidence.
   // Learners receive a neutral service-directory acknowledgement.
-  userRoute("GET","/api/lab/status",async(_db,a)=>({
+  userRoute("GET","/api/business/status",async(_db,a)=>({
     account:{name:a.name,verified:a.verified},
     services:"available",
   }),false);
   // Each action is also documented as a business workflow in the storefront
   // and can be inspected in Burp. The actor/profile cannot be set by the client.
-  userRoute("POST","/api/lab/action",async(db,a,req)=>{
+  userRoute("POST","/api/business/actions",async(db,a,req)=>{
     const p=parse(req.body), action=str(p,"action");
     const profile=a.profile;
     switch(action){
@@ -301,7 +301,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
   });
   // Race workflows must release the initial transaction before the window;
   // deliberately holding an app-wide transaction would serialize everything.
-  app.post("/api/lab/race/checkout", async req=>{
+  app.post("/api/business/checkout", async req=>{
     const p=z.object({delayMs:z.number().int().min(20).max(300).default(120)}).strict().parse(req.body);
     const initial=await transaction(pool,async db=>{
       const a=await actor(db,req,true);requireProfile(a,["R03"]);
@@ -323,7 +323,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
       return receipt;
     });
   });
-  app.post("/api/lab/race/email-change", async req=>{
+  app.post("/api/business/email-change", async req=>{
     const {address,delayMs}=z.object({
       address:z.string().email().max(120),
       delayMs:z.number().int().min(20).max(400).default(120)
@@ -348,7 +348,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
       return {recipient:recipient?"owned mailbox":"unavailable",pendingAddress:s.address,delivered:!!recipient};
     });
   });
-  app.post("/api/lab/race/registration",async req=>{
+  app.post("/api/business/registration",async req=>{
     const p=z.object({email:z.string().email().max(120),registrationId:z.string().uuid().optional(),delayMs:z.number().int().min(40).max(500).default(150)}).strict().parse(req.body);
     const prepared=await transaction(pool,async db=>{
       const a=await actor(db,req,true);requireProfile(a,["R06"]);
@@ -365,7 +365,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
       return {registrationId:prepared.id,completed:true};
     });
   });
-  app.post("/api/lab/race/login",async req=>{
+  app.post("/api/business/login-verification",async req=>{
     const p=z.object({password:z.string().min(1).max(128),delayMs:z.number().int().min(20).max(300).default(80)}).strict().parse(req.body);
     const checked=await transaction(pool,async db=>{
       const a=await actor(db,req,true);requireProfile(a,["R02"]);
