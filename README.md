@@ -1,49 +1,45 @@
 # RVU Commerce
 
-A locally hosted retail application with a React storefront, account services, PostgreSQL, and Docker Compose.
+An intentionally vulnerable, locally hosted retail training application with a React storefront, account services, PostgreSQL, and Docker Compose.
 
-## Instructor setup
+## Student download (Windows + WSL2)
 
-Run in your Ubuntu WSL workspace:
+**[Download RVU Commerce for students](https://github.com/RaV-u/rvu-commerce/releases/latest/download/RVU-Commerce-Student.tar.gz)** — single offline Docker package from the latest verified GitHub Release. No Node.js or Git required. Docker Desktop and Ubuntu WSL2 must be installed and Docker WSL integration enabled.
+
+In **Ubuntu (WSL)** run:
 
 ```bash
-cd ~/rvu-commerce
-git pull origin main
+mkdir -p ~/rvu-commerce-student && cd ~/rvu-commerce-student
+curl -fL "https://github.com/RaV-u/rvu-commerce/releases/latest/download/RVU-Commerce-Student.tar.gz" -o RVU-Commerce-Student.tar.gz
+tar -xzf RVU-Commerce-Student.tar.gz
+cd RVU-Commerce-Student
+bash install.sh
+```
+
+Open **http://localhost:8081**.
+
+| Username | Password | Starting wallet |
+| --- | --- | --- |
+| `rvu` | `rvucamp` | EGP 15,000 |
+| `rvu_2` | `rvucamp` | EGP 15,000 |
+
+The accounts have separate sessions, carts, wallets, inboxes, and orders. Amounts use **whole Egyptian pounds**: `1` is EGP 1, and `100` is EGP 100. Payments are simulated; no real money is involved.
+
+You can stop the student store with `bash stop.sh` from its folder, then restart with `bash install.sh`. For a fresh lab run, use `bash reset.sh`.
+
+The [Arabic installation guide](student/README_AR.md) contains troubleshooting and Burp proxy setup. **Download the named `RVU-Commerce-Student.tar.gz` Release asset; do not use GitHub's automatic "Source code" archives.** Source archives lack prebuilt Docker images and may reveal training exercises.
+
+## Instructor workspace
+
+```bash
+git clone https://github.com/RaV-u/rvu-commerce.git
+cd rvu-commerce
 bash scripts/start.sh
 ```
 
-Open **http://localhost:8081**. All account services are within **My Account → Services**.
+The instructor source contains automated tests and intended training vulnerabilities. **This public repository is not appropriate for a blind hunt when learners can browse source or Git history.** Students should receive the Release asset link, not source access. If spoiler prevention is important, host student releases in a separate public repository and restrict access to this source.
 
-| Username | Password |
-| --- | --- |
-| `rvu` | `rvucamp` |
-| `rvu_2` | `rvucamp` |
-
-Both accounts have separate sessions, shopping carts, wallets, inboxes, and order histories, preserved when they sign back in. Currency and payment operations are simulated locally. Monetary API values and database values use whole EGP pounds: 1 means EGP 1 and 100 means EGP 100. New accounts start with EGP 15,000.
-
-Stop containers without deleting data:
-
-```bash
-docker compose down
-```
-
-Reset the local account environment without erasing the PostgreSQL volume:
-
-```bash
-docker compose run --rm migrate node dist/server/reset-local.js RESET
-```
-
-## Prepare the student edition
-
-Do **not** distribute this source repository to learners. Create an offline Docker package from your WSL machine:
-
-```bash
-bash scripts/export-student-package.sh
-```
-
-Send **only** `dist-packages/RVU-Commerce-Student.tar.gz` to students. It contains container images and a one-command installer, with no source, regression tests, archived instructor files or solution guides in the runtime image. Students need Docker Desktop with WSL2, but not Node.js or Git.
-
-**Make this GitHub repository private** before a blind-hunting session: Git history can expose historical tests, comments and solutions even after files are removed from `main`.
+The instructor app is bound to **127.0.0.1:8081** only. All account services appear under **My Account → Services**.
 
 ## Development checks
 
@@ -55,8 +51,8 @@ npm test
 npm run test:ui
 ```
 
-CI also checks Docker/PostgreSQL, account isolation, purchase/refund, and browser layout. The store binds to **127.0.0.1:8081** only and must not be internet-exposed. Database migrations and security regression tests remain part of the instructor source repository.
+On every passing push to `main`, GitHub Actions runs PostgreSQL, app/UI and Docker installation tests, then refreshes the stable [student Release](https://github.com/RaV-u/rvu-commerce/releases/latest). An offline instructor export is also available via `bash scripts/export-student-package.sh`.
 
 ## Currency upgrade
 
-The monetary contract is **whole Egyptian pounds (EGP)** end-to-end. On the first upgrade from older cent-denominated builds, migration 007 updates catalog, promotion and voucher values and activates a fresh training run. Existing historical runs and ledger entries remain archived without being re-denominated. This avoids altering financial journals or mixing different units inside a wallet. Rebuild the student package before distributing it.
+The application uses whole EGP pounds end to end. Migration 007 converts catalog, promotion and voucher defaults and activates a fresh training run on the first upgrade. Older historical runs remain archived without rewriting financial ledgers.

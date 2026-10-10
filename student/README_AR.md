@@ -1,30 +1,44 @@
-# RVU Commerce — دليل التثبيت للطلاب
+# RVU Commerce — نزّل الموقع من GitHub
 
-## قبل التثبيت
-- Windows 10/11: ثبّت **Docker Desktop** وفعّل **WSL2 integration**، ثم افتح Docker Desktop.
-- Linux: ثبّت Docker Engine مع Docker Compose.
-- لا تحتاج Node.js أو Git أو GitHub. تحتاج ملف **RVU-Commerce-Student.tar.gz** المرسَل من المدرّب.
-- الموقع يعمل محليًا فقط على البورت **8081**.
+**رابط تحميل نسخة الطلاب مباشرة:**
+https://github.com/RaV-u/rvu-commerce/releases/latest/download/RVU-Commerce-Student.tar.gz
 
-## التثبيت من الصفر
-1. فك ضغط الملف **RVU-Commerce-Student.tar.gz** في مكان تختاره. على Windows يُفضّل داخل مجلد Ubuntu في WSL.
-2. افتح Ubuntu / WSL Terminal وادخل إلى مجلد **RVU-Commerce-Student** الناتج.
-3. شغّل **bash install.sh**. يجب أن يكون Docker Desktop مفتوحًا.
-4. بعد ظهور **RVU Commerce is ready** افتح **http://localhost:8081**.
+**لا تضغط Source code (ZIP)**. نزّل ملف **RVU-Commerce-Student.tar.gz** من [Releases](https://github.com/RaV-u/rvu-commerce/releases/latest)؛ ده ملف Docker جاهز من غير السورس والاختبارات.
 
-## الحسابات
-| الحساب | Username | Password |
-| --- | --- | --- |
-| الأول | `rvu` | `rvucamp` |
-| الثاني | `rvu_2` | `rvucamp` |
+## المطلوب قبل السيشن
 
-كل حساب له Session وWallet وCart وOrders مستقلة. تسجيل الخروج لا يمسح حسابك. كل الأسعار والأرصدة **بالجنيه المصري (EGP)**: الرقم **1** يعني جنيهًا واحدًا، والرقم **100** يعني 100 جنيه. كل حساب يبدأ برصيد افتراضي **15,000 جنيه**. الدفع محاكاة داخلية بلا أموال حقيقية.
+Windows 10/11 أو Linux. لو Windows: شغّل **Docker Desktop** وفعّل **WSL2 integration** مع Ubuntu. مش محتاج Git ولا Node.js. تأكد إن بورت **8081** فاضي.
+
+## التثبيت من الصفر — Ubuntu WSL
+
+انسخ الأوامر كلها داخل Ubuntu:
+
+```bash
+mkdir -p ~/rvu-commerce-student && cd ~/rvu-commerce-student
+curl -fL "https://github.com/RaV-u/rvu-commerce/releases/latest/download/RVU-Commerce-Student.tar.gz" -o RVU-Commerce-Student.tar.gz
+tar -xzf RVU-Commerce-Student.tar.gz
+cd RVU-Commerce-Student
+bash install.sh
+```
+
+بعد ظهور `RVU Commerce is ready` افتح **http://localhost:8081** من Firefox.
+
+## حسابات التدريب
+
+| الحساب | Username | Password | الرصيد |
+| --- | --- | --- | --- |
+| الأول | `rvu` | `rvucamp` | 15,000 جنيه |
+| الثاني | `rvu_2` | `rvucamp` | 15,000 جنيه |
+
+الحسابين مستقلين في Wallet وCart وOrders وSession. الأسعار **بالجنيه المصري، مش بالقرش**: `1` يعني 1 جنيه، و`100` يعني 100 جنيه. كل العمليات مالية افتراضية.
 
 ## أثناء التدريب
-- ادخل **My Account → Services** للخدمات المرتبطة بالمتجر.
-- استخدم حسابًا في Firefox والآخر في نافذة Private أو متصفح مختلف إذا أردت اختبار فصل الحسابات.
-- Burp Suite يمكن ضبطه على Proxy **127.0.0.1:8080** مع Firefox، بينما الموقع يعمل على **localhost:8081**؛ لا تخلط بين البورتين.
-- للتوقف بدون حذف البيانات: **bash stop.sh**.
-- لإعادة ضبط الحسابات والرجوع لبداية تدريب جديدة: **bash reset.sh** (تظل السجلات القديمة محفوظة داخل قاعدة البيانات، لكنها لا تظهر في الـRun الجديد).
 
-**حل سريع:** إذا لم يفتح الموقع، تأكد أن Docker يعمل، وأنك نفذت الأمر من داخل المجلد الصحيح، وأن بورت 8081 غير مستخدم. لا تنشر الموقع على الإنترنت ولا ترسل الحزمة لطرف خارجي.
+- كل أدوات الحساب من **My Account → Services**.
+- لفتح الحسابين معًا استخدم متصفحين مختلفين، أو Firefox عادي ونافذة Private.
+- لو بتستخدم Burp، خليه يسمع على `127.0.0.1:8080`، والموقع نفسه `localhost:8081`.
+- للإيقاف بدون حذف بيانات: `bash stop.sh` من مجلد `RVU-Commerce-Student`.
+- للتشغيل بعد الإيقاف: `bash install.sh`.
+- لإعادة ضبط اللاب وبداية تدريب جديدة: `bash reset.sh` (بيبدأ Run جديد وبيحتفظ بالسجلات القديمة داخل قاعدة البيانات).
+
+لو حصل خطأ، تأكد إن Docker Desktop شغال والـWSL integration مفعّل، وإنك داخل المجلد الصحيح وبورت 8081 فاضي. الموقع محلي فقط وماينفعش يتعرض للإنترنت.

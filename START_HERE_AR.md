@@ -1,11 +1,14 @@
-# RVU Commerce — تجهيز نسخة الكامب
+# RVU Commerce — تجهيز الكامب
 
-**موقع واحد:** http://localhost:8081 — كل الخدمات تحت **My Account → Services**.
+## نسخة الطالب من GitHub
 
-**الحساب الأول:** `rvu` / `rvucamp`  
-**الحساب الثاني:** `rvu_2` / `rvucamp`
+**التحميل المباشر:** https://github.com/RaV-u/rvu-commerce/releases/latest/download/RVU-Commerce-Student.tar.gz
 
-## تحديث وتشغيل نسخة المدرب
+الطلاب ينزّلوا `RVU-Commerce-Student.tar.gz` من GitHub Releases (مش Download ZIP بتاع السورس)، ويتبعوا [دليل التثبيت بالعربي](student/README_AR.md).
+
+موقع واحد: **http://localhost:8081**، والحسابين `rvu` و`rvu_2` بكلمة المرور `rvucamp`، وكل حساب يبدأ بـ **15,000 جنيه افتراضي**. الحسابات محفوظة ومنفصلة.
+
+## تحديث وتشغيل نسخة المدرّب
 
 ```bash
 cd ~/rvu-commerce
@@ -14,28 +17,26 @@ bash scripts/start.sh
 docker compose ps
 ```
 
-## تجهيز ملف تبعته للطلاب
+## فحص الموقع
 
 ```bash
-cd ~/rvu-commerce
+curl -fsS http://localhost:8081/api/health
+docker compose ps
+docker stats --no-stream
+```
+
+## تصدير حزمة يدوية لو احتجت
+
+```bash
 bash scripts/export-student-package.sh
 ```
 
-هتلاقي ملف `dist-packages/RVU-Commerce-Student.tar.gz`. **ابعت الملف ده بس** مع تعليمات التثبيت القصيرة، من غير GitHub أو سورس أو حلول أو ملفات اختبار. ملف الحزمة كبير نسبيًا لأنه يحتوي Docker Images جاهزة.
+بعد نجاح GitHub Actions، Release بيتحدث تلقائيًا بنفس رابط التحميل. **متشاركش سورس الـRepository في سيشن Blind Hunting**: السورس والـGit history فيهما تفاصيل اللابات والاختبارات. نسخة الطالب اللي في Release جاهزة للتشغيل بدون سورس.
 
-## إعادة التجربة من الأول
+## إعادة ضبط تجربة المدرّب
 
 ```bash
 docker compose run --rm migrate node dist/server/reset-local.js RESET
 ```
 
-ده بيبدأ بيئة جديدة من غير حذف الـDatabase Volume. ما تستخدمش `docker compose down -v`.
-
-## التحقق السريع
-
-```bash
-docker compose ps
-docker stats --no-stream
-```
-
-الموقع مخصص للتشغيل المحلي على `127.0.0.1:8081`، ما تفتحش البورت للإنترنت. خلي GitHub **Private** قبل السيشن لأن تاريخ الـRepository القديم ممكن يكشف تفاصيل لا نريد إظهارها للطالب.
+الـReset يبدأ Run جديد من غير حذف Docker Volume. الموقع مربوط بـ `127.0.0.1:8081` فقط.

@@ -193,3 +193,35 @@ jobs:
       - name: Remove CI containers and volumes
         if: always()
         run: docker compose down -v --remove-orphans
+
+  publish-student-release:
+    name: Publish direct GitHub download
+    needs: [docker-smoke]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download fully tested student installer
+        uses: actions/download-artifact@v4
+        with:
+          name: RVU-Commerce-Student-Installer
+          path: release-assets
+      - name: Publish stable download as GitHub Release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          asset=release-assets/RVU-Commerce-Student.tar.gz
+          test -s "$asset"
+          if gh release view student-latest >/dev/null 2>&1; then
+            gh release upload student-latest "$asset" --clobber
+          else
+            gh release create student-latest "$asset" \
+              --title "RVU Commerce - Student Installer" \
+              --notes "Verified offline Docker installer for the RVU Commerce training store. Extract RVU-Commerce-Student.tar.gz and run bash install.sh in Ubuntu WSL (Docker Desktop and WSL2 required on Windows). Opens at http://localhost:8081. Training accounts: rvu / rvucamp and rvu_2 / rvucamp. All amounts are whole Egyptian pounds (EGP)." \
+              --target "$GITHUB_SHA" --latest
+          fi
+          gh release view student-latest --json assets --jq '.assets[] | select(.name=="RVU-Commerce-Student.tar.gz") | .url'
