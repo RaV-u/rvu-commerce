@@ -527,8 +527,8 @@ export async function buildApp(config: Config) {
       await db.query("UPDATE store.carts SET version=version+1 WHERE run_id=$1 AND id=$2",[a.run,c.id]);
       return cart(db,a);
     });
-    // A real server-priced quote workflow; the B01 training profile intentionally
-    // accepts the amount supplied by the client at the acceptance boundary.
+    // Custom workstation quotes are server-priced in the combined storefront.
+    // The historical B01 regression profile retains its original isolated case.
     userRoute("POST", "/api/quotes", async (db, a, req) => {
       const options = z.object({ dock: z.boolean(), support: z.boolean() }).strict().parse(req.body);
       const authorizedPrice = 680000 + (options.dock ? 900000 : 0) + (options.support ? 250000 : 0);
@@ -549,7 +549,7 @@ export async function buildApp(config: Config) {
       if (!quote) throw new HttpError(404, "Quote not found");
       if (quote.accepted_at || new Date(quote.expires_at).getTime() <= Date.now())
         throw new HttpError(409, "Quote expired or already accepted");
-      if (!hasWeakness(a.profile,"B01") && quotedTotal !== Number(quote.authorized_price))
+      if (a.profile !== "B01" && quotedTotal !== Number(quote.authorized_price))
         throw new HttpError(409, "The quote has changed. Please request a fresh price.");
       const c = await cart(db,a);
       if(hasWeakness(a.profile,"B04")) {
