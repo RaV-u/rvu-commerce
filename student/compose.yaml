@@ -1,6 +1,6 @@
-name: rvu-commerce-student
+name: rvu-commerce
 x-app: &app
-  image: rvu-commerce-student:local
+  image: rvu-commerce:local
   init: true
   read_only: true
   tmpfs: [/tmp]

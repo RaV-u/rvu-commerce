@@ -2,11 +2,11 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 if ! command -v docker >/dev/null 2>&1 || ! docker compose version >/dev/null 2>&1; then
-  echo "Docker Desktop with WSL integration is required. Start Docker Desktop first."
+  echo "Docker with Compose is required: enable Docker Desktop WSL Integration on Windows or Docker Engine on Linux."
   exit 1
 fi
 if ! docker info >/dev/null 2>&1; then
-  echo "Docker is not running. Open Docker Desktop and try again."
+  echo "Docker daemon unavailable. Start Docker Desktop (Windows) or Docker Engine (Linux)."
   exit 1
 fi
 if [ ! -f .env ]; then
