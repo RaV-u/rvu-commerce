@@ -1,4 +1,4 @@
-name: rvu-commerce
+name: rvu-commerce-lab
 x-app: &app
   image: rvu-commerce:local
   init: true
