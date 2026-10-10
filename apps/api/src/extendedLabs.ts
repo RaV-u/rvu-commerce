@@ -321,10 +321,10 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
     });
   });
   app.post("/api/lab/race/registration",async req=>{
-    const p=z.object({email:z.string().email().max(120),delayMs:z.number().int().min(40).max(500).default(150)}).strict().parse(req.body);
+    const p=z.object({email:z.string().email().max(120),registrationId:z.string().uuid().optional(),delayMs:z.number().int().min(40).max(500).default(150)}).strict().parse(req.body);
     const prepared=await transaction(pool,async db=>{
       const a=await actor(db,req,true);requireProfile(a,["R06"]);
-      const id=randomUUID(),code=token();
+      const id=p.registrationId ?? randomUUID(),code=token();
       await db.query("INSERT INTO store.lab_registrations(id,run_id,user_id,email,token) VALUES($1,$2,$3,$4,$5)",
         [id,a.run,a.id,p.email,a.profile==="R06"?null:code]);
       return {id,run:a.run,actor:a.id,code};
