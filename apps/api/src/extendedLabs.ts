@@ -173,7 +173,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         requireProfile(a,["B11"]);
         const hex=z.string().regex(/^[0-9a-f]+$/).max(2048).parse(p.ciphertext);
         const plaintext=decrypt(a,hex);
-        if(profile!=="B11" || !plaintext.includes("kind=remember&user=store-admin")) throw new HttpError(403,"Not a remembered login credential");
+        if(profile!=="B11" || !plaintext.startsWith("kind=remember&user=store-admin")) throw new HttpError(403,"Not a remembered login credential");
         await evidence(db,a,"B11","remembered-admin",{token:hash(hex)});
         return {role:"store-admin",authenticated:true};
       }
