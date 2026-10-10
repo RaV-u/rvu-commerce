@@ -261,3 +261,22 @@ test("R06: registration is exploitable only while token provisioning is incomple
   assert.equal((await act("corporate.orders")).orders.length,1);
   assert.ok(await proof("R06")>=1);
 });
+
+test("integrated storefront keeps multiple independent business weaknesses active together",async()=>{
+  await fresh("open-playground");
+  const account=await act("email.update",{address:"buyer@corp.rvu.test"});
+  assert.equal(account.verified,true);
+  assert.equal((await act("corporate.orders")).orders.length,1);
+  const cartSale=await act("cart.reconcile",{lines:[{sku:"vista-27",quantity:1},{sku:"arc-light",quantity:-1}]});
+  assert.equal(cartSale.charged,540000);
+  const bulk=await act("bulk.invoice",{quantity:85900});
+  assert.equal(bulk.charged,32704);
+  assert.equal((await act("workspace.admin")).approved,true);
+  const note=await act("notification.encrypt",{body:"A".repeat(9)+"kind=remember&user=store-admin"});
+  const forged=Buffer.from(note.ciphertext,"hex").subarray(32).toString("hex");
+  assert.equal((await act("remember.login",{ciphertext:forged})).authenticated,true);
+  for(const id of ["B02","B03","B05","B09","B11"])assert.ok(await proof(id)>0,id+" evidence missing");
+  const status=await call(alex,"GET","/api/business/status");
+  assert.equal(status.profile,undefined);
+  assert.equal(status.evidence,undefined);
+});
