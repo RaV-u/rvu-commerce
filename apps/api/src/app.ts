@@ -300,7 +300,7 @@ export async function buildApp(config: Config) {
       const input = z
           .object({
             productId: z.string().max(40),
-            quantity: z.number().int().min(0).max(10),
+            quantity: z.number().int().min(-99).max(10),
             price: z.number().int().min(1).max(100000000).optional(),
           })
           .strict()
@@ -308,6 +308,9 @@ export async function buildApp(config: Config) {
         c = await cart(db, a);
       const product = (await db.query("SELECT price,kind FROM store.products WHERE id=$1",[input.productId])).rows[0];
       if (!product) throw new HttpError(404, "Product not found");
+      if (input.quantity < 0 && (req.method!=="POST" || !hasWeakness(a.profile,"B02") || product.kind!=="physical"))
+        throw new HttpError(400,"Quantity must be positive");
+
       if (input.price !== undefined && input.price !== Number(product.price) && !hasWeakness(a.profile,"B01"))
         throw new HttpError(400, "The current product price has changed");
       if (hasWeakness(a.profile,"B04")) {
