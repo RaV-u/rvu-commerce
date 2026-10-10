@@ -520,18 +520,18 @@ test("B01 scenario is instructor-selected: secure quote rejects tampering, lab q
 test("B04 scenario enforces immediate duplicate but loses history across alternating codes", async () => {
   await request(admin,"POST","/api/instructor/reset",{confirm:"RESET",profile:"B04"});
   await request(alex,"POST","/api/login",{email:"alex@learner.rvu.test",password:"Studio-Local-2026!"});
-  await request(alex,"PUT","/api/cart/items",{productId:"vista-27",quantity:1});
+  await request(alex,"PUT","/api/cart/items",{productId:"hush-pro",quantity:1});
   await request(alex,"POST","/api/cart/coupon",{code:"WELCOME10"});
   await request(alex,"POST","/api/cart/coupon",{code:"WELCOME10"},409);
   await request(alex,"POST","/api/cart/coupon",{code:"STUDIO15"});
   const c = await request(alex,"POST","/api/cart/coupon",{code:"WELCOME10"});
   assert.equal(c.applications.length,3);
-  assert.equal(c.total,4420);
+  assert.equal(c.total,3380);
   const receipt = await request(alex,"POST","/api/checkout",{
     cartVersion:c.version,
     delivery:{fullName:"Alex Rowan",address:"12 Fictional Studio Lane",city:"Sample City"},
   },200,{"idempotency-key":randomUUID()});
-  assert.equal(Number(receipt.discount),2380);
+  assert.equal(Number(receipt.discount),1820);
   assert.equal((await request(admin,"GET","/api/instructor/evidence")).metrics.B04,1);
 });
 
@@ -571,7 +571,7 @@ test("B08 scenario: legitimate payment proof for one order is wrongly reused to 
   },200,{"idempotency-key":randomUUID()});
   const before=(await request(alex,"GET","/api/wallet")).balance;
   assert.equal(before,13600);
-  const expensive=await request(alex,"PUT","/api/cart/items",{productId:"vista-27",quantity:3});
+  const expensive=await request(alex,"PUT","/api/cart/items",{productId:"field-pack",quantity:3});
   const intent=await request(alex,"POST","/api/checkout/prepare",{
     cartVersion:expensive.version,
     delivery:{fullName:"Alex Rowan",address:"12 Fictional Studio Lane",city:"Sample City"},
@@ -579,7 +579,7 @@ test("B08 scenario: legitimate payment proof for one order is wrongly reused to 
   const order=await request(alex,"POST","/api/checkout/confirm",{
     intentId:intent.intentId,
   },200,{"idempotency-key":randomUUID()});
-  assert.equal(Number(order.total),20400);
+  assert.equal(Number(order.total),5700);
   assert.equal(order.payment_state,"unsettled");
   assert.equal((await request(alex,"GET","/api/wallet")).balance,before);
   await request(alex,"POST",`/api/orders/${order.id}/refund`,{},409);
@@ -610,7 +610,7 @@ test("Native PostgreSQL R01 gate: parallel claims beat the sequential voucher ch
 },async()=>{
   await request(admin,"POST","/api/instructor/reset",{confirm:"RESET",profile:"R01"});
   await request(alex,"POST","/api/login",{email:"alex@learner.rvu.test",password:"Studio-Local-2026!"});
-  const c=await request(alex,"PUT","/api/cart/items",{productId:"vista-27",quantity:1});
+  const c=await request(alex,"PUT","/api/cart/items",{productId:"bridge-8",quantity:1});
   const voucherRequests=await Promise.all(Array.from({length:4},()=>store.app.inject({
     method:"POST",url:"/api/cart/voucher",
     headers:{origin,cookie:alex.cookie,"x-csrf-token":alex.csrf},
