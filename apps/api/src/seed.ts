@@ -202,7 +202,7 @@ export async function newRun(db: DB, profile: TrainingProfile = "secure-baseline
     await passwordHash("Studio-Local-2026!"),
     true,
   );
-  if (["B07", "R02", "R05"].includes(profile)) {
+  if (["B07", "R02", "R05", "open-playground"].includes(profile)) {
     await createCustomer(
       db, id, "Training Target", "target@learner.rvu.test",
       await passwordHash("Target-Only-2026!"), true,
