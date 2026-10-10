@@ -126,6 +126,10 @@ export async function buildApp(config: Config) {
       )
     ).rows[0];
     if (!a) throw new HttpError(401, "Please sign in");
+    // An older edition generated an anonymous customer on every sign-in.
+    // Those cookies must not bypass the new two-account classroom flow.
+    if (sharedLoginOnly && !classroomUsername(a.email))
+      throw new HttpError(401, "Please sign in with your RVU account");
     if (verified && !a.verified)
       throw new HttpError(403, "Verify your email in your inbox first");
     if (
