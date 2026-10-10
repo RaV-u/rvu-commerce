@@ -2,7 +2,6 @@ import {useEffect,useMemo,useState,type FormEvent} from "react";
 import {api,setCsrf,type Session} from "./api.ts";
 type Operation={section:string;title:string;description:string;path:string;body:Record<string,unknown>};
 const operations:Operation[]=[
-  {section:"Buying",title:"Order adjustments",description:"Review an order made of multiple catalogue lines.",path:"/business/actions",body:{action:"cart.reconcile",lines:[{sku:"vista-27",quantity:1},{sku:"arc-light",quantity:1}]}},
   {section:"Buying",title:"Wholesale invoice",description:"Create a wholesale invoice for a component order.",path:"/business/actions",body:{action:"bulk.invoice",quantity:3}},
   {section:"Buying",title:"Express purchase",description:"Settle a reviewed bag after processing time.",path:"/business/checkout",body:{delayMs:120}},
   {section:"Accounts",title:"Update contact email",description:"Maintain the email address for your business identity.",path:"/business/actions",body:{action:"email.update",address:"alex@learner.rvu.test"}},
