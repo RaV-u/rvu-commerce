@@ -97,6 +97,10 @@ jobs:
         run: node scripts/smoke-extended.mjs
         env:
           RVU_DISPOSABLE_CI: 'yes'
+      - name: Verify repeatable local reset without the instructor website
+        run: |
+          docker compose run --rm migrate node --import tsx scripts/reset-local.mjs RESET
+          node scripts/smoke.mjs
       - name: Render storefront and account services in headless Chrome
         run: |
           browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
