@@ -5,10 +5,10 @@ import { randomUUID } from "node:crypto";
 assert.equal(process.env.RVU_DISPOSABLE_CI, "yes", "Disposable CI required");
 const origin="http://localhost:8080";
 let cookie="",csrf="";
-async function call(method,path,payload,expected=200) {
+async function call(method,path,payload,expected=200,extraHeaders={}) {
   const res=await fetch(origin+path,{
     method,
-    headers:{Origin:origin,Cookie:cookie,"X-CSRF-Token":csrf,...(payload===undefined?{}:{"Content-Type":"application/json"})},
+    headers:{Origin:origin,Cookie:cookie,"X-CSRF-Token":csrf,...(payload===undefined?{}:{"Content-Type":"application/json"}),...extraHeaders},
     ...(payload===undefined?{}:{body:JSON.stringify(payload)}),
   });
   const text=await res.text();
@@ -47,6 +47,16 @@ await pause(55);
 await call("PUT","/api/cart/items",{productId:"vista-27",quantity:1});
 const moved=await pending;
 assert.ok(moved.delivered>moved.charged);
+// Ordinary add-to-bag includes a client-supplied item price, just like
+// PortSwigger's client-price trust lesson (not an instructor-selected API).
+const quoted=await call("POST","/api/cart/items",{productId:"arc-light",quantity:1,price:100});
+assert.equal(Number(quoted.items.find(x=>x.id==="arc-light").price),100);
+const cheap=await call("POST","/api/checkout",{
+  cartVersion:quoted.version,
+  delivery:{fullName:"Alex Rowan",address:"12 Sample Studio Lane",city:"Sample City"},
+},200,{"Idempotency-Key":randomUUID()});
+assert.equal(Number(cheap.total),100);
+assert.ok(cheap.items.some(x=>x.product_id==="arc-light" && Number(x.unit_price)===100));
 const regId=randomUUID();
 const registration=call("POST","/api/business/registration",{email:"hire@corp.rvu.test",registrationId:regId,delayMs:260});
 await pause(60);
@@ -54,4 +64,4 @@ assert.equal((await act("registration.confirm",{registrationId:regId,code:[""]})
 await registration;
 const raceLogins=await Promise.all(Array.from({length:5},()=>call("POST","/api/business/login-verification",{password:"Target-Only-2026!",delayMs:140})));
 assert.equal(raceLogins.filter(x=>x.authenticated).length,5);
-console.log("PASS: integrated storefront: B02, B03, B05, B06, B09, B11, R02, R03, R06 and no profile disclosure");
+console.log("PASS: integrated storefront: B01, B02, B03, B05, B06, B09, B11, R02, R03, R06 and no profile disclosure");
