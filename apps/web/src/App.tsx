@@ -151,7 +151,7 @@ export function App() {
   }
   async function quantity(p: Product, n: number) {
     setCart(
-      await api<Cart>("/cart/items", "POST", { productId: p.id, quantity: n, price: Number(p.price) }),
+      await api<Cart>("/cart/items", "POST", { productId: p.id, quantity: n - (cart.items.find(i => i.id === p.id)?.quantity ?? 0), price: Number(p.price) }),
     );
   }
   function add(p: Product) {
