@@ -140,6 +140,24 @@ jobs:
         run: |
           browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           RVU_CHROME="$browser" node scripts/check-mobile-layout.mjs
+      - name: Create and validate student installation package
+        run: |
+          bash -n student/install.sh student/stop.sh student/reset.sh scripts/export-student-package.sh
+          docker compose -f student/compose.yaml config --quiet
+          bash scripts/export-student-package.sh
+          archive=dist-packages/RVU-Commerce-Student.tar.gz
+          test -s "$archive"
+          tar -tzf "$archive" | grep -q 'RVU-Commerce-Student/install.sh'
+          tar -tzf "$archive" | grep -q 'RVU-Commerce-Student/images.tar.gz'
+          if tar -tzf "$archive" | grep -Eq '/(apps|tests|docs|node_modules)/'; then
+            echo 'The student package unexpectedly contains source or instructor material'
+            exit 1
+          fi
+      - name: Exercise student-only Docker installation
+        run: |
+          docker compose down --remove-orphans
+          docker compose -f student/compose.yaml up -d --wait --wait-timeout 180
+          node scripts/smoke.mjs
       - name: Save review screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -154,6 +172,9 @@ jobs:
       - name: Show service diagnostics on failure
         if: failure()
         run: docker compose logs --tail=100
+      - name: Remove student edition CI containers and volumes
+        if: always()
+        run: docker compose -f student/compose.yaml down -v --remove-orphans || true
       - name: Remove CI containers and volumes
         if: always()
         run: docker compose down -v --remove-orphans
