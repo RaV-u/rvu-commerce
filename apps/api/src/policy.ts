@@ -6,7 +6,7 @@ export const baseline = Object.freeze({
   currency: "EGP",
   maxQuantity: 10,
 });
-export const activeTrainingProfiles = ["secure-baseline", "B01", "B04", "B08", "B10", "R01"] as const;
+export const activeTrainingProfiles = ["secure-baseline", "B01", "B04", "B08", "B10", "R01", "B02", "B03", "B05", "B06", "B07", "B09", "B11", "B12", "R02", "R03", "R04", "R05", "R06"] as const;
 export type TrainingProfile = (typeof activeTrainingProfiles)[number];
 export const plannedCore = Object.freeze(["B01", "B04", "B08", "B10", "R01"]);
 export function totalFor(

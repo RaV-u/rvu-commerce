@@ -10,7 +10,7 @@ GRANT INSERT ON store.runs,store.users,store.mailboxes,store.accounts,
 GRANT UPDATE (closed_at) ON store.runs TO rvu_control;
 GRANT UPDATE (balance) ON store.accounts TO rvu_control;
 GRANT UPDATE (active_run) ON store.runtime TO rvu_control;
-GRANT INSERT,UPDATE,DELETE ON store.users,store.sessions,store.mailboxes,store.verifications,store.outbox,store.accounts,store.carts,store.cart_items,store.cart_coupons,store.orders,store.order_items,store.payments,store.checkouts,store.promotion_uses,store.gift_cards,store.refunds,store.quotes,store.cart_quotes,store.cart_discount_applications,store.checkout_intents,store.voucher_claims TO rvu_store;
+GRANT INSERT,UPDATE,DELETE ON store.users,store.sessions,store.mailboxes,store.verifications,store.outbox,store.accounts,store.carts,store.cart_items,store.cart_coupons,store.orders,store.order_items,store.payments,store.checkouts,store.promotion_uses,store.gift_cards,store.refunds,store.quotes,store.cart_quotes,store.cart_discount_applications,store.checkout_intents,store.voucher_claims,store.lab_states,store.lab_evidence,store.lab_sales,store.lab_attempts,store.lab_resets,store.lab_registrations TO rvu_store;
 GRANT INSERT ON store.entries,store.journals,store.events TO rvu_store;
 GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA store TO rvu_store,rvu_control;
 REVOKE UPDATE,DELETE ON store.entries,store.journals,store.events FROM rvu_store,rvu_control;

@@ -31,6 +31,10 @@ export async function migrate(url: string, instructorPassword: string) {
       await db.query(await readFile(new URL("../../../db/migrations/002_training_profiles.sql", import.meta.url), "utf8"));
       await db.query("INSERT INTO public.schema_migrations(version) VALUES(2)");
     }
+    if (!(await db.query("SELECT 1 FROM public.schema_migrations WHERE version=3")).rowCount) {
+      await db.query(await readFile(new URL("../../../db/migrations/003_extended_labs.sql", import.meta.url), "utf8"));
+      await db.query("INSERT INTO public.schema_migrations(version) VALUES(3)");
+    }
     await seedCatalog(db);
     if (!(await db.query("SELECT 1 FROM store.runtime")).rowCount)
       await newRun(db);

@@ -202,6 +202,12 @@ export async function newRun(db: DB, profile: TrainingProfile = "secure-baseline
     await passwordHash("Studio-Local-2026!"),
     true,
   );
+  if (["B07", "R02", "R05"].includes(profile)) {
+    await createCustomer(
+      db, id, "Training Target", "target@learner.rvu.test",
+      await passwordHash("Target-Only-2026!"), true,
+    );
+  }
   await db.query(
     "INSERT INTO store.runtime(singleton,active_run) VALUES(true,$1) ON CONFLICT(singleton) DO UPDATE SET active_run=excluded.active_run",
     [id],
