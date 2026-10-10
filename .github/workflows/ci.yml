@@ -107,6 +107,10 @@ jobs:
           timeout 45s "$browser" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=3500 --window-size=1365,900 --screenshot=artifacts/services.png http://localhost:8080/services
           test -s artifacts/storefront.png
           test -s artifacts/services.png
+          timeout 45s "$browser" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=3500 --window-size=420,900 --screenshot=artifacts/storefront-mobile.png http://localhost:8080/
+          timeout 45s "$browser" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=3500 --window-size=420,900 --screenshot=artifacts/services-mobile.png http://localhost:8080/services
+          test -s artifacts/storefront-mobile.png
+          test -s artifacts/services-mobile.png
       - name: Save review screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -115,6 +119,8 @@ jobs:
           path: |
             artifacts/storefront.png
             artifacts/services.png
+            artifacts/storefront-mobile.png
+            artifacts/services-mobile.png
           if-no-files-found: ignore
           retention-days: 7
 
