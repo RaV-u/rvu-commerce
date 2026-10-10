@@ -176,40 +176,16 @@ test("React → Fastify → SQL: search, login, bag, promotion, payment, order a
   await waitFor(() => assert.ok(!screen.queryByRole("dialog")));
   cleanup();
 });
-test("React → Fastify → SQL: registration and scoped inbox verification unlock shopping", async () => {
+test("Shared classroom sign-in opens a personal shopping account", async () => {
   const user = userEvent.setup({ document: dom.window.document });
   render(<App />);
-  await screen.findByRole("button", {
-    name: "View Form 75 Mechanical Keyboard",
-  });
+  await screen.findByRole("button", { name: "View Form 75 Mechanical Keyboard" });
   await user.click(screen.getByRole("button", { name: "Your account" }));
-  await user.click(
-    screen.getByRole("button", { name: "New here? Create an account" }),
-  );
   let modal = within(screen.getByRole("dialog"));
-  await user.type(modal.getByLabelText("Full name"), "Sam Arden");
-  await user.type(
-    modal.getByLabelText("Email address"),
-    "sam@learner.rvu.test",
-  );
-  await user.type(modal.getByLabelText("Password"), "Fictional-UI-2026!");
-  await user.click(modal.getByRole("button", { name: "Create account" }));
+  await user.type(modal.getByLabelText("Username"), "rvu");
+  await user.type(modal.getByLabelText("Password"), "rvucamp");
+  await user.click(modal.getByRole("button", { name: "Sign in" }));
   await waitFor(() => assert.ok(!screen.queryByRole("dialog")));
-  await user.click(screen.getByRole("button", { name: "Your account" }));
-  await screen.findByRole("button", { name: "Verify my email" });
-  modal = within(screen.getByRole("dialog"));
-  await user.click(modal.getByRole("button", { name: "Verify my email" }));
-  await modal.findByText("Email verified");
-  await user.click(modal.getByRole("button", { name: "Close dialog" }));
-  await waitFor(() =>
-    assert.ok(
-      !(
-        screen.getByRole("button", {
-          name: "Add Hush Pro Headphones to bag",
-        }) as HTMLButtonElement
-      ).disabled,
-    ),
-  );
   await user.click(
     screen.getByRole("button", { name: "Add Hush Pro Headphones to bag" }),
   );
