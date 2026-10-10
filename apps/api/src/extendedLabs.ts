@@ -13,7 +13,7 @@ import type { Actor } from "./commerce.ts";
 import { cart } from "./commerce.ts";
 import { HttpError, hash, token, passwordHash, passwordValid } from "./security.ts";
 import { transfer } from "./seed.ts";
-import { hasWeakness } from "./policy.ts";
+import { hasWeakness, classroomColleagueEmail } from "./policy.ts";
 
 type Handler = (db: DB, actor: Actor, req: FastifyRequest) => Promise<unknown>;
 type UserRoute = (method:"GET"|"POST"|"PUT"|"DELETE", path:string, handler:Handler, verified?:boolean) => unknown;
@@ -25,6 +25,8 @@ const requireProfile = (a:Actor, profiles:string[]) => {
   if (a.profile!=="secure-baseline" && a.profile!=="open-playground" && !profiles.includes(a.profile)) throw new HttpError(404,"Feature not available in this training run");
 };
 const fail = (message:string):never => {throw new HttpError(409,message);};
+const colleagueFor = (a:Actor):string => a.profile==="open-playground"
+  ? classroomColleagueEmail(a.id) : "target@learner.rvu.test";
 async function data(db:DB,a:Actor,scenario:string):Promise<LabState> {
   await db.query("INSERT INTO store.lab_states(run_id,user_id,scenario) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",[a.run,a.id,scenario]);
   const result=await db.query("SELECT data FROM store.lab_states WHERE run_id=$1 AND user_id=$2 AND scenario=$3 FOR UPDATE",[a.run,a.id,scenario]);
@@ -134,7 +136,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         // independent onboarding and account-maintenance workflows.
         const targets = profile==="open-playground"
           ? ["B03","B06","B12","R04","R06"] : [profile];
-        let approvedScenario:string|undefined, approvedAddress:string|undefined;
+        const verifiedPaths:{scenario:string;address:string}[]=[];
         for(const target of targets) {
           const state=await data(db,a,target);
           let address=state.address;
@@ -148,11 +150,12 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
             verified=!!registration;
           }
           if(typeof address==="string" && address.endsWith("@corp.rvu.test") && verified) {
-            approvedScenario=target; approvedAddress=address; break;
+            verifiedPaths.push({scenario:target,address});
           }
         }
-        if(!approvedScenario) throw new HttpError(403,"Verified corporate membership required");
-        await evidence(db,a,approvedScenario,"corporate-access",{address:approvedAddress,order:"CORP-DEMO-1001"});
+        if(!verifiedPaths.length) throw new HttpError(403,"Verified corporate membership required");
+        for(const entry of verifiedPaths)
+          await evidence(db,a,entry.scenario,"corporate-access",{address:entry.address,order:"CORP-DEMO-1001"});
         return {orders:[{id:"CORP-DEMO-1001",status:"approved",value:960000}]};
       }
       case "password.maintain": {
@@ -192,7 +195,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         requireProfile(a,["R02"]);
         const s=await data(db,a,"R02");
         if(s.authenticatedTarget!==true)throw new HttpError(403,"Target account session required");
-        return {email:"target@learner.rvu.test",authenticated:true};
+        return {email:colleagueFor(a),authenticated:true};
       }
       case "notification.encrypt": {
         requireProfile(a,["B11"]);
@@ -375,10 +378,11 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
     });
   });
   app.post("/api/business/login-verification",async req=>{
-    const p=z.object({password:z.string().min(1).max(128),delayMs:z.number().int().min(20).max(300).default(80)}).strict().parse(req.body);
+    const p=z.object({email:z.string().email().optional(),password:z.string().min(1).max(128),delayMs:z.number().int().min(20).max(300).default(80)}).strict().parse(req.body);
     const checked=await transaction(pool,async db=>{
       const a=await actor(db,req,true);requireProfile(a,["R02"]);
-      const username="target@learner.rvu.test";
+      const username=colleagueFor(a);
+      if(p.email && p.email!==username)throw new HttpError(404,"Account not found");
       if(!hasWeakness(a.profile,"R02")){
         await db.query("SELECT pg_advisory_xact_lock(hashtext($1))",["quota:"+a.run+username]);
       }
@@ -396,7 +400,8 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
     return transaction(pool,async db=>{
       const a=await actor(db,req,true);
       if(a.run!==checked.run||a.id!==checked.actor)fail("Training run changed");
-      const username="target@learner.rvu.test";
+      const username=colleagueFor(a);
+      if(p.email && p.email!==username)throw new HttpError(404,"Account not found");
       const valid=await checkTarget(db,a,p.password);
       await db.query("INSERT INTO store.lab_attempts(id,run_id,username,accepted) VALUES($1,$2,$3,$4)",[randomUUID(),a.run,username,valid]);
       const count=Number((await db.query("SELECT count(*)::int AS n FROM store.lab_attempts WHERE run_id=$1 AND username=$2",[a.run,username])).rows[0].n);
@@ -410,6 +415,6 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
   });
 }
 async function checkTarget(db:DB,a:Actor,password:string){
-  const user=(await db.query("SELECT password_hash FROM store.users WHERE run_id=$1 AND email='target@learner.rvu.test'",[a.run])).rows[0];
+  const user=(await db.query("SELECT password_hash FROM store.users WHERE run_id=$1 AND email=$2",[a.run,colleagueFor(a)])).rows[0];
   return !!user && await passwordValid(password,user.password_hash);
 }

@@ -830,6 +830,7 @@ export function App() {
         >
           <div className="account-top">
             <p className="muted">Signed in as rvu · Fictional inbox: {session.user?.email}</p>
+            {session.user?.colleagueEmail && <p className="muted">Workspace directory · Company colleague: {session.user.colleagueEmail}</p>}
             <button
               className="text-link"
               disabled={busy}

@@ -20,16 +20,18 @@ const operations:Operation[]=[
   {section:"Workspace",title:"Confirm corporate email",description:"Validate a corporate invitation or mailbox verification.",path:"/business/actions",body:{action:"parser.verify",code:""}},
   {section:"Support",title:"Send delivery notice",description:"Encode a message with the legacy notification system.",path:"/business/actions",body:{action:"notification.encrypt",body:"Delivery update"}},
   {section:"Support",title:"Restore remembered access",description:"Resume a remembered session from its encrypted credential.",path:"/business/actions",body:{action:"remember.login",ciphertext:""}},
-  {section:"Support",title:"Company account sign-in",description:"Submit a login attempt to the protected business account.",path:"/business/login-verification",body:{password:"",delayMs:80}},
+  {section:"Support",title:"Company account sign-in",description:"Sign in to a separate company account in your workspace.",path:"/business/login-verification",body:{email:"target@learner.rvu.test",password:"",delayMs:80}},
 ];
 function pretty(value:unknown){return JSON.stringify(value,null,2);}
 // Pre-populate self-service forms with the private mailbox assigned to this
 // sign-in, rather than the retired shared demo customer's address.
-function accountDefaults(op:Operation, userEmail?:string) {
+function accountDefaults(op:Operation, user?:Session["user"]) {
   const body:Record<string,unknown>={...op.body};
   for(const [key,value] of Object.entries(body)){
-    if(value==="alex@learner.rvu.test" && userEmail)body[key]=userEmail;
+    if(value==="alex@learner.rvu.test" && user?.email)body[key]=user.email;
+    if(value==="target@learner.rvu.test" && user?.colleagueEmail)body[key]=user.colleagueEmail;
   }
+  if(op.path==="/business/registration")body.registrationId=crypto.randomUUID();
   return pretty(body);
 }
 function humanize(name:string):string {
@@ -48,7 +50,7 @@ export function Services(){
   useEffect(()=>{
     let mounted=true;
     void api<Session>("/session").then(s=>{
-      if(mounted){setCsrf(s.csrf);setSession(s);setPayload(accountDefaults(operations[0],s.user?.email));}
+      if(mounted){setCsrf(s.csrf);setSession(s);setPayload(accountDefaults(operations[0],s.user));}
     }).catch(()=>{if(mounted)setError("Please sign in from the storefront first.");})
       .finally(()=>{if(mounted)setReady(true);});
     return ()=>{mounted=false;};
@@ -83,13 +85,14 @@ export function Services(){
       <div className="service-intro"><span className="service-eyebrow">RVU BUSINESS SERVICES</span>
         <h1>Work, connected.</h1>
         <p>Manage business purchases, account access, company workspaces and support requests. These services run entirely on fictional data in your local installation.</p>
+        {session.user?.colleagueEmail && <p className="service-workspace-peer">Company directory · Colleague: <strong>{session.user.colleagueEmail}</strong></p>}
       </div>
       {!ready?<p>Checking your account…</p>:!session.user?.verified?
         <section className="service-signed-out"><h2>Sign in to use your account services.</h2><p>Sign in once on the storefront using the RVU classroom access, then return here. No separate registration or mailbox verification is needed.</p><a href="/">Go to the store →</a></section>:
         <div className="service-columns">
           <aside className="service-menu"><p>Service directory</p>
             {categories.map(group=><div key={group} className="service-group"><h2>{group}</h2>
-              {operations.map((o,i)=>o.section===group?<button type="button" key={i} className={choice===i?"chosen":""} onClick={()=>{setChoice(i);setPayload(accountDefaults(o,session.user?.email));setError("");setResponse("");}}>{o.title}</button>:null)}
+              {operations.map((o,i)=>o.section===group?<button type="button" key={i} className={choice===i?"chosen":""} onClick={()=>{setChoice(i);setPayload(accountDefaults(o,session.user));setError("");setResponse("");}}>{o.title}</button>:null)}
             </div>)}
           </aside>
           <section className="service-workspace" aria-live="polite">
@@ -97,6 +100,7 @@ export function Services(){
             <h2>{op.title}</h2>
             <p>{op.description}</p>
             <form onSubmit={e=>void submit(e)}>
+              {op.path==="/business/registration" && <p className="service-hint">Application reference: <code>{String((JSON.parse(payload) as Record<string,unknown>).registrationId??"")}</code></p>}
               <div className="service-fields">
                 {Object.entries(op.body).filter(([key])=>key!=="action" && key!=="delayMs").map(([key,example])=>{
                   const current=(JSON.parse(payload) as Record<string,unknown>)[key];

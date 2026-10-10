@@ -38,3 +38,9 @@ export function totalFor(
 export function hasWeakness(profile:string, scenario:string):boolean {
   return profile === "open-playground" || profile === scenario;
 }
+
+// A separate fictional teammate is provisioned for each RVU sign-in.
+// All cross-account exercises use this predictable-internally but non-guessable
+// identity rather than mutating one shared seeded target for all learners.
+export const classroomColleagueEmail = (userId:string):string =>
+  "colleague-"+userId.replaceAll("-","")+"@learner.rvu.test";

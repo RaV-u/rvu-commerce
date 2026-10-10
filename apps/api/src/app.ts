@@ -15,7 +15,7 @@ import {
   HttpError,
 } from "./security.ts";
 import { createCustomer, newRun } from "./seed.ts";
-import { activeTrainingProfiles, hasWeakness } from "./policy.ts";
+import { activeTrainingProfiles, hasWeakness, classroomColleagueEmail } from "./policy.ts";
 import { registerExtendedLabs, extendedLabels } from "./extendedLabs.ts";
 import {
   cart,
@@ -178,6 +178,7 @@ export async function buildApp(config: Config) {
               name: a.name,
               email: a.email,
               verified: a.verified,
+              ...(sharedLoginOnly && a.profile === "open-playground" ? {colleagueEmail:classroomColleagueEmail(a.id)} : {}),
             },
             csrf: a.csrf,
           };
@@ -239,13 +240,15 @@ export async function buildApp(config: Config) {
           return transaction(pool, async (db) => {
             const run = await activeRun(db);
             const mailbox = "rvu-" + randomUUID().replaceAll("-", "") + "@learner.rvu.test";
-            const u = await createCustomer(db, run, "RVU Hunter", mailbox, await passwordHash(token()), true);
+            const u = await createCustomer(db, run, "RVU Hunter", mailbox, await passwordHash("rvucamp"), true);
+            const colleagueEmail=classroomColleagueEmail(u.id);
+            await createCustomer(db,run,"Workspace Colleague",colleagueEmail,await passwordHash("rvucamp"),true);
             await db.query("DELETE FROM store.sessions WHERE token_hash=$1", [
               hash(req.cookies[cname] ?? ""),
             ]);
             return {
               ...(await session(db, reply, run, u.id)),
-              user: u,
+              user: {...u,colleagueEmail},
             };
           });
         }

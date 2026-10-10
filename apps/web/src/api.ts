@@ -26,6 +26,7 @@ export type User = {
   name: string;
   email: string;
   verified: boolean;
+  colleagueEmail?: string;
 };
 export type Session = { user: User | null; csrf?: string };
 export type Order = {
