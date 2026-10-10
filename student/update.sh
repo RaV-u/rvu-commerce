@@ -48,7 +48,8 @@ gzip -dc "$source_dir/images.tar.gz" | docker load >/dev/null
 mkdir -p infra
 for file in compose.yaml install.sh stop.sh reset.sh update.sh README_AR.md \
             infra/nginx.conf infra/init-db.sh; do
-  cp -f "$source_dir/$file" "$file"
+  cp -f "$source_dir/$file" "$file.next"
+  mv -f "$file.next" "$file"
 done
 mv -f "$source_dir/images.tar.gz" images.tar.gz
 chmod 755 install.sh stop.sh reset.sh update.sh
