@@ -15,7 +15,7 @@ import {
   HttpError,
 } from "./security.ts";
 import { createCustomer, newRun } from "./seed.ts";
-import { activeTrainingProfiles } from "./policy.ts";
+import { activeTrainingProfiles, hasWeakness } from "./policy.ts";
 import { registerExtendedLabs, extendedLabels } from "./extendedLabs.ts";
 import {
   cart,
@@ -313,7 +313,7 @@ export async function buildApp(config: Config) {
         ).rowCount
       )
         throw new HttpError(404, "Product not found");
-      if (a.profile === "B04") {
+      if (hasWeakness(a.profile,"B04")) {
         await db.query("DELETE FROM store.cart_discount_applications WHERE run_id=$1 AND cart_id=$2 AND order_id IS NULL",[a.run,c.id]);
         await db.query("DELETE FROM store.cart_coupons WHERE run_id=$1 AND cart_id=$2",[a.run,c.id]);
       }
@@ -347,23 +347,23 @@ export async function buildApp(config: Config) {
         await db.query("SELECT * FROM store.promotions WHERE code=$1", [code])
       ).rows[0];
       if (!p) throw new HttpError(404, "Promotion not found");
-      if (c.coupon && a.profile !== "B04")
+      if (c.coupon && !hasWeakness(a.profile,"B04"))
         throw new HttpError(
           409,
           "Remove the current promotion before applying another",
         );
-      if (code === "GIFT20" && a.profile !== "B10")
+      if (code === "GIFT20" && !hasWeakness(a.profile,"B10"))
         throw new HttpError(404, "Promotion not found");
-      if (a.profile === "B04" && c.coupon?.code === code)
+      if (hasWeakness(a.profile,"B04") && c.coupon?.code === code)
         throw new HttpError(409, "This promotion is already applied");
-      const eligible = a.profile === "B10" && code === "GIFT20" ? c.subtotal : c.eligible;
+      const eligible = hasWeakness(a.profile,"B10") && code === "GIFT20" ? c.subtotal : c.eligible;
       if (eligible < Number(p.minimum))
         throw new HttpError(
           409,
           "Your eligible items do not meet the promotion minimum",
         );
       if (
-        !(a.profile === "B10" && code === "GIFT20") &&
+        !(hasWeakness(a.profile,"B10") && code === "GIFT20") &&
         (
           await db.query(
             "SELECT 1 FROM store.promotion_uses WHERE run_id=$1 AND user_id=$2 AND code=$3",
@@ -372,7 +372,7 @@ export async function buildApp(config: Config) {
         ).rowCount
       )
         throw new HttpError(409, "This promotion has already been used");
-      if (a.profile === "B04") {
+      if (hasWeakness(a.profile,"B04")) {
         const amount = Math.floor(eligible * p.percent / 100);
         if (amount <= 0 || c.discount + amount >= c.subtotal)
           throw new HttpError(409, "Promotion exceeds the eligible order value");
@@ -393,7 +393,7 @@ export async function buildApp(config: Config) {
     });
     userRoute("DELETE", "/api/cart/coupon", async (db, a) => {
       const c = await cart(db, a);
-      if (a.profile === "B04")
+      if (hasWeakness(a.profile,"B04"))
         await db.query(
           "DELETE FROM store.cart_discount_applications WHERE run_id=$1 AND cart_id=$2 AND order_id IS NULL",
           [a.run,c.id],
@@ -448,7 +448,7 @@ export async function buildApp(config: Config) {
       };
       const prepared=await transaction(pool,async db=>{
         const a=await actor(db,req,true);
-        if(a.profile!=="R01") {
+        if(!hasWeakness(a.profile,"R01")) {
           const checked=await check(db,a,true);
           return {result:await claim(db,a,checked)};
         }
@@ -459,7 +459,7 @@ export async function buildApp(config: Config) {
       await new Promise<void>((resolve)=>setTimeout(resolve,80));
       return transaction(pool,async db=>{
         const a=await actor(db,req,true);
-        if(a.profile!=="R01" || a.run!==prepared.checked!.run)
+        if(!hasWeakness(a.profile,"R01") || a.run!==prepared.checked!.run)
           throw new HttpError(409,"Training run changed during voucher claim");
         return claim(db,a,prepared.checked!);
       });
@@ -492,10 +492,10 @@ export async function buildApp(config: Config) {
       if (!quote) throw new HttpError(404, "Quote not found");
       if (quote.accepted_at || new Date(quote.expires_at).getTime() <= Date.now())
         throw new HttpError(409, "Quote expired or already accepted");
-      if (a.profile !== "B01" && quotedTotal !== Number(quote.authorized_price))
+      if (!hasWeakness(a.profile,"B01") && quotedTotal !== Number(quote.authorized_price))
         throw new HttpError(409, "The quote has changed. Please request a fresh price.");
       const c = await cart(db,a);
-      if(a.profile === "B04") {
+      if(hasWeakness(a.profile,"B04")) {
         await db.query("DELETE FROM store.cart_discount_applications WHERE run_id=$1 AND cart_id=$2 AND order_id IS NULL",[a.run,c.id]);
         await db.query("DELETE FROM store.cart_coupons WHERE run_id=$1 AND cart_id=$2",[a.run,c.id]);
       }
@@ -541,7 +541,7 @@ export async function buildApp(config: Config) {
       const c=await cart(db,a);
       if(c.version!==intent.cart_version || c.total!==Number(intent.quoted_total))
         throw new HttpError(409,"The checkout details no longer match your bag");
-      const previousPaid = a.profile === "B08" && !!(await db.query(
+      const previousPaid = hasWeakness(a.profile,"B08") && !!(await db.query(
         "SELECT 1 FROM store.payments p JOIN store.orders o ON o.run_id=p.run_id AND o.id=p.order_id WHERE p.run_id=$1 AND o.user_id=$2 LIMIT 1",
         [a.run,a.id],
       )).rowCount;
