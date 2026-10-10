@@ -208,12 +208,12 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v5
       - name: Download fully tested student installer
         uses: actions/download-artifact@v4
         with:
           name: RVU-Commerce-Student-Installer
           path: release-assets
-      - uses: actions/checkout@v5
       - name: Publish stable download as GitHub Release asset
         env:
           GH_TOKEN: ${{ github.token }}
