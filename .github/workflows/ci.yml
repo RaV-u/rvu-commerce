@@ -97,6 +97,10 @@ jobs:
         run: node scripts/smoke-extended.mjs
         env:
           RVU_DISPOSABLE_CI: 'yes'
+      - name: Check three independent customers after training scenarios
+        run: node scripts/smoke-stability.mjs
+        env:
+          RVU_DISPOSABLE_CI: 'yes'
       - name: Verify repeatable local reset without the instructor website
         run: |
           docker compose run --rm migrate node --import tsx scripts/reset-local.mjs RESET
