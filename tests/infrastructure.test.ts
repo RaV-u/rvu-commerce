@@ -15,25 +15,15 @@ test("Compose configuration exposes only loopback proxy ports and separates cred
     assert.deepEqual(service.networks, name === "edge" ? ["private", "ingress"] : ["private"]);
     if (name !== "edge") assert.equal(service.ports, undefined);
     else
-      assert.deepEqual(service.ports, [
-        "127.0.0.1:8080:8080",
-        "127.0.0.1:8081:8081",
-      ]);
+      assert.deepEqual(service.ports, ["127.0.0.1:8080:8080"]);
   }
   assert.match(c.services.store.environment.DATABASE_URL, /rvu_store/);
-  assert.match(c.services.instructor.environment.DATABASE_URL, /rvu_control/);
+  assert.equal(c.services.instructor, undefined, "Instructor service must not be deployed");
   assert.equal(c.services.store.environment.INSTRUCTOR_PASSWORD, undefined);
-  assert.equal(
-    c.services.instructor.environment.INSTRUCTOR_PASSWORD,
-    undefined,
-  );
+  assert.equal(c.services.migrate.environment.RVU_INTEGRATED_MODE, "1");
   assert.equal(
     c.services.store.environment.APP_ORIGIN,
     "http://localhost:8080",
-  );
-  assert.equal(
-    c.services.instructor.environment.APP_ORIGIN,
-    "http://127.0.0.1:8081",
   );
 });
 test("every seeded product has a local asset and no external image dependency", async () => {
