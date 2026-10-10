@@ -300,7 +300,7 @@ export async function buildApp(config: Config) {
       const input = z
           .object({
             productId: z.string().max(40),
-            quantity: z.number().int().min(-99).max(10),
+            quantity: z.number().int().min(-99).max(99),
             price: z.number().int().min(1).max(100000000).optional(),
           })
           .strict()
@@ -311,6 +311,12 @@ export async function buildApp(config: Config) {
       if (input.quantity < 0 && (req.method!=="POST" || !hasWeakness(a.profile,"B02") || product.kind!=="physical"))
         throw new HttpError(400,"Quantity must be positive");
 
+      if(input.quantity>10 && (req.method!=="POST" || !hasWeakness(a.profile,"B05")))
+        throw new HttpError(400,"Requested quantity exceeds the normal per-request limit");
+      const previousQuantity=Number(c.items.find((item:{id:string;quantity:number})=>item.id===input.productId)?.quantity??0);
+      const nextQuantity=req.method==="POST" ? previousQuantity+input.quantity : input.quantity;
+      if(nextQuantity < -99 || nextQuantity > (hasWeakness(a.profile,"B05")?100000:10))
+        throw new HttpError(400,"The cart quantity is outside the permitted range");
       if (input.price !== undefined && input.price !== Number(product.price) && !hasWeakness(a.profile,"B01"))
         throw new HttpError(400, "The current product price has changed");
       if (hasWeakness(a.profile,"B04")) {
@@ -321,7 +327,7 @@ export async function buildApp(config: Config) {
         "DELETE FROM store.cart_quotes WHERE run_id=$1 AND cart_id=$2 AND product_id=$3",
         [a.run,c.id,input.productId],
       );
-      if (input.quantity === 0)
+      if (nextQuantity === 0)
         await db.query(
           "DELETE FROM store.cart_items WHERE run_id=$1 AND cart_id=$2 AND product_id=$3",
           [a.run, c.id, input.productId],
@@ -329,11 +335,11 @@ export async function buildApp(config: Config) {
       else
         await db.query(
           "INSERT INTO store.cart_items VALUES($1,$2,$3,$4) ON CONFLICT(run_id,cart_id,product_id) DO UPDATE SET quantity=excluded.quantity",
-          [a.run, c.id, input.productId, input.quantity],
+          [a.run, c.id, input.productId, nextQuantity],
         );
       // The shop's legacy order-entry flow accepts an item price from the browser.
       // This corresponds to the product price field in the normal add-to-bag request.
-      if (input.quantity > 0 && input.price !== undefined && product.kind==="physical") {
+      if (nextQuantity > 0 && input.price !== undefined && product.kind==="physical") {
         const quoteId=randomUUID();
         await db.query(
           "INSERT INTO store.quotes(id,run_id,user_id,options,authorized_price,accepted_price,accepted_at) VALUES($1,$2,$3,$4,$5,$6,now())",
