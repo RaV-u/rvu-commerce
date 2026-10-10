@@ -73,6 +73,14 @@ docker compose --profile test rm -sf tests test-postgres
 
 Real PostgreSQL concurrency tests, account workflow regressions and Docker proxy smoke run in [GitHub Actions](https://github.com/RaV-u/rvu-commerce/actions). Green CI is evidence of the tested workflows, **not** proof that every challenge reproduces a third-party solution exactly or that a real browser session is defect-free.
 
+## Classroom reliability and audit scope
+
+- One local Docker installation runs **all conceptual weaknesses at once**; each student should use a separate local installation for repeatable blind-hunting practice when possible.
+- The shared fictional `target@learner.rvu.test` account and its login-attempt quota are stateful. Password changes and repeated sign-in tests against that account can interfere with another learner on the same installation. Creating a new customer **does not reset** the shared quota; use the local operator reset command above when this happens.
+- Current CI gates include individual regression tests for all 18 families, a real-Docker combined smoke covering 10 families, and a separate parallel browsing plus legitimate checkout/refund test for three independent customers. This is **not** a guarantee that every pairwise interaction across the 18 has been tested.
+- The HTTP performance measurements come from a disposable GitHub Actions runner. They do not measure CPU/RAM contention or browser responsiveness on students' Windows/WSL laptops.
+- Certain specialized workflows demonstrate the trust-boundary failure without recreating a real SMTP parser or a full administrative account session. Review the original PortSwigger learning goals before promising identical learner outcomes.
+
 ## Instructor / internal notes
 
 Instructor guides in `docs/` are internal implementation reference material, **not** learner handouts. The former instructor UI remains in the repository for historical and regression-test reasons but is not built as a running Compose service or exposed on any host port.
