@@ -27,7 +27,7 @@ const operations:Operation[]=[
 function pretty(value:unknown){return JSON.stringify(value,null,2);}
 // Pre-populate self-service forms with the private mailbox assigned to this
 // sign-in, rather than the retired shared demo customer's address.
-function accountDefaults(op:Operation, user?:Session["user"]) {
+function accountDefaults(op:Operation, user?:User|null) {
   const body:Record<string,unknown>={...op.body};
   for(const [key,value] of Object.entries(body)){
     if(value==="alex@learner.rvu.test" && user?.email)body[key]=user.email;
