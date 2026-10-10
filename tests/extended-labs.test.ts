@@ -213,13 +213,13 @@ test("R03: adding a product during payment produces durable undercharged fulfill
   skip:!process.env.TEST_DATABASE_URL?"Independent checkout/cart requests require native PostgreSQL":false,
 },async()=>{
   await fresh("R03");
-  await call(alex,"PUT","/api/cart/items",{productId:"arc-light",quantity:1});
+  await call(alex,"PUT","/api/cart/items",{productId:"lift-stand",quantity:1});
   const pending=call(alex,"POST","/api/business/checkout",{delayMs:220});
   await pause(60);
-  await call(alex,"PUT","/api/cart/items",{productId:"vista-27",quantity:1});
+  await call(alex,"PUT","/api/cart/items",{productId:"lift-stand",quantity:2});
   const sale=await pending;
-  assert.equal(sale.charged,1400);
-  assert.equal(sale.delivered,8200);
+  assert.equal(sale.charged,950);
+  assert.equal(sale.delivered,1900);
   assert.ok(await proof("R03")>0);
 });
 test("R04: two overlapping email-change workers deliver the new corporate verification to old owned mailbox",{
@@ -284,6 +284,25 @@ test("R06: registration is exploitable only while token provisioning is incomple
   assert.ok(await proof("R06")>=1);
 });
 
+test("each product has its own business-rule boundary",async()=>{
+  await fresh("open-playground");
+  await call(alex,"POST","/api/cart/items",{productId:"arc-light",quantity:1,price:10},400);
+  await call(alex,"POST","/api/cart/items",{productId:"vista-27",quantity:1,price:10},400);
+  await call(alex,"POST","/api/cart/items",{productId:"hush-pro",quantity:11},400);
+  await call(alex,"POST","/api/cart/items",{productId:"form-75",quantity:-1},400);
+  const keyboard=await call(alex,"POST","/api/cart/items",{productId:"form-75",quantity:1,price:100});
+  assert.equal(keyboard.total,100);
+  await call(alex,"POST","/api/cart/items",{productId:"form-75",quantity:-2},400);
+  await fresh("open-playground");
+  await call(alex,"PUT","/api/cart/items",{productId:"vista-27",quantity:1});
+  await call(alex,"POST","/api/cart/coupon",{code:"WELCOME10"});
+  await call(alex,"POST","/api/cart/coupon",{code:"STUDIO15"},409);
+  await fresh("open-playground");
+  await call(alex,"PUT","/api/cart/items",{productId:"hush-pro",quantity:1});
+  await call(alex,"POST","/api/cart/coupon",{code:"WELCOME10"});
+  await call(alex,"POST","/api/cart/coupon",{code:"STUDIO15"});
+  assert.equal((await call(alex,"POST","/api/cart/coupon",{code:"WELCOME10"})).total,3380);
+});
 test("integrated storefront keeps multiple independent business weaknesses active together",async()=>{
   await fresh("open-playground");
   // The combined site demonstrates B01 in the ordinary cart price field.
@@ -303,6 +322,13 @@ test("integrated storefront keeps multiple independent business weaknesses activ
   assert.equal(Number(paid.total),5400);
   assert.equal(paid.items.length,1);
   assert.equal(Number(paid.items[0].unit_price),6800);
+  await call(alex,"POST","/api/cart/items",{productId:"vista-27",quantity:1,price:100},400);
+  const cheap=await call(alex,"POST","/api/cart/items",{productId:"form-75",quantity:1,price:100});
+  assert.equal(cheap.total,100);
+  const paidCheap=await call(alex,"POST","/api/checkout",{
+    cartVersion:cheap.version,delivery:{fullName:"Alex Rowan",address:"12 Sample Studio Lane",city:"Sample City"},
+  },200,{"Idempotency-Key":randomUUID()});
+  assert.equal(Number(paidCheap.total),100);
   for(let n=0;n<63;n++)await call(alex,"POST","/api/cart/items",{productId:"vista-27",quantity:99});
   const bulk=await call(alex,"POST","/api/cart/items",{productId:"vista-27",quantity:80});
   assert.equal(bulk.total,5927);
