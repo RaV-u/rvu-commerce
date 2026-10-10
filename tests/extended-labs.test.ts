@@ -305,31 +305,45 @@ test("integrated storefront keeps multiple independent business weaknesses activ
   assert.equal(status.evidence,undefined);
 });
 
-test("two RVU sign-ins isolate their company colleague, account recovery scope and normal password maintenance",async()=>{
+test("two stable RVU accounts retain separate wallets and sessions across sign-outs",async()=>{
   await fresh("open-playground");
   const first:Client={cookie:"",csrf:""},second:Client={cookie:"",csrf:""};
   const a=await call(first,"POST","/api/login",{username:"rvu",password:"rvucamp"});
-  const b=await call(second,"POST","/api/login",{username:"rvu",password:"rvucamp"});
+  const b=await call(second,"POST","/api/login",{username:"rvu_2",password:"rvucamp"});
   assert.notEqual(a.user.id,b.user.id);
-  assert.notEqual(a.user.email,b.user.email);
-  assert.notEqual(a.user.colleagueEmail,b.user.colleagueEmail);
-  assert.match(a.user.colleagueEmail,/^colleague-[a-f0-9]{32}@learner\.rvu\.test$/);
-  assert.equal((await call(first,"GET","/api/session")).user.colleagueEmail,a.user.colleagueEmail);
-  assert.equal((await call(second,"GET","/api/session")).user.colleagueEmail,b.user.colleagueEmail);
-  const member=await call(first,"POST","/api/business/login-verification",{
-    email:a.user.colleagueEmail,password:"rvucamp",delayMs:25,
+  assert.equal(a.user.email,"rvu@learner.rvu.test");
+  assert.equal(b.user.email,"rvu_2@learner.rvu.test");
+  assert.equal(a.user.colleagueEmail,b.user.email);
+  assert.equal(b.user.colleagueEmail,a.user.email);
+  assert.equal(a.user.username,"rvu");
+  assert.equal(b.user.username,"rvu_2");
+  assert.equal((await call(first,"GET","/api/session")).user.username,"rvu");
+  assert.equal((await call(second,"GET","/api/session")).user.username,"rvu_2");
+  await call(first,"PUT","/api/cart/items",{productId:"form-75",quantity:1});
+  assert.equal((await call(second,"GET","/api/cart")).items.length,0);
+  const current=await call(first,"POST","/api/business/login-verification",{
+    email:b.user.email,password:"rvucamp",delayMs:25,
   });
-  assert.equal(member.authenticated,true);
-  await call(first,"POST","/api/business/actions",{
-    action:"password.maintain",targetEmail:a.user.email,
-    currentPassword:"rvucamp",newPassword:"Updated-Local-Password-2026!",
+  assert.equal(current.authenticated,true);
+  const edited=await call(first,"POST","/api/business/actions",{
+    action:"password.maintain",targetEmail:b.user.email,
+    newPassword:"Updated-Company-2026!",
   });
-  const member2=await call(second,"POST","/api/business/login-verification",{
-    email:b.user.colleagueEmail,password:"rvucamp",delayMs:25,
+  assert.equal(edited.usedSupportBranch,true);
+  await call(second,"POST","/api/logout",{});
+  const back=await call(second,"POST","/api/login",{username:"rvu_2",password:"rvucamp"});
+  assert.equal(back.user.id,b.user.id,"Second named account must persist after re-login");
+  const verified=await call(first,"POST","/api/business/login-verification",{
+    email:b.user.email,password:"Updated-Company-2026!",delayMs:25,
   });
-  assert.equal(member2.authenticated,true);
+  assert.equal(verified.authenticated,true);
+  await call(first,"POST","/api/logout",{});
+  const again=await call(first,"POST","/api/login",{username:"rvu",password:"rvucamp"});
+  assert.equal(again.user.id,a.user.id,"First named account must persist after re-login");
+  assert.equal((await call(first,"GET","/api/cart")).items.length,1);
   assert.equal((await call(first,"GET","/api/wallet")).balance,1500000);
   assert.equal((await call(second,"GET","/api/wallet")).balance,1500000);
+  await call(first,"POST","/api/login",{username:"rvu_3",password:"rvucamp"},401);
 });
 
 test("unified RVU session supports corporate verification and concurrent account workflows together",{

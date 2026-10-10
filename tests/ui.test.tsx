@@ -6,7 +6,7 @@ import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 import { migrate } from "../apps/api/src/migrate.ts";
 import { buildApp } from "../apps/api/src/app.ts";
 import { App } from "../apps/web/src/App.tsx";
-import { Services } from "../apps/web/src/Services.tsx";
+
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", {
   url: "http://localhost:8080",
@@ -193,23 +193,31 @@ test("Shared classroom sign-in opens a personal shopping account", async () => {
   cleanup();
 });
 
-test("Services portal renders actual business workflows and sends typed requests to the backend", async () => {
-  const user = userEvent.setup({document: dom.window.document});
-  render(<Services />);
-  await screen.findByRole("heading", {name:"Work, connected."});
-  await screen.findByRole("button", {name:"Send delivery notice"});
-  await user.click(screen.getByRole("button", {name:"Send delivery notice"}));
-  await user.click(screen.getByRole("button", {name:"Continue →"}));
-  await screen.findByText("Request completed");
-  assert.ok(screen.getByText("Ciphertext"));
-  assert.match(screen.getByText(/"ciphertext":/).textContent ?? "", /ciphertext/);
-  await user.click(screen.getByRole("button",{name:"Password maintenance"}));
-  const ownEmail=screen.getByLabelText("Target Email") as HTMLInputElement;
-  assert.match(ownEmail.value,/^rvu-[a-f0-9]{32}@learner\.rvu\.test$/);
-  await user.click(screen.getByRole("button",{name:"Company account sign-in"}));
-  const colleague=screen.getByLabelText("Email") as HTMLInputElement;
-  assert.match(colleague.value,/^colleague-[a-f0-9]{32}@learner\.rvu\.test$/);
-  await user.click(screen.getByRole("button",{name:"Register company contact"}));
-  assert.match(screen.getByText(/Application reference:/).textContent??"",/[a-f0-9]{8}-[a-f0-9-]{27,}/);
+test("Business services are inside My Account on the only storefront", async () => {
+  const user = userEvent.setup({document:dom.window.document});
+  render(<App />);
+  await screen.findByRole("button",{name:"View Form 75 Mechanical Keyboard"});
+  assert.equal(screen.queryByRole("link",{name:"Account services"}),null);
+  await user.click(screen.getByRole("button",{name:"Your account"}));
+  let dialog=within(screen.getByRole("dialog"));
+  await user.type(dialog.getByLabelText("Username"),"rvu_2");
+  await user.type(dialog.getByLabelText("Password"),"rvucamp");
+  await user.click(dialog.getByRole("button",{name:"Sign in"}));
+  await waitFor(()=>assert.ok(!screen.queryByRole("dialog")));
+  await user.click(screen.getByRole("button",{name:"Your account"}));
+  dialog=within(screen.getByRole("dialog"));
+  await user.click(dialog.getByRole("button",{name:"Services"}));
+  await dialog.findByRole("button",{name:"Send delivery notice"});
+  await user.click(dialog.getByRole("button",{name:"Send delivery notice"}));
+  await user.click(dialog.getByRole("button",{name:"Continue →"}));
+  await dialog.findByText("Request completed");
+  assert.ok(dialog.getByText("Ciphertext"));
+  assert.match(dialog.getByText(/"ciphertext":/).textContent??"",/ciphertext/);
+  await user.click(dialog.getByRole("button",{name:"Password maintenance"}));
+  assert.equal((dialog.getByLabelText("Target Email") as HTMLInputElement).value,"rvu_2@learner.rvu.test");
+  await user.click(dialog.getByRole("button",{name:"Company account sign-in"}));
+  assert.equal((dialog.getByLabelText("Email") as HTMLInputElement).value,"rvu@learner.rvu.test");
+  await user.click(dialog.getByRole("button",{name:"Register company contact"}));
+  assert.match(dialog.getByText(/Application reference:/).textContent??"",/[a-f0-9]{8}-[a-f0-9-]{27,}/);
   cleanup();
 });

@@ -68,3 +68,16 @@ test("all 18 vulnerability families are present in one student-facing commerce e
   assert.ok(!services.includes("service-request"),"Do not expose editable JSON lab request forms to learners");
   assert.ok(!storefront.includes("instructor console"),"Student storefront reveals an instructor panel");
 });
+
+test("business services are embedded in My Account, not a separate website",async()=>{
+  const app=await readFile("apps/web/src/App.tsx","utf8");
+  const entry=await readFile("apps/web/src/main.tsx","utf8");
+  const services=await readFile("apps/web/src/Services.tsx","utf8");
+  assert.ok(app.includes('<AccountServices user={session.user} />'));
+  assert.ok(app.includes('id: "services"'));
+  assert.ok(!app.includes('href="/services"'));
+  assert.ok(!entry.includes("<Services"));
+  assert.ok(entry.includes("<App />"));
+  assert.ok(services.includes("export function AccountServices"));
+  assert.ok(!services.includes("className=\"service-page\""));
+});

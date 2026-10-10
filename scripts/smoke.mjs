@@ -29,7 +29,7 @@ assert.equal(html.status, 200);
 assert.match(await html.text(), /RVU Commerce/);
 assert.ok(html.headers.get("content-security-policy"));
 const servicesPage = await fetch(origin + "/services");
-assert.equal(servicesPage.status, 200, "Service portal SPA route must be published");
+assert.equal(servicesPage.status, 200, "Old service bookmark must resolve to the main storefront");
 assert.match(await servicesPage.text(), /RVU Commerce/);
 // Only the storefront is published. Instructor APIs are not deployed.
 const forbidden = await fetch(origin + "/api/instructor/session");
@@ -39,7 +39,9 @@ assert.equal(catalog.products.length, 8);
 assert.equal(catalog.promotions.length, 3, "Integrated storefront exposes the store promotion family");
 const signedIn = await request("/api/login", "POST", { username: "rvu", password: "rvucamp" });
 assert.equal(signedIn.user.verified, true);
-assert.match(signedIn.user.colleagueEmail,/^colleague-[a-f0-9]{32}@learner\.rvu\.test$/);
+assert.equal(signedIn.user.username,"rvu");
+assert.equal(signedIn.user.email,"rvu@learner.rvu.test");
+assert.equal(signedIn.user.colleagueEmail,"rvu_2@learner.rvu.test");
 const directory = await request("/api/business/status");
 assert.equal(directory.profile, undefined, "Learner must not discover internal profile");
 assert.equal(directory.states, undefined, "Learner must not receive lab state or tokens");
@@ -84,6 +86,14 @@ await request(`/api/orders/${order.id}/refund`, "POST", {});
 assert.equal((await request("/api/wallet")).balance, 1500000);
 await request("/api/logout", "POST", {});
 assert.equal((await request("/api/session")).user, null);
-console.log(
-  "PASS: one RVU login → private workspace → no registration → coupon, payment, refund and logout.",
-);
+const other=await request("/api/login","POST",{username:"rvu_2",password:"rvucamp"});
+assert.notEqual(other.user.id,signedIn.user.id,"Two distinct named accounts required");
+assert.equal(other.user.colleagueEmail,signedIn.user.email);
+assert.equal((await request("/api/wallet")).balance,1500000);
+assert.equal((await request("/api/cart")).items.length,0);
+await request("/api/logout","POST",{});
+const returned=await request("/api/login","POST",{username:"rvu",password:"rvucamp"});
+assert.equal(returned.user.id,signedIn.user.id,"Re-login must restore original account");
+assert.equal((await request("/api/orders")).orders.length,1);
+console.log("PASS: two fixed RVU accounts, no registration, independent carts and persisted orders after logout.");
+
