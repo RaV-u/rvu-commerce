@@ -205,8 +205,9 @@ test("R02: native PostgreSQL counts actual password checks beyond the three-atte
   await fresh("R02");
   const entries=await Promise.all(Array.from({length:5},()=>call(alex,"POST","/api/business/login-verification",{password:"Target-Only-2026!",delayMs:280})));
   assert.equal(entries.filter(x=>x.authenticated).length,5);
-  assert.ok(await proof("R02")>=1);
+  // Inspect the committed quota after all concurrent transactions finish.
   assert.equal((await act("auth.target")).authenticated,true);
+  assert.ok(await proof("R02")>=1);
 });
 test("R03: adding a product during payment produces durable undercharged fulfillment",{
   skip:!process.env.TEST_DATABASE_URL?"Independent checkout/cart requests require native PostgreSQL":false,

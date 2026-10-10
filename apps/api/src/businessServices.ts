@@ -199,7 +199,14 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         requireProfile(a,["R02"]);
         const s=await data(db,a,"R02");
         if(s.authenticatedTarget!==true)throw new HttpError(403,"Target account session required");
-        return {email:colleagueFor(a),authenticated:true};
+        const username=colleagueFor(a);
+        const attempts=Number((await db.query(
+          "SELECT count(*)::int AS n FROM store.lab_attempts WHERE run_id=$1 AND username=$2",
+          [a.run,username],
+        )).rows[0].n);
+        if(hasWeakness(a.profile,"R02") && attempts>3)
+          await evidence(db,a,"R02","quota-bypass",{verifiedAttempts:attempts,target:username});
+        return {email:username,authenticated:true};
       }
       case "notification.encrypt": {
         requireProfile(a,["B11"]);
