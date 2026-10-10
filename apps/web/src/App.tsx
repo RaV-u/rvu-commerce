@@ -40,7 +40,7 @@ const blankCart: Cart = {
   couponEligible: true,
 };
 type Panel =
-  "login" | "register" | "bag" | "checkout" | "account" | "policy" | "quote" | null;
+  "login" | "bag" | "checkout" | "account" | "policy" | "quote" | null;
 export function App() {
   const [products, setProducts] = useState<Product[]>([]),
     [session, setSession] = useState<Session>({ user: null }),
@@ -175,20 +175,12 @@ export function App() {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.currentTarget));
     await perform(async () => {
-      const s = await api<Session>(
-        panel === "register" ? "/register" : "/login",
-        "POST",
-        data,
-      );
+      const s = await api<Session>("/login", "POST", data);
       setSession(s);
       setCsrf(s.csrf);
       await refresh(s);
       setPanel(null);
-      setNotice(
-        s.user?.verified
-          ? "Welcome back. Make yourself at home."
-          : "Your account is ready. Open your inbox to verify your email.",
-      );
+      setNotice("Your RVU training workspace is ready.");
     });
   }
   async function createQuote(e: FormEvent<HTMLFormElement>) {
@@ -526,36 +518,26 @@ export function App() {
           </button>
         </div>
       )}
-      {(panel === "login" || panel === "register") && (
+      {panel === "login" && (
         <Modal
           error={error}
-          title={panel === "login" ? "Welcome back." : "Make yourself at home."}
+          title="Welcome back."
           close={() => setPanel(null)}
         >
           <p className="muted">
-            Your essentials, orders and wallet. All in one place.
+            Sign in once to access your own shop, wallet, orders and business services.
+            Your local practice workspace is isolated from other sign-ins.
           </p>
           <form onSubmit={authenticate} className="form">
-            {panel === "register" && (
-              <label>
-                Full name
-                <input
-                  name="name"
-                  required
-                  minLength={2}
-                  maxLength={80}
-                  autoComplete="name"
-                />
-              </label>
-            )}
             <label>
-              Email address
+              Username
               <input
-                name="email"
-                type="email"
+                name="username"
+                type="text"
                 required
-                placeholder="you@learner.rvu.test"
+                placeholder="rvu"
                 autoComplete="username"
+                maxLength={40}
               />
             </label>
             <label>
@@ -564,43 +546,22 @@ export function App() {
                 name="password"
                 type="password"
                 required
-                minLength={12}
+                minLength={1}
                 maxLength={128}
-                autoComplete={
-                  panel === "login" ? "current-password" : "new-password"
-                }
+                autoComplete="current-password"
               />
             </label>
-            {panel === "register" && (
-              <p className="form-note">
-                Use a fictional @learner.rvu.test address. Your private in-app
-                inbox receives the verification message. New accounts receive
-                EGP 15,000 in virtual credit.
-              </p>
-            )}
             <button className="primary full" disabled={busy}>
-              {busy
-                ? "One moment…"
-                : panel === "login"
-                  ? "Sign in"
-                  : "Create account"}
+              {busy ? "One moment…" : "Sign in"}
               <ArrowRight size={18} />
             </button>
           </form>
-          <button
-            className="switch-link"
-            onClick={() => setPanel(panel === "login" ? "register" : "login")}
-          >
-            {panel === "login"
-              ? "New here? Create an account"
-              : "Already have an account? Sign in"}
-          </button>
           <div className="demo-note">
-            Explore the local demo
+            RVU Mentorship Camp · Local training access
             <br />
-            <strong>alex@learner.rvu.test</strong>
+            Username: <strong>rvu</strong>
             <br />
-            Password: Studio-Local-2026!
+            Password: <strong>rvucamp</strong>
           </div>
         </Modal>
       )}
@@ -868,7 +829,7 @@ export function App() {
           close={() => setPanel(null)}
         >
           <div className="account-top">
-            <p className="muted">{session.user?.email}</p>
+            <p className="muted">Signed in as rvu · Fictional inbox: {session.user?.email}</p>
             <button
               className="text-link"
               disabled={busy}
