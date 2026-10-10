@@ -64,6 +64,14 @@ export async function cart(db: DB, a: Actor) {
     giftEligible: hasWeakness(a.profile,"B10") && coupon?.code === "GIFT20",
     stackedDiscount,
   });
+  const exactSubtotal=items.reduce((n:number,item:{price:string;quantity:number})=>n+Number(item.price)*item.quantity,0);
+  // An old 32-bit checkout aggregate wraps only when a very large, uncouponed
+  // cart crosses the signed integer boundary. Item quantities remain persisted.
+  const wrapped=exactSubtotal|0;
+  const priced=hasWeakness(a.profile,"B05") && exactSubtotal>2147483647 &&
+    !coupon && !applications.length && !vouchers.length
+    ? {...totals,subtotal:wrapped,total:wrapped,discount:0,couponEligible:wrapped>0}
+    : totals;
   return {
     id: c.id,
     version: c.version,
@@ -71,8 +79,8 @@ export async function cart(db: DB, a: Actor) {
     coupon,
     applications,
     vouchers,
-    ...totals,
-    couponEligible: totals.couponEligible && vouchers.every((v:{minimum:string})=>physicalEligible>=Number(v.minimum)),
+    ...priced,
+    couponEligible: priced.couponEligible && vouchers.every((v:{minimum:string})=>physicalEligible>=Number(v.minimum)),
   };
 }
 export async function order(db: DB, a: Actor, id: string) {
@@ -134,6 +142,7 @@ export async function checkout(
       "Your bag changed. Review the updated total before paying.",
     );
   if (!c.items.length) throw new HttpError(400, "Your bag is empty");
+  if(c.total <= 0) throw new HttpError(409,"A positive checkout total is required");
   if (!c.couponEligible)
     throw new HttpError(
       409,
@@ -201,6 +210,15 @@ export async function checkout(
       "INSERT INTO store.lab_evidence(id,run_id,user_id,scenario,kind,detail) VALUES($1,$2,$3,'B02','underpaid',$4)",
       [randomUUID(),a.run,a.id,JSON.stringify({orderId:id,charged:c.total,shipped})],
     );
+  }
+  if (hasWeakness(a.profile,"B05")) {
+    const fullValue=c.items.reduce((sum:number,item:{price:string;quantity:number})=>sum+Number(item.price)*item.quantity,0);
+    if (fullValue>2147483647 && c.total>0 && c.total<fullValue) {
+      await db.query(
+        "INSERT INTO store.lab_evidence(id,run_id,user_id,scenario,kind,detail) VALUES($1,$2,$3,'B05','integer-wrap',$4)",
+        [randomUUID(),a.run,a.id,JSON.stringify({orderId:id,charged:c.total,fullValue})],
+      );
+    }
   }
   const merchant = (
     await db.query(
