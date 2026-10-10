@@ -296,23 +296,20 @@ export async function buildApp(config: Config) {
       false,
     );
     userRoute("GET", "/api/cart", (db, a) => cart(db, a));
-    userRoute("PUT", "/api/cart/items", async (db, a, req) => {
+    const updateCartItem = async (db:DB, a:Actor, req:FastifyRequest) => {
       const input = z
           .object({
             productId: z.string().max(40),
             quantity: z.number().int().min(0).max(10),
+            price: z.number().int().min(1).max(100000000).optional(),
           })
           .strict()
           .parse(req.body),
         c = await cart(db, a);
-      if (
-        !(
-          await db.query("SELECT 1 FROM store.products WHERE id=$1", [
-            input.productId,
-          ])
-        ).rowCount
-      )
-        throw new HttpError(404, "Product not found");
+      const product = (await db.query("SELECT price,kind FROM store.products WHERE id=$1",[input.productId])).rows[0];
+      if (!product) throw new HttpError(404, "Product not found");
+      if (input.price !== undefined && input.price !== Number(product.price) && !hasWeakness(a.profile,"B01"))
+        throw new HttpError(409, "The current product price has changed");
       if (hasWeakness(a.profile,"B04")) {
         await db.query("DELETE FROM store.cart_discount_applications WHERE run_id=$1 AND cart_id=$2 AND order_id IS NULL",[a.run,c.id]);
         await db.query("DELETE FROM store.cart_coupons WHERE run_id=$1 AND cart_id=$2",[a.run,c.id]);
@@ -331,12 +328,27 @@ export async function buildApp(config: Config) {
           "INSERT INTO store.cart_items VALUES($1,$2,$3,$4) ON CONFLICT(run_id,cart_id,product_id) DO UPDATE SET quantity=excluded.quantity",
           [a.run, c.id, input.productId, input.quantity],
         );
+      // The shop's legacy order-entry flow accepts an item price from the browser.
+      // This corresponds to the product price field in the normal add-to-bag request.
+      if (input.quantity > 0 && input.price !== undefined && product.kind==="physical") {
+        const quoteId=randomUUID();
+        await db.query(
+          "INSERT INTO store.quotes(id,run_id,user_id,options,authorized_price,accepted_price,accepted_at) VALUES($1,$2,$3,$4,$5,$6,now())",
+          [quoteId,a.run,a.id,JSON.stringify({cartOverride:true}),product.price,input.price],
+        );
+        await db.query(
+          "INSERT INTO store.cart_quotes(run_id,cart_id,product_id,quote_id) VALUES($1,$2,$3,$4)",
+          [a.run,c.id,input.productId,quoteId],
+        );
+      }
       await db.query(
         "UPDATE store.carts SET version=version+1 WHERE run_id=$1 AND id=$2",
         [a.run, c.id],
       );
       return cart(db, a);
-    });
+    };
+    userRoute("PUT", "/api/cart/items", updateCartItem);
+    userRoute("POST", "/api/cart/items", updateCartItem);
     userRoute("POST", "/api/cart/coupon", async (db, a, req) => {
       const { code } = z
           .object({ code: z.string().trim().toUpperCase().max(30) })
