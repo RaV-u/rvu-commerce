@@ -2,7 +2,7 @@
 export const baseline = Object.freeze({
   profile: "secure-baseline",
   version: 1,
-  openingCredit: 1500000,
+  openingCredit: 15000,
   currency: "EGP",
   maxQuantity: 10,
 });

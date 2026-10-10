@@ -67,8 +67,8 @@ export async function cart(db: DB, a: Actor) {
   const exactSubtotal=items.reduce((n:number,item:{price:string;quantity:number})=>n+Number(item.price)*item.quantity,0);
   // An old 32-bit checkout aggregate wraps only when a very large, uncouponed
   // cart crosses the signed integer boundary. Item quantities remain persisted.
-  const wrapped=exactSubtotal|0;
-  const priced=hasWeakness(a.profile,"B05") && exactSubtotal>2147483647 &&
+  const wrapped=Math.trunc(((exactSubtotal*100)|0)/100);
+  const priced=hasWeakness(a.profile,"B05") && exactSubtotal*100>2147483647 &&
     !coupon && !applications.length && !vouchers.length
     ? {...totals,subtotal:wrapped,total:wrapped,discount:0,couponEligible:wrapped>0}
     : totals;
@@ -213,7 +213,7 @@ export async function checkout(
   }
   if (hasWeakness(a.profile,"B05")) {
     const fullValue=c.items.reduce((sum:number,item:{price:string;quantity:number})=>sum+Number(item.price)*item.quantity,0);
-    if (fullValue>2147483647 && c.total>0 && c.total<fullValue) {
+    if (fullValue*100>2147483647 && c.total>0 && c.total<fullValue) {
       await db.query(
         "INSERT INTO store.lab_evidence(id,run_id,user_id,scenario,kind,detail) VALUES($1,$2,$3,'B05','integer-wrap',$4)",
         [randomUUID(),a.run,a.id,JSON.stringify({orderId:id,charged:c.total,fullValue})],

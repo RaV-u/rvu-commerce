@@ -8,7 +8,7 @@ export const products = [
     "Vista 27 Studio Display",
     "Displays",
     "A quiet canvas for your best work. A crisp 27-inch 4K display with an adjustable aluminium stand.",
-    680000,
+    6800,
     "physical",
     "monitor",
     "The studio essential",
@@ -19,7 +19,7 @@ export const products = [
     "Form 75 Mechanical Keyboard",
     "Desk essentials",
     "A compact layout, tactile switches and warm, considered details. Made for the hours that matter.",
-    220000,
+    2200,
     "physical",
     "keyboard",
     "Bestseller",
@@ -30,7 +30,7 @@ export const products = [
     "Hush Pro Headphones",
     "Audio",
     "Find your focus. Over-ear comfort and a balanced sound for the working day.",
-    310000,
+    3100,
     "physical",
     "headphones",
     "New arrival",
@@ -41,7 +41,7 @@ export const products = [
     "Arc Task Light",
     "Desk essentials",
     "A sculptural pool of warm light. Adjust the angle and make a little room for focus.",
-    140000,
+    1400,
     "physical",
     "lamp",
     "",
@@ -52,7 +52,7 @@ export const products = [
     "Bridge 8 USB-C Hub",
     "Connectivity",
     "One small hub. A tidier desk. Connect the essentials and get back to what you do best.",
-    165000,
+    1650,
     "physical",
     "hub",
     "",
@@ -63,7 +63,7 @@ export const products = [
     "Lift Laptop Stand",
     "Desk essentials",
     "A better angle for everyday work. Folded aluminium with a soft, protective finish.",
-    95000,
+    950,
     "physical",
     "stand",
     "",
@@ -74,7 +74,7 @@ export const products = [
     "Field Everyday Backpack",
     "On the move",
     "For the commute, the coffee shop and everything between. Thoughtful storage in a clean silhouette.",
-    190000,
+    1900,
     "physical",
     "bag",
     "",
@@ -85,7 +85,7 @@ export const products = [
     "The RVU Gift Card",
     "Gift cards",
     "Give someone room to choose. EGP 500 of store value, delivered to your account after purchase.",
-    50000,
+    500,
     "gift_card",
     "gift",
     "A thoughtful choice",
@@ -99,7 +99,7 @@ export const products = [
 export async function seedCatalog(db: DB) {
   for (const p of products)
     await db.query(
-      "INSERT INTO store.products(id,name,category,description,price,kind,image,badge,specs) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT(id) DO NOTHING",
+      "INSERT INTO store.products(id,name,category,description,price,kind,image,badge,specs) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT(id) DO UPDATE SET price=EXCLUDED.price",
       [
         ...p.slice(0, 6),
         "/products/" + p[6] + ".svg",
@@ -108,7 +108,7 @@ export async function seedCatalog(db: DB) {
       ],
     );
   await db.query(
-    "INSERT INTO store.promotions VALUES('WELCOME10',10,100000,'10% off physical products on an eligible order of EGP 1,000 or more. Once per account.'),('STUDIO15',15,500000,'15% off physical products on an eligible order of EGP 5,000 or more. Once per account.') ON CONFLICT DO NOTHING",
+    "INSERT INTO store.promotions VALUES('WELCOME10',10,1000,'10% off physical products on an eligible order of EGP 1,000 or more. Once per account.'),('STUDIO15',15,5000,'15% off physical products on an eligible order of EGP 5,000 or more. Once per account.') ON CONFLICT(code) DO UPDATE SET minimum=EXCLUDED.minimum",
   );
 }
 export async function transfer(

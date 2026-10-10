@@ -112,13 +112,13 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         if(profile==="open-playground")throw new HttpError(404,"Use the ordinary store purchase flow");
         requireProfile(a,["B05"]);
         const quantity=z.number().int().min(1).max(100000).parse(p.quantity);
-        const exact=50000*quantity;
+        const exact=500*quantity;
         // Deliberate signed 32-bit conversion in the isolated legacy adapter.
-        const legacy=Math.imul(50000,quantity);
+        const legacy=Math.trunc(Math.imul(50000,quantity)/100);
         if(!hasWeakness(a.profile,"B05") && exact!==legacy) fail("Bulk invoice exceeds supported integer range");
         const paid=hasWeakness(a.profile,"B05")?legacy:exact;
         if(paid<=0) fail("Legacy invoice amount cannot be paid");
-        return purchase(db,a,"B05",paid,exact,{quantity,unitPrice:50000,legacy});
+        return purchase(db,a,"B05",paid,exact,{quantity,unitPrice:500,legacy});
       }
       case "email.update": {
         requireProfile(a,["B03"]);
@@ -154,7 +154,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         if(!verifiedPaths.length) throw new HttpError(403,"Verified corporate membership required");
         for(const entry of verifiedPaths)
           await evidence(db,a,entry.scenario,"corporate-access",{address:entry.address,order:"CORP-DEMO-1001"});
-        return {orders:[{id:"CORP-DEMO-1001",status:"approved",value:960000}]};
+        return {orders:[{id:"CORP-DEMO-1001",status:"approved",value:9600}]};
       }
       case "password.maintain": {
         requireProfile(a,["B07"]);
@@ -193,7 +193,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         requireProfile(a,["B09"]);
         const state=await data(db,a,"B09");
         if(state.adminApproved!==true)throw new HttpError(403,"Business approval privileges required");
-        return {history:[{id:state.approval,kind:"company-order-approval",status:"approved",amount:960000}]};
+        return {history:[{id:state.approval,kind:"company-order-approval",status:"approved",amount:9600}]};
       }
       case "auth.target": {
         requireProfile(a,["R02"]);

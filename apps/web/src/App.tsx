@@ -615,17 +615,17 @@ export function App() {
           <form className="form" onSubmit={createQuote}>
             <div className="quote-line">
               <div><strong>Vista 27 Studio Display</strong><span>4K display · adjustable aluminium stand</span></div>
-              <strong>{money(680000)}</strong>
+              <strong>{money(6800)}</strong>
             </div>
             <label className="quote-choice">
               <input name="dock" type="checkbox" defaultChecked />
               <span><strong>Pro docking bundle</strong><small>More connections, less clutter</small></span>
-              <strong>+ {money(900000)}</strong>
+              <strong>+ {money(9000)}</strong>
             </label>
             <label className="quote-choice">
               <input name="support" type="checkbox" />
               <span><strong>Studio care package</strong><small>Priority service for your workspace</small></span>
-              <strong>+ {money(250000)}</strong>
+              <strong>+ {money(2500)}</strong>
             </label>
             <button className="primary full" disabled={busy} type="submit">
               {busy ? "Preparing quote…" : "Accept quote and add to bag"} <ArrowRight size={18}/>

@@ -1,0 +1,7 @@
+UPDATE store.promotions SET minimum = CASE code
+  WHEN 'WELCOME10' THEN 1000
+  WHEN 'STUDIO15' THEN 5000
+  WHEN 'GIFT20' THEN 100
+  ELSE minimum END
+WHERE code IN ('WELCOME10','STUDIO15','GIFT20');
+UPDATE store.vouchers SET amount=300, minimum=1000 WHERE code='STUDIO300';

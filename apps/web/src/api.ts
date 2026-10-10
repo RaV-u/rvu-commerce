@@ -110,5 +110,6 @@ export const money = (value: Money) =>
   new Intl.NumberFormat("en-EG", {
     style: "currency",
     currency: "EGP",
-    maximumFractionDigits: 2,
-  }).format(Number(value) / 100);
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(Number(value));

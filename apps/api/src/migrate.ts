@@ -49,11 +49,16 @@ export async function migrate(url: string, instructorPassword: string) {
       await db.query(await readFile(resolve("db/migrations/006_large_order_quantities.sql"), "utf8"));
       await db.query("INSERT INTO public.schema_migrations(version) VALUES(6)");
     }
+    const poundsAlreadyMigrated = !!(await db.query("SELECT 1 FROM public.schema_migrations WHERE version=7")).rowCount;
+    if (!poundsAlreadyMigrated) {
+      await db.query(await readFile(resolve("db/migrations/007_egp_pounds.sql"), "utf8"));
+      await db.query("INSERT INTO public.schema_migrations(version) VALUES(7)");
+    }
     await seedCatalog(db);
     // Preserve historical customer data while activating the current storefront.
     const integrated = process.env.RVU_INTEGRATED_MODE === "1";
     const current = await db.query("SELECT r.profile FROM store.runtime rt JOIN store.runs r ON r.id=rt.active_run");
-    if (!current.rowCount || (integrated && current.rows[0].profile !== "open-playground"))
+    if (!current.rowCount || (integrated && current.rows[0].profile !== "open-playground") || (!poundsAlreadyMigrated && !!current.rowCount))
       await newRun(db, integrated ? "open-playground" : "secure-baseline");
     if (legacyAdminMode && !(await db.query("SELECT 1 FROM control.instructors")).rowCount)
       await db.query("INSERT INTO control.instructors VALUES($1,$2,$3)", [

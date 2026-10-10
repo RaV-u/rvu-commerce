@@ -349,7 +349,7 @@ export async function buildApp(config: Config) {
           .object({
             productId: z.string().max(40),
             quantity: z.number().int().min(-99).max(99),
-            price: z.number().int().min(1).max(100000000).optional(),
+            price: z.number().int().min(1).max(1000000).optional(),
           })
           .strict()
           .parse(req.body),
@@ -545,7 +545,7 @@ export async function buildApp(config: Config) {
     // The historical B01 regression profile retains its original isolated case.
     userRoute("POST", "/api/quotes", async (db, a, req) => {
       const options = z.object({ dock: z.boolean(), support: z.boolean() }).strict().parse(req.body);
-      const authorizedPrice = 680000 + (options.dock ? 900000 : 0) + (options.support ? 250000 : 0);
+      const authorizedPrice = 6800 + (options.dock ? 9000 : 0) + (options.support ? 2500 : 0);
       const id = randomUUID();
       await db.query(
         "INSERT INTO store.quotes(id,run_id,user_id,options,authorized_price) VALUES($1,$2,$3,$4,$5)",
@@ -555,7 +555,7 @@ export async function buildApp(config: Config) {
     });
     userRoute("POST", "/api/quotes/:id/accept", async (db, a, req) => {
       const id = uuid.parse((req.params as {id:string}).id);
-      const { quotedTotal } = z.object({quotedTotal:z.number().int().min(1).max(100000000)}).strict().parse(req.body);
+      const { quotedTotal } = z.object({quotedTotal:z.number().int().min(1).max(1000000)}).strict().parse(req.body);
       const quote = (await db.query(
         "SELECT * FROM store.quotes WHERE run_id=$1 AND user_id=$2 AND id=$3 FOR UPDATE",
         [a.run,a.id,id],
@@ -781,7 +781,7 @@ export async function buildApp(config: Config) {
         )).rows[0].n);
         const giftProfit = Number((await db.query(
           `SELECT count(DISTINCT a.user_id) AS n FROM store.accounts a
-           WHERE a.run_id=$1 AND a.purpose='wallet' AND a.balance>1500000
+           WHERE a.run_id=$1 AND a.purpose='wallet' AND a.balance>15000
            AND EXISTS(SELECT 1 FROM store.gift_cards g JOIN store.orders o ON o.run_id=g.run_id AND o.id=g.order_id
                       WHERE g.run_id=$1 AND g.redeemed_by=a.user_id AND o.discount>0)`,
           [run],
