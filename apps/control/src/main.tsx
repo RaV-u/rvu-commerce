@@ -30,7 +30,8 @@ function Control() {
     [confirm, setConfirm] = useState(""),
     [ready, setReady] = useState(false),
     [nextProfile, setNextProfile] = useState("secure-baseline"),
-    [evidence, setEvidence] = useState<Record<string,number>|null>(null);
+    [evidence, setEvidence] = useState<Record<string,number>|null>(null),
+    [events, setEvents] = useState<{scenario:string;kind:string;detail:unknown;created_at:string}[]|null>(null);
   async function refresh() {
     const s = await api<{ csrf: string; run: string; users: number; profile: string }>(
       "/instructor/session",
@@ -166,6 +167,21 @@ function Control() {
               ))}
             </dl>
             <button className="evidence-refresh" disabled={busy} onClick={() => void perform(refresh)}>Refresh evidence</button>
+            <button className="evidence-refresh" disabled={busy} onClick={()=>void perform(async()=>{
+              const log=await api<{events:{scenario:string;kind:string;detail:unknown;created_at:string}[]}>("/instructor/evidence/events");
+              setEvents(log.events);
+            })}>View detailed evidence</button>
+            {events&&<div className="evidence-history">
+              <h3>Recent server-verified events</h3>
+              {events.length===0?<p>No additional evidence in this run yet.</p>:events.map((event,i)=>(
+                <article key={i}>
+                  <strong>{event.scenario} · {event.kind}</strong>
+                  <time>{new Date(event.created_at).toLocaleString()}</time>
+                  <pre>{JSON.stringify(event.detail,null,2)}</pre>
+                </article>
+              ))}
+            </div>}
+
           </section>
           <section className="reset">
             <RefreshCw size={24} />
@@ -182,6 +198,7 @@ function Control() {
                 void perform(async () => {
                   await api("/instructor/reset", "POST", { confirm,profile: nextProfile });
                   setConfirm("");
+                  setEvents(null);
                   await refresh();
                 });
               }}
