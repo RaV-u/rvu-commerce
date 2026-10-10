@@ -1,8 +1,4 @@
-/**
- * Isolated, fictional, instructor-selected business-logic challenge workflows.
- * All actions operate on the active run and authenticated learner only.
- * This is deliberately vulnerable training code. Do not internet-expose it.
- */
+/** Customer business workflows scoped to the active local account. */
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { Pool } from "pg";
 import { randomUUID, createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";

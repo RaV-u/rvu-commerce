@@ -16,7 +16,7 @@ import {
 } from "./security.ts";
 import { createCustomer, newRun } from "./seed.ts";
 import { activeTrainingProfiles, hasWeakness, classroomAccountEmail, classroomUsername, classroomColleagueEmail, type ClassroomUsername } from "./policy.ts";
-import { registerExtendedLabs, extendedLabels } from "./extendedLabs.ts";
+import { registerExtendedLabs, extendedLabels } from "./businessServices.ts";
 import {
   cart,
   checkout,
@@ -40,9 +40,7 @@ const credentials = z
   .object({ email, password: z.string().min(12).max(128) })
   .strict();
 const uuid = z.string().uuid();
-// The local classroom installation accepts one published login pair.
-// Each successful sign-in creates a separately scoped learner workspace.
-// Regression-test applications can retain the historical customer flows.
+// Customer sessions are associated with persistent local accounts.
 const sharedCredentials = z.object({
   username: z.string().trim().max(40),
   password: z.string().max(128),

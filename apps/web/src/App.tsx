@@ -31,7 +31,7 @@ import {
   type Message,
 } from "./api.ts";
 import { Modal } from "./components/Modal.tsx";
-import { AccountServices } from "./Services.tsx";
+import { AccountServices } from "./AccountServices.tsx";
 const blankCart: Cart = {
   version: 0,
   items: [],

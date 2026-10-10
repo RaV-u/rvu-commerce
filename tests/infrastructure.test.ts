@@ -39,9 +39,9 @@ test("every seeded product has a local asset and no external image dependency", 
 test("all 18 vulnerability families are present in one student-facing commerce experience",async()=>{
   const {activeTrainingProfiles,hasWeakness}=await import("../apps/api/src/policy.ts");
   const storefront=await readFile("apps/web/src/App.tsx","utf8");
-  const services=await readFile("apps/web/src/Services.tsx","utf8");
+  const services=await readFile("apps/web/src/AccountServices.tsx","utf8");
   const api=await readFile("apps/api/src/app.ts","utf8");
-  const workflows=await readFile("apps/api/src/extendedLabs.ts","utf8");
+  const workflows=await readFile("apps/api/src/businessServices.ts","utf8");
   const identifiers=[
     "B01","B02","B03","B04","B05","B06","B07","B08","B09","B10","B11","B12",
     "R01","R02","R03","R04","R05","R06",
@@ -72,7 +72,7 @@ test("all 18 vulnerability families are present in one student-facing commerce e
 test("business services are embedded in My Account, not a separate website",async()=>{
   const app=await readFile("apps/web/src/App.tsx","utf8");
   const entry=await readFile("apps/web/src/main.tsx","utf8");
-  const services=await readFile("apps/web/src/Services.tsx","utf8");
+  const services=await readFile("apps/web/src/AccountServices.tsx","utf8");
   assert.ok(app.includes('<AccountServices user={session.user} />'));
   assert.ok(app.includes('id: "services"'));
   assert.ok(!app.includes('href="/services"'));
