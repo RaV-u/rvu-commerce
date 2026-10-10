@@ -31,35 +31,19 @@ assert.ok(html.headers.get("content-security-policy"));
 const servicesPage = await fetch(origin + "/services");
 assert.equal(servicesPage.status, 200, "Service portal SPA route must be published");
 assert.match(await servicesPage.text(), /RVU Commerce/);
-// Both published hosts must be usable, but student authentication and API
-// routes must never cross the instructor boundary.
-const instructorOrigin = "http://127.0.0.1:8081";
-const instructorPage = await fetch(instructorOrigin);
-assert.equal(instructorPage.status, 200);
-assert.match(await instructorPage.text(), /RVU Commerce.*Instructor/);
-const instructorHealth = await fetch(instructorOrigin + "/api/health");
-assert.equal(instructorHealth.status, 200);
-assert.equal((await instructorHealth.json()).service, "control");
-const forbidden = await fetch(instructorOrigin + "/api/instructor/reset", {
-  method: "POST",
-  headers: {
-    Origin: instructorOrigin,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({ confirm: "RESET" }),
-});
-assert.equal(forbidden.status, 401, "A visitor must not reset instructor runs");
-const wrongService = await fetch(origin + "/api/instructor/session");
-assert.equal(wrongService.status, 404);
+// Only the storefront is published. Instructor APIs are not deployed.
+const forbidden = await fetch(origin + "/api/instructor/session");
+assert.equal(forbidden.status, 404);
 const catalog = await request("/api/catalog");
 assert.equal(catalog.products.length, 8);
+assert.equal(catalog.promotions.length, 3, "Integrated storefront exposes the store promotion family");
 await request("/api/register", "POST", {
   name: "Local Smoke Customer",
   email: `smoke-${randomUUID().slice(0, 8)}@learner.rvu.test`,
   password: "Fictional-Smoke-2026!",
 });
 const directory = await request("/api/business/status");
-assert.equal(directory.profile, undefined, "Learner must not discover instructor training profile");
+assert.equal(directory.profile, undefined, "Learner must not discover internal profile");
 assert.equal(directory.states, undefined, "Learner must not receive lab state or tokens");
 const inbox = await request("/api/inbox");
 await request("/api/verify", "POST", {
