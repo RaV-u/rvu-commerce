@@ -17,7 +17,8 @@ The setup script creates local `.env` credentials on first run and preserves exi
 - Store: http://localhost:8080
 - Business services: http://localhost:8080/services
 - No instructor website; port 8081 is no longer published
-- Demo customer: `alex@learner.rvu.test` / `Studio-Local-2026!`
+- Single learner login: **Username `rvu` / Password `rvucamp`** (localhost classroom only)
+- Each sign-in provisions a fresh, verified fictional workspace and separate basket/wallet/inbox. No registration or email verification step is needed.
 - Opening fictional wallet credit: **EGP 15,000**
 
 **Upgrade an already-running local installation:**
@@ -29,17 +30,17 @@ sh scripts/start.sh
 docker compose ps
 ```
 
-Migration 004 upgrades pre-existing PostgreSQL volumes without deleting them. The first integrated-mode startup changes the active run, which invalidates sessions from older versions; sign back in using the demo account. Do **not** use `docker compose down -v` if you need existing data.
+Migration 004 upgrades pre-existing PostgreSQL volumes without deleting them. The first integrated-mode startup changes the active run, which invalidates sessions from older versions; sign back in using `rvu` / `rvucamp`. Do **not** use `docker compose down -v` if you need existing data.
 
 ### Repeat a scenario
 
-Students may create new `@learner.rvu.test` accounts. To start an entirely new isolated storefront state as the **local machine operator**, run:
+Students sign out and sign in again using the same pair to receive a fresh fictional practice workspace. Signing in again starts a new account and does **not** restore orders or funds from a previous login. To reset the entire active training run as the **local machine operator**, run:
 
 ```bash
 docker compose run --rm migrate node --import tsx scripts/reset-local.mjs RESET
 ```
 
-That command is **not** exposed via the website; it rotates the active run. Existing customer sessions become invalid and demo accounts are reseeded. The prior run remains in PostgreSQL until you intentionally delete the volume.
+That command is **not** exposed via the website; it rotates the active run. Existing customer sessions become invalid; new logins provision their own workspaces. The prior run remains in PostgreSQL until you intentionally delete the volume.
 
 To stop the app without erasing the database: `docker compose down`.
 
@@ -76,7 +77,8 @@ Real PostgreSQL concurrency tests, account workflow regressions and Docker proxy
 ## Classroom reliability and audit scope
 
 - One local Docker installation runs **all conceptual weaknesses at once**; each student should use a separate local installation for repeatable blind-hunting practice when possible.
-- The shared fictional `target@learner.rvu.test` account and its login-attempt quota are stateful. Password changes and repeated sign-in tests against that account can interfere with another learner on the same installation. Creating a new customer **does not reset** the shared quota; use the local operator reset command above when this happens.
+- The deliberately simple `rvucamp` password is intended strictly for loopback-only training. It must never be used for an internet-facing deployment.
+- The shared fictional `target@learner.rvu.test` account and its login-attempt quota are stateful. Password changes and repeated sign-in tests against that account can interfere with another learner on the same installation. Signing in again **does not reset** the shared quota; use the local operator reset command above when this happens.
 - Current CI gates include individual regression tests for all 18 families, a real-Docker combined smoke covering 10 families, and a separate parallel browsing plus legitimate checkout/refund test for three independent customers. This is **not** a guarantee that every pairwise interaction across the 18 has been tested.
 - The HTTP performance measurements come from a disposable GitHub Actions runner. They do not measure CPU/RAM contention or browser responsiveness on students' Windows/WSL laptops.
 - Certain specialized workflows demonstrate the trust-boundary failure without recreating a real SMTP parser or a full administrative account session. Review the original PortSwigger learning goals before promising identical learner outcomes.
