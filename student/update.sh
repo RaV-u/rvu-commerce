@@ -31,5 +31,5 @@ for file in compose.yaml install.sh stop.sh reset.sh update.sh setup.sh README_A
 done
 mv -f "$src/images.tar.gz" images.tar.gz
 chmod +x install.sh stop.sh reset.sh update.sh setup.sh
-docker compose up -d --wait --wait-timeout 180 --remove-orphans
+docker compose up -d --force-recreate --wait --wait-timeout 180 --remove-orphans
 echo "RVU Commerce is up to date: http://localhost:8081"
