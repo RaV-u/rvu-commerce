@@ -6,6 +6,7 @@ import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 import { migrate } from "../apps/api/src/migrate.ts";
 import { buildApp } from "../apps/api/src/app.ts";
 import { App } from "../apps/web/src/App.tsx";
+import { Services } from "../apps/web/src/Services.tsx";
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", {
   url: "http://localhost:8080",
@@ -213,5 +214,17 @@ test("React → Fastify → SQL: registration and scoped inbox verification unlo
     screen.getByRole("button", { name: "Add Hush Pro Headphones to bag" }),
   );
   await screen.findByRole("button", { name: "Shopping bag, 1 items" });
+  cleanup();
+});
+
+test("Services portal renders actual business workflows and sends typed requests to the backend", async () => {
+  const user = userEvent.setup({document: dom.window.document});
+  render(<Services />);
+  await screen.findByRole("heading", {name:"Work, connected."});
+  await screen.findByRole("button", {name:"Cart reconciliation"});
+  await user.click(screen.getByRole("button", {name:"Bulk business invoice"}));
+  await user.click(screen.getByRole("button", {name:"Submit request →"}));
+  await screen.findByText("Service response");
+  assert.match(screen.getByText(/"charged":/).textContent ?? "", /charged/);
   cleanup();
 });
