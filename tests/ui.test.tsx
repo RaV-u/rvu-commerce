@@ -221,10 +221,10 @@ test("Services portal renders actual business workflows and sends typed requests
   const user = userEvent.setup({document: dom.window.document});
   render(<Services />);
   await screen.findByRole("heading", {name:"Work, connected."});
-  await screen.findByRole("button", {name:"Wholesale invoice"});
-  await user.click(screen.getByRole("button", {name:"Wholesale invoice"}));
+  await screen.findByRole("button", {name:"Send delivery notice"});
+  await user.click(screen.getByRole("button", {name:"Send delivery notice"}));
   await user.click(screen.getByRole("button", {name:"Continue →"}));
   await screen.findByText("Request completed");
-  assert.match(screen.getByText(/"charged":/).textContent ?? "", /charged/);
+  assert.match(screen.getByText(/"ciphertext":/).textContent ?? "", /ciphertext/);
   cleanup();
 });
