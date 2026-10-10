@@ -13,7 +13,7 @@
     "migrate": "node --import tsx apps/api/src/migrate.ts",
     "test": "node --import tsx --test --test-concurrency=1 tests/*.test.ts",
     "test:ui": "node --import tsx --test tests/ui.test.tsx",
-    "build:server": "node node_modules/esbuild/bin/esbuild apps/api/src/main.ts apps/api/src/migrate.ts scripts/reset-local.mjs --bundle --minify --platform=node --format=esm --packages=external --define:process.env.RVU_CONTROL_SERVICE='\"disabled\"' --outdir=dist/server --log-level=warning"
+    "build:server": "./node_modules/.bin/esbuild apps/api/src/main.ts apps/api/src/migrate.ts scripts/reset-local.mjs --bundle --minify --platform=node --format=esm --packages=external --define:process.env.RVU_CONTROL_SERVICE='\"disabled\"' --outdir=dist/server --log-level=warning"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.3",
