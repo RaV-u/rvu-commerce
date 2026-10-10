@@ -85,7 +85,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
   userRoute("GET","/api/lab/status",async(_db,a)=>({
     account:{name:a.name,verified:a.verified},
     services:"available",
-  }));
+  }),false);
   // Each action is also documented as a business workflow in the storefront
   // and can be inspected in Burp. The actor/profile cannot be set by the client.
   userRoute("POST","/api/lab/action",async(db,a,req)=>{
