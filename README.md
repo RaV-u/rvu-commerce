@@ -2,7 +2,7 @@
 
 A local commerce training application for RVU Camp, built on the approved blueprint at `docs/RVU_Commerce_Research_and_Architecture.md`.
 
-**Milestone 2 source preview (2026-10-10):** the original secure baseline is retained and five instructor-selected scenarios have been implemented in code: **B01, B04, B08, B10, R01**. The remaining 13 scenarios from the 18-lab blueprint are not yet implemented. Student accounts cannot select training profiles. Native PostgreSQL, Docker, real-browser and end-to-end acceptance of these new changes **remain to be executed**. The original M1 test log does not certify M2.
+**Milestone 2 verification (2026-10-10):** Five instructor-selected training scenarios are implemented: **B01, B04, B08, B10, R01**, alongside `secure-baseline`. The other **13 of 18** planned labs are not implemented. GitHub Actions now verifies strict TypeScript checks, both Vite builds, **20/20 backend tests on native PostgreSQL 17 (including real concurrent transactions and R01)** and **3/3 connected React UI tests**. A separate Docker Compose end-to-end CI gate has been added; see the latest Actions run for its result. These checks do not replace interactive browser acceptance on the student's device.
 
 A rebuilt horizontal SVG logo replaces the previously misaligned vertical wordmark, and the storefront adds a responsive mobile navigation, custom workstation quotes, two-step checkout review and one-use store vouchers. Instructor-only evidence metrics are derived from persisted server data.
 
@@ -63,7 +63,7 @@ There is no real shipment, external payment gateway, stock reservation, password
 
 ## Verification and its limits
 
-The committed logs in `docs/verification/` describe the *previous M1 build only*. The present M2 source was syntax-parsed (JS/TS, 24 files). No M2 npm dependency install, typecheck, SQL execution or Docker/native-browser test could run in the present sandbox: npm registry DNS resolution and Docker are unavailable. Run every gate below locally before trusting the new training modes. The original M1 authoring environment had Node 24.19.0 but no Docker daemon or native PostgreSQL. Native PostgreSQL installation was blocked by the execution environment's UID/GID restrictions.
+The files in `docs/verification/` are historical **M1 snapshots**, not results of the current M2 code. **Current M2 evidence is in [GitHub Actions](https://github.com/RaV-u/rvu-commerce/actions):** typecheck and builds pass, backend integration tests run on PostgreSQL 17 with all 20 passing (including native concurrency and R01), and all three connected React/PGlite UI tests pass. An additional Compose smoke job exercises the actual proxy and local service stack. Real-browser layout/responsive appearance and your Windows/WSL2 resource usage still require local acceptance.
 
 Functional API/SQL and React interaction tests use **PGlite (PostgreSQL/WASM)** via the PostgreSQL wire protocol. They run the real migrations, handlers, transactions and ledger logic. The React tests use JSDOM and an in-process HTTP adapter to Fastify; they do not mock business responses. This verifies connected functional behavior, **not browser rendering, independent PostgreSQL backends, Docker startup, network isolation or Windows performance**.
 
@@ -82,7 +82,7 @@ Tests use a separate ephemeral `rvu_test` database, not the store database. Expl
 2. Twelve concurrent ordinary coupon requests produce one benefit, then twelve identical checkouts produce one order and one wallet debit.
 3. In **R01 only**, two or more parallel claims for the same STUDIO300 voucher can produce multiple persisted benefit records; a clean sequential control is rejected. This check is intentionally native-only.
 
-The React test suite still uses PGlite so it is portable; native correctness is established by the backend gates. These tests are provided but **were not run on native PostgreSQL in the authoring environment**.
+The React test suite uses PGlite to verify UI → Fastify → SQL. Backend integration and true concurrency gates have passed on native PostgreSQL 17 in GitHub Actions. The Compose stack uses PostgreSQL 18; check the latest Docker smoke job for container-level acceptance.
 
 For host-to-proxy-to-database smoke testing, if Node 24 is available on WSL:
 
@@ -129,7 +129,7 @@ One installation supports one active run/profile. It is designed for one learner
 
 ## Core scenario preparation
 
-See `docs/CORE_READINESS.md`. B01, B04, B08, B10 and R01 have identified secure boundaries and regression checks. Their vulnerable variants and evaluators are intentionally absent. B01's custom-quote domain and B08's separate intent/confirmation transitions still need their own complete, verified milestones. R01 cannot begin until the native concurrency and WSL2 transport gates pass.
+See `docs/CORE_READINESS.md`. The five instructor-selected training implementations (B01, B04, B08, B10, R01) now have scenario-specific behavior and native-PostgreSQL regression tests; the other 13 planned labs are still unimplemented. The native R01 concurrency gate passed in CI, but instructor-led acceptance and repeatability on the student's local Docker environment remain release checks.
 
 ## Resource and packaging decisions
 
