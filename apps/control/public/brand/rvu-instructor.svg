@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 328 82" role="img" aria-labelledby="title desc">
+  <title id="title">RVU Commerce</title>
+  <desc id="desc">Horizontal RVU wordmark with Commerce descriptor</desc>
+  <g fill="#183e32">
+    <text x="3" y="61" font-family="Arial,Helvetica,sans-serif" font-size="73" font-weight="800" letter-spacing="-8">rvu</text>
+    <rect x="170" y="18" width="2" height="44" rx="1" fill="#c4a66b"/>
+    <text x="187" y="38" font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="700" letter-spacing="3.1">INSTRUCTOR</text>
+    <text x="188" y="57" font-family="Arial,Helvetica,sans-serif" font-size="9.2" font-weight="600" letter-spacing="2.1">LOCAL TRAINING CONSOLE</text>
+    <rect x="188" y="66" width="57" height="2" rx="1" fill="#c4a66b"/>
+  </g>
+</svg>

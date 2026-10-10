@@ -1,0 +1,23 @@
+# Dependencies and build outputs
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+
+# Per-machine secrets: never commit these
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs, backups, generated runtime data
+*.log
+*.zip
+*.tar
+*.tar.gz
+*.sql.gz
+backups/
+data/
+.DS_Store

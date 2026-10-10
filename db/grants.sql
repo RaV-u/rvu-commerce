@@ -1,0 +1,13 @@
+REVOKE ALL ON SCHEMA control FROM PUBLIC;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+GRANT USAGE ON SCHEMA store TO rvu_store,rvu_control;
+GRANT SELECT ON ALL TABLES IN SCHEMA store TO rvu_store,rvu_control;
+GRANT INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA store TO rvu_control;
+GRANT INSERT,UPDATE,DELETE ON store.users,store.sessions,store.mailboxes,store.verifications,store.outbox,store.accounts,store.carts,store.cart_items,store.cart_coupons,store.orders,store.order_items,store.payments,store.checkouts,store.promotion_uses,store.gift_cards,store.refunds,store.quotes,store.cart_quotes,store.cart_discount_applications,store.checkout_intents,store.voucher_claims TO rvu_store;
+GRANT INSERT ON store.entries,store.journals,store.events TO rvu_store;
+GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA store TO rvu_store,rvu_control;
+REVOKE UPDATE,DELETE ON store.entries,store.journals,store.events FROM rvu_store,rvu_control;
+GRANT USAGE ON SCHEMA control TO rvu_control;
+GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA control TO rvu_control;
+REVOKE ALL ON SCHEMA control FROM rvu_store;
+REVOKE ALL ON ALL TABLES IN SCHEMA control FROM rvu_store;

@@ -1,0 +1,46 @@
+CREATE SCHEMA IF NOT EXISTS store;
+CREATE SCHEMA IF NOT EXISTS control;
+CREATE TABLE store.runs(id uuid PRIMARY KEY, profile text NOT NULL CHECK(profile='secure-baseline'), version int NOT NULL DEFAULT 1, created_at timestamptz NOT NULL DEFAULT now(), closed_at timestamptz);
+CREATE TABLE store.runtime(singleton boolean PRIMARY KEY DEFAULT true CHECK(singleton), active_run uuid NOT NULL REFERENCES store.runs);
+CREATE TABLE store.products(id text PRIMARY KEY, name text NOT NULL, category text NOT NULL, description text NOT NULL, price bigint NOT NULL CHECK(price>0 AND price<=100000000), kind text NOT NULL CHECK(kind IN ('physical','gift_card')), image text NOT NULL, badge text NOT NULL DEFAULT '', specs jsonb NOT NULL DEFAULT '[]');
+CREATE TABLE store.users(id uuid NOT NULL, run_id uuid NOT NULL REFERENCES store.runs, name text NOT NULL, email text NOT NULL, password_hash text NOT NULL, verified boolean NOT NULL DEFAULT false, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(run_id,id), UNIQUE(run_id,email));
+CREATE TABLE store.sessions(token_hash text PRIMARY KEY, run_id uuid NOT NULL, user_id uuid NOT NULL, csrf text NOT NULL, expires_at timestamptz NOT NULL, FOREIGN KEY(run_id,user_id) REFERENCES store.users);
+CREATE TABLE store.mailboxes(run_id uuid NOT NULL, user_id uuid NOT NULL, address text NOT NULL, PRIMARY KEY(run_id,address), FOREIGN KEY(run_id,user_id) REFERENCES store.users);
+CREATE TABLE store.verifications(token_hash text PRIMARY KEY, run_id uuid NOT NULL, user_id uuid NOT NULL, address text NOT NULL, expires_at timestamptz NOT NULL, used_at timestamptz, FOREIGN KEY(run_id,user_id) REFERENCES store.users);
+CREATE TABLE store.outbox(id uuid PRIMARY KEY, run_id uuid NOT NULL, user_id uuid NOT NULL, recipient text NOT NULL, subject text NOT NULL, body text NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), sent_at timestamptz, attempts int NOT NULL DEFAULT 0, FOREIGN KEY(run_id,user_id) REFERENCES store.users);
+CREATE TABLE store.accounts(id uuid NOT NULL, run_id uuid NOT NULL REFERENCES store.runs, user_id uuid, purpose text NOT NULL CHECK(purpose IN ('wallet','treasury','merchant')), balance bigint NOT NULL DEFAULT 0, PRIMARY KEY(run_id,id), UNIQUE(run_id,user_id), FOREIGN KEY(run_id,user_id) REFERENCES store.users, CHECK(purpose!='wallet' OR balance>=0));
+CREATE UNIQUE INDEX system_accounts ON store.accounts(run_id,purpose) WHERE user_id IS NULL;
+CREATE TABLE store.journals(id uuid NOT NULL, run_id uuid NOT NULL REFERENCES store.runs, kind text NOT NULL CHECK(kind IN ('opening','purchase','redemption','refund')), reference text NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(run_id,id), UNIQUE(run_id,kind,reference));
+CREATE TABLE store.entries(id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, run_id uuid NOT NULL, journal_id uuid NOT NULL, account_id uuid NOT NULL, amount bigint NOT NULL CHECK(amount!=0), FOREIGN KEY(run_id,journal_id) REFERENCES store.journals, FOREIGN KEY(run_id,account_id) REFERENCES store.accounts);
+CREATE FUNCTION store.enforce_balanced_journal() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF (SELECT count(*) FROM store.entries WHERE run_id=NEW.run_id AND journal_id=NEW.id)<2 OR (SELECT coalesce(sum(amount),0) FROM store.entries WHERE run_id=NEW.run_id AND journal_id=NEW.id)!=0 THEN RAISE EXCEPTION 'Unbalanced journal'; END IF;
+ RETURN NULL;
+END $$;
+CREATE CONSTRAINT TRIGGER balanced_journal AFTER INSERT ON store.journals DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION store.enforce_balanced_journal();
+CREATE TABLE store.carts(id uuid NOT NULL, run_id uuid NOT NULL, user_id uuid NOT NULL, version int NOT NULL DEFAULT 0, PRIMARY KEY(run_id,id), UNIQUE(run_id,user_id), FOREIGN KEY(run_id,user_id) REFERENCES store.users);
+CREATE TABLE store.cart_items(run_id uuid NOT NULL, cart_id uuid NOT NULL, product_id text NOT NULL REFERENCES store.products, quantity int NOT NULL CHECK(quantity BETWEEN 1 AND 10), PRIMARY KEY(run_id,cart_id,product_id), FOREIGN KEY(run_id,cart_id) REFERENCES store.carts);
+CREATE TABLE store.promotions(code text PRIMARY KEY, percent int NOT NULL CHECK(percent BETWEEN 1 AND 50), minimum bigint NOT NULL CHECK(minimum>=0), description text NOT NULL);
+CREATE TABLE store.cart_coupons(run_id uuid NOT NULL, cart_id uuid NOT NULL, code text NOT NULL REFERENCES store.promotions, PRIMARY KEY(run_id,cart_id), FOREIGN KEY(run_id,cart_id) REFERENCES store.carts);
+CREATE TABLE store.orders(id uuid NOT NULL, run_id uuid NOT NULL, user_id uuid NOT NULL, order_number text NOT NULL, state text NOT NULL CHECK(state IN ('confirmed','refunded')), subtotal bigint NOT NULL CHECK(subtotal>0), discount bigint NOT NULL CHECK(discount>=0), total bigint NOT NULL CHECK(total>0 AND total=subtotal-discount), currency text NOT NULL DEFAULT 'EGP' CHECK(currency='EGP'), cart_version int NOT NULL, delivery jsonb NOT NULL, coupon text, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(run_id,id), UNIQUE(run_id,order_number), FOREIGN KEY(run_id,user_id) REFERENCES store.users);
+CREATE TABLE store.order_items(id uuid PRIMARY KEY, run_id uuid NOT NULL, order_id uuid NOT NULL, product_id text NOT NULL REFERENCES store.products, name text NOT NULL, unit_price bigint NOT NULL CHECK(unit_price>0), quantity int NOT NULL CHECK(quantity BETWEEN 1 AND 10), kind text NOT NULL, FOREIGN KEY(run_id,order_id) REFERENCES store.orders);
+CREATE TABLE store.payments(id uuid PRIMARY KEY, run_id uuid NOT NULL, order_id uuid NOT NULL, journal_id uuid NOT NULL, amount bigint NOT NULL CHECK(amount>0), state text NOT NULL CHECK(state='settled'), UNIQUE(run_id,order_id), FOREIGN KEY(run_id,order_id) REFERENCES store.orders, FOREIGN KEY(run_id,journal_id) REFERENCES store.journals);
+CREATE TABLE store.checkouts(run_id uuid NOT NULL, user_id uuid NOT NULL, key text NOT NULL, fingerprint text NOT NULL, order_id uuid NOT NULL, PRIMARY KEY(run_id,user_id,key), FOREIGN KEY(run_id,user_id) REFERENCES store.users, FOREIGN KEY(run_id,order_id) REFERENCES store.orders);
+CREATE TABLE store.promotion_uses(run_id uuid NOT NULL, user_id uuid NOT NULL, code text NOT NULL REFERENCES store.promotions, order_id uuid NOT NULL, PRIMARY KEY(run_id,user_id,code), FOREIGN KEY(run_id,user_id) REFERENCES store.users, FOREIGN KEY(run_id,order_id) REFERENCES store.orders);
+CREATE TABLE store.gift_cards(id uuid PRIMARY KEY, run_id uuid NOT NULL, order_id uuid NOT NULL, buyer_id uuid NOT NULL, code text NOT NULL, face_value bigint NOT NULL CHECK(face_value>0), redeemed_by uuid, redeemed_at timestamptz, UNIQUE(run_id,code), FOREIGN KEY(run_id,order_id) REFERENCES store.orders, FOREIGN KEY(run_id,buyer_id) REFERENCES store.users, FOREIGN KEY(run_id,redeemed_by) REFERENCES store.users);
+CREATE TABLE store.refunds(id uuid PRIMARY KEY, run_id uuid NOT NULL, order_id uuid NOT NULL, journal_id uuid NOT NULL, amount bigint NOT NULL CHECK(amount>0), UNIQUE(run_id,order_id), FOREIGN KEY(run_id,order_id) REFERENCES store.orders, FOREIGN KEY(run_id,journal_id) REFERENCES store.journals);
+CREATE TABLE store.events(id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, run_id uuid NOT NULL REFERENCES store.runs, actor_id uuid, action text NOT NULL, object_id text NOT NULL, request_id text, created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE control.instructors(id uuid PRIMARY KEY, username text NOT NULL UNIQUE, password_hash text NOT NULL);
+CREATE TABLE control.sessions(token_hash text PRIMARY KEY, instructor_id uuid NOT NULL REFERENCES control.instructors, csrf text NOT NULL, expires_at timestamptz NOT NULL);
+CREATE INDEX session_expiry ON store.sessions(expires_at);
+CREATE INDEX orders_owner ON store.orders(run_id,user_id,created_at DESC);
+CREATE INDEX ledger_lookup ON store.entries(run_id,account_id);
+CREATE INDEX outbox_pending ON store.outbox(created_at) WHERE sent_at IS NULL;
+CREATE FUNCTION store.reject_ledger_mutation() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'Ledger records are append-only'; END $$;
+CREATE TRIGGER immutable_entries BEFORE UPDATE OR DELETE ON store.entries FOR EACH ROW EXECUTE FUNCTION store.reject_ledger_mutation();
+CREATE TRIGGER immutable_journals BEFORE UPDATE OR DELETE ON store.journals FOR EACH ROW EXECUTE FUNCTION store.reject_ledger_mutation();
+CREATE FUNCTION store.check_entry_balance() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+ IF (SELECT sum(amount) FROM store.entries WHERE run_id=NEW.run_id AND journal_id=NEW.journal_id)!=0 THEN RAISE EXCEPTION 'Unbalanced journal entries'; END IF;
+ IF (SELECT balance FROM store.accounts WHERE run_id=NEW.run_id AND id=NEW.account_id)!=(SELECT coalesce(sum(amount),0) FROM store.entries WHERE run_id=NEW.run_id AND account_id=NEW.account_id) THEN RAISE EXCEPTION 'Account does not match ledger'; END IF;
+ RETURN NULL; END $$;
+CREATE CONSTRAINT TRIGGER balanced_entries AFTER INSERT ON store.entries DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION store.check_entry_balance();

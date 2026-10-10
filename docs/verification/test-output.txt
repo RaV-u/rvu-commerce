@@ -1,0 +1,48 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> rvu-commerce@0.1.0 typecheck
+> tsc --noEmit
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> rvu-commerce@0.1.0 test
+> node --import tsx --test --test-concurrency=1 tests/*.test.ts
+
+✔ catalog is reproducible and instructor routes are absent from student service (1867.426632ms)
+✔ register → private inbox → email verification → wallet (132.89962ms)
+✔ origin, CSRF, server prices, quantity and strict body validation (20.119ms)
+✔ transactional outbox delivers a real SMTP message and marks it sent once (178.349605ms)
+✔ cart → one coupon → checkout → one settlement → order → idempotent refund (133.377535ms)
+✔ stale cart and insufficient wallet fail atomically (35.477346ms)
+✔ gift card face value → purchase → different owner redemption exactly once (67.429377ms)
+✔ database ledger is balanced, immutable and rejects incomplete journals (10.089478ms)
+✔ database role cannot read instructor credentials or change catalog prices (5.14808ms)
+﹣ native PostgreSQL gate: two HTTP requests hold independent simultaneous transactions (0.253391ms) # PGlite is not evidence of independent PostgreSQL sessions
+✔ instructor boundary and reset invalidate every old run session and object (154.928738ms)
+﹣ native PostgreSQL gate: parallel coupons and checkout settle once (0.196959ms) # Requires native PostgreSQL
+✔ Compose configuration exposes only loopback proxy ports and separates credentials (20.900484ms)
+✔ every seeded product has a local asset and no external image dependency (4.201935ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 2
+ℹ todo 0
+ℹ duration_ms 3533.536848
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> rvu-commerce@0.1.0 test:ui
+> node --import tsx --test tests/ui.test.tsx
+
+✔ expired/reset session returns the storefront to sign-in (2687.086347ms)
+✔ React → Fastify → SQL: search, login, bag, promotion, payment, order and refund (1623.232346ms)
+✔ React → Fastify → SQL: registration and scoped inbox verification unlock shopping (866.278445ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6690.169997
