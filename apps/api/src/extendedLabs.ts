@@ -80,11 +80,12 @@ export const extendedLabels:Record<string,string> = {
   R06:"Partially provisioned corporate account",
 };
 export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
-  userRoute("GET","/api/lab/status",async(db,a)=>{
-    const states=(await db.query("SELECT scenario,data FROM store.lab_states WHERE run_id=$1 AND user_id=$2",[a.run,a.id])).rows;
-    const proofs=(await db.query("SELECT scenario,kind,count(*)::int AS count FROM store.lab_evidence WHERE run_id=$1 AND user_id=$2 GROUP BY scenario,kind",[a.run,a.id])).rows;
-    return {profile:a.profile,available:Object.keys(extendedLabels),states,proofs};
-  });
+  // Only instructor endpoints may reveal scenario identity, state and evidence.
+  // Learners receive a neutral service-directory acknowledgement.
+  userRoute("GET","/api/lab/status",async(_db,a)=>({
+    account:{name:a.name,verified:a.verified},
+    services:"available",
+  }));
   // Each action is also documented as a business workflow in the storefront
   // and can be inspected in Burp. The actor/profile cannot be set by the client.
   userRoute("POST","/api/lab/action",async(db,a,req)=>{
@@ -284,7 +285,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         if((r.token??"")!==candidate || r.verified) throw new HttpError(400,"Invalid corporate verification code");
         await db.query("UPDATE store.lab_registrations SET verified=true WHERE id=$1",[id]);
         if(!r.completed && r.token===null) await evidence(db,a,"R06","partial-confirm",{registrationId:id,priorToken:null});
-        return {verified:true,publishedBeforeReady:!r.completed};
+        return {verified:true};
       }
       default: throw new HttpError(404,"Unknown training operation");
     }
