@@ -277,8 +277,15 @@ test("integrated storefront keeps multiple independent business weaknesses activ
   assert.equal(Number(paid.total),540000);
   assert.equal(paid.items.length,1);
   assert.equal(Number(paid.items[0].unit_price),680000);
-  const bulk=await act("bulk.invoice",{quantity:85900});
-  assert.equal(bulk.charged,32704);
+  for(let n=0;n<63;n++)await call(alex,"POST","/api/cart/items",{productId:"vista-27",quantity:99});
+  const bulk=await call(alex,"POST","/api/cart/items",{productId:"vista-27",quantity:80});
+  assert.equal(bulk.total,592704);
+  const bulkOrder=await call(alex,"POST","/api/checkout",{
+    cartVersion:bulk.version,
+    delivery:{fullName:"Alex Rowan",address:"12 Sample Studio Lane",city:"Sample City"},
+  },200,{"Idempotency-Key":randomUUID()});
+  assert.equal(Number(bulkOrder.total),592704);
+  assert.equal(Number(bulkOrder.items[0].quantity),6317);
   assert.equal((await act("workspace.admin")).approved,true);
   const note=await act("notification.encrypt",{body:"A".repeat(9)+"kind=remember&user=store-admin"});
   const forged=Buffer.from(note.ciphertext,"hex").subarray(32).toString("hex");
