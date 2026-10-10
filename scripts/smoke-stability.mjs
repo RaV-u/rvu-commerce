@@ -39,7 +39,7 @@ await Promise.all(accounts.flatMap(user=>Array.from({length:8},async()=>{
   ]);
   assert.equal(catalog.products.length,8);
   assert.equal(cart.items.length,0);
-  assert.equal(wallet.balance,1500000);
+  assert.equal(wallet.balance,15000);
 })));
 for(const user of accounts){
   const cart=await call(user,"PUT","/api/cart/items",{productId:"form-75",quantity:1});
@@ -47,9 +47,9 @@ for(const user of accounts){
     cartVersion:cart.version,
     delivery:{fullName:user.username,address:"12 Fictional Studio Lane",city:"Sample City"}
   },{"Idempotency-Key":randomUUID()});
-  assert.equal(Number(order.total),220000);
+  assert.equal(Number(order.total),2200);
   await call(user,"POST","/api/orders/"+order.id+"/refund",{});
-  assert.equal((await call(user,"GET","/api/wallet")).balance,1500000);
+  assert.equal((await call(user,"GET","/api/wallet")).balance,15000);
   await call(user,"POST","/api/logout",{});
   const returned=await call(user,"POST","/api/login",{username:user.username,password:"rvucamp"});
   assert.equal(returned.user.id,user.id,"A logout/login must restore the same named account");

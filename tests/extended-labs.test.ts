@@ -117,7 +117,7 @@ test("secure baseline rejects a cart update during authorization",{
   await pause(40);
   await call(alex,"PUT","/api/cart/items",{productId:"vista-27",quantity:1});
   await pending;
-  assert.equal((await call(alex,"GET","/api/wallet")).balance,1500000);
+  assert.equal((await call(alex,"GET","/api/wallet")).balance,15000);
 });
 test("secure baseline rejects corporate confirmation before provisioning completes",{
   skip:!process.env.TEST_DATABASE_URL?"Requires real parallel PostgreSQL sessions":false,
@@ -133,9 +133,9 @@ test("secure baseline rejects corporate confirmation before provisioning complet
 test("B02: negative quantity offsets a positive delivered product and debits real wallet",async()=>{
   await fresh("B02");
   const sale=await act("cart.reconcile",{lines:[{sku:"vista-27",quantity:1},{sku:"arc-light",quantity:-1}]});
-  assert.equal(sale.delivered,680000);
-  assert.equal(sale.charged,540000);
-  assert.equal((await call(alex,"GET","/api/wallet")).balance,960000);
+  assert.equal(sale.delivered,6800);
+  assert.equal(sale.charged,5400);
+  assert.equal((await call(alex,"GET","/api/wallet")).balance,9600);
   assert.equal(await proof("B02"),1);
 });
 test("B03: updating a trusted identity gives access to corporate order data",async()=>{
@@ -148,8 +148,8 @@ test("B03: updating a trusted identity gives access to corporate order data",asy
 test("B05: an explicitly converted 32-bit invoice wraps while ledger tracks charge",async()=>{
   await fresh("B05");
   const receipt=await act("bulk.invoice",{quantity:85900});
-  assert.equal(receipt.delivered,4295000000);
-  assert.equal(receipt.charged,32704);
+  assert.equal(receipt.delivered,42950000);
+  assert.equal(receipt.charged,327);
   assert.equal(await proof("B05"),1);
 });
 test("B06: legacy storage/truncation identity differs from an owned delivery mailbox",async()=>{
@@ -218,8 +218,8 @@ test("R03: adding a product during payment produces durable undercharged fulfill
   await pause(60);
   await call(alex,"PUT","/api/cart/items",{productId:"vista-27",quantity:1});
   const sale=await pending;
-  assert.equal(sale.charged,140000);
-  assert.equal(sale.delivered,820000);
+  assert.equal(sale.charged,1400);
+  assert.equal(sale.delivered,8200);
   assert.ok(await proof("R03")>0);
 });
 test("R04: two overlapping email-change workers deliver the new corporate verification to old owned mailbox",{
@@ -289,28 +289,28 @@ test("integrated storefront keeps multiple independent business weaknesses activ
   // The combined site demonstrates B01 in the ordinary cart price field.
   // A separate custom-workstation quote is NOT an alternative underpayment path.
   const quote=await call(alex,"POST","/api/quotes",{dock:true,support:true});
-  await call(alex,"POST","/api/quotes/"+quote.id+"/accept",{quotedTotal:90000},409);
+  await call(alex,"POST","/api/quotes/"+quote.id+"/accept",{quotedTotal:900},409);
   const account=await act("email.update",{address:"buyer@corp.rvu.test"});
   assert.equal(account.verified,true);
   assert.equal((await act("corporate.orders")).orders.length,1);
-  await call(alex,"POST","/api/cart/items",{productId:"vista-27",quantity:1,price:680000});
+  await call(alex,"POST","/api/cart/items",{productId:"vista-27",quantity:1,price:6800});
   const cartSale=await call(alex,"POST","/api/cart/items",{productId:"arc-light",quantity:-1});
-  assert.equal(cartSale.total,540000);
+  assert.equal(cartSale.total,5400);
   const paid=await call(alex,"POST","/api/checkout",{
     cartVersion:cartSale.version,
     delivery:{fullName:"Alex Rowan",address:"12 Sample Studio Lane",city:"Sample City"},
   },200,{"Idempotency-Key":randomUUID()});
-  assert.equal(Number(paid.total),540000);
+  assert.equal(Number(paid.total),5400);
   assert.equal(paid.items.length,1);
-  assert.equal(Number(paid.items[0].unit_price),680000);
+  assert.equal(Number(paid.items[0].unit_price),6800);
   for(let n=0;n<63;n++)await call(alex,"POST","/api/cart/items",{productId:"vista-27",quantity:99});
   const bulk=await call(alex,"POST","/api/cart/items",{productId:"vista-27",quantity:80});
-  assert.equal(bulk.total,592704);
+  assert.equal(bulk.total,5927);
   const bulkOrder=await call(alex,"POST","/api/checkout",{
     cartVersion:bulk.version,
     delivery:{fullName:"Alex Rowan",address:"12 Sample Studio Lane",city:"Sample City"},
   },200,{"Idempotency-Key":randomUUID()});
-  assert.equal(Number(bulkOrder.total),592704);
+  assert.equal(Number(bulkOrder.total),5927);
   assert.equal(Number(bulkOrder.items[0].quantity),6317);
   assert.equal((await act("workspace.admin")).approved,true);
   const note=await act("notification.encrypt",{body:"A".repeat(9)+"kind=remember&user=store-admin"});
@@ -358,8 +358,8 @@ test("two stable RVU accounts retain separate wallets and sessions across sign-o
   const again=await call(first,"POST","/api/login",{username:"rvu",password:"rvucamp"});
   assert.equal(again.user.id,a.user.id,"First named account must persist after re-login");
   assert.equal((await call(first,"GET","/api/cart")).items.length,1);
-  assert.equal((await call(first,"GET","/api/wallet")).balance,1500000);
-  assert.equal((await call(second,"GET","/api/wallet")).balance,1500000);
+  assert.equal((await call(first,"GET","/api/wallet")).balance,15000);
+  assert.equal((await call(second,"GET","/api/wallet")).balance,15000);
   await call(first,"POST","/api/login",{username:"rvu_3",password:"rvucamp"},401);
 });
 

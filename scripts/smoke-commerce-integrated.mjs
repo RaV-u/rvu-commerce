@@ -29,9 +29,9 @@ async function paid(call,cart){
   await call("POST","/api/cart/coupon",{code:"WELCOME10"});
   await call("POST","/api/cart/coupon",{code:"STUDIO15"});
   const cart=await call("POST","/api/cart/coupon",{code:"WELCOME10"});
-  assert.equal(cart.total,442000,"Repeated promotional applications must change the actual payable total");
+  assert.equal(cart.total,4420,"Repeated promotional applications must change the actual payable total");
   const order=await paid(call,cart);
-  assert.equal(Number(order.total),442000);
+  assert.equal(Number(order.total),4420);
   await call("POST","/api/orders/"+order.id+"/refund",{});
   console.log("PASS: stacked promotion persisted on actual paid order");
 }
@@ -52,12 +52,12 @@ async function paid(call,cart){
   const call=await newShopper();
   let cart=await call("PUT","/api/cart/items",{productId:"gift-500",quantity:1});
   cart=await call("POST","/api/cart/coupon",{code:"GIFT20"});
-  assert.equal(cart.total,40000);
+  assert.equal(cart.total,400);
   const start=(await call("GET","/api/wallet")).balance;
   const order=await paid(call,cart);
   await call("POST","/api/gift-cards/redeem",{code:order.giftCards[0].code});
   const end=(await call("GET","/api/wallet")).balance;
-  assert.equal(end-start,10000);
+  assert.equal(end-start,100);
   console.log("PASS: stored-value balance and promotional purchase are mutually consistent");
 }
 {
@@ -68,9 +68,9 @@ async function paid(call,cart){
   assert.ok(successful>=2,"Overlapping voucher claims were not reproduced in this CI run");
   const cart=await call("GET","/api/cart");
   assert.ok(cart.vouchers.length>=2);
-  assert.ok(cart.total<=620000);
+  assert.ok(cart.total<=6200);
   const order=await paid(call,cart);
-  assert.ok(Number(order.total)<=620000);
+  assert.ok(Number(order.total)<=6200);
   console.log("PASS: overlapping voucher claims reach a real order");
 }
 console.log("PASS: four commerce families available simultaneously with one RVU credential, no profile switch");

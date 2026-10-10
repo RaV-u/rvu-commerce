@@ -1,19 +1,30 @@
-# RVU Commerce — التثبيت قبل السيشن
+# RVU Commerce — دليل التثبيت للطلاب
 
-**المتطلبات:** Windows 10/11 أو Linux، وDocker Desktop شغال مع WSL2 (على Windows)، ومساحة فاضية كفاية لفك الحزمة وصور Docker. **لا تحتاج Node.js أو GitHub.**
+## قبل التثبيت
+- Windows 10/11: ثبّت **Docker Desktop** وفعّل **WSL2 integration**، ثم افتح Docker Desktop.
+- Linux: ثبّت Docker Engine مع Docker Compose.
+- لا تحتاج Node.js أو Git أو GitHub. تحتاج ملف **RVU-Commerce-Student.tar.gz** المرسَل من المدرّب.
+- الموقع يعمل محليًا فقط على البورت **8081**.
 
-1. فك ضغط ملف `RVU-Commerce-Student.tar.gz`.
-2. افتح Ubuntu (WSL) وروح لمجلد `RVU-Commerce-Student` اللي اتفك.
-3. نفّذ الأمر: `bash install.sh`.
-4. استنى لحد ما تظهر رسالة `RVU Commerce is ready`.
-5. افتح **http://localhost:8081**.
+## التثبيت من الصفر
+1. فك ضغط الملف **RVU-Commerce-Student.tar.gz** في مكان تختاره. على Windows يُفضّل داخل مجلد Ubuntu في WSL.
+2. افتح Ubuntu / WSL Terminal وادخل إلى مجلد **RVU-Commerce-Student** الناتج.
+3. شغّل **bash install.sh**. يجب أن يكون Docker Desktop مفتوحًا.
+4. بعد ظهور **RVU Commerce is ready** افتح **http://localhost:8081**.
 
-**الحساب الأول:** `rvu` / `rvucamp`  
-**الحساب الثاني:** `rvu_2` / `rvucamp`
+## الحسابات
+| الحساب | Username | Password |
+| --- | --- | --- |
+| الأول | `rvu` | `rvucamp` |
+| الثاني | `rvu_2` | `rvucamp` |
 
-كل الحسابات وخدمات المتجر داخل نفس الموقع. جرب تسجيل الدخول والتصفح قبل السيشن، لكن سيب تجارب الـCheckout والـWallet للسيشن نفسها.
+كل حساب له Session وWallet وCart وOrders مستقلة. تسجيل الخروج لا يمسح حسابك. كل الأسعار والأرصدة **بالجنيه المصري (EGP)**: الرقم **1** يعني جنيهًا واحدًا، والرقم **100** يعني 100 جنيه. كل حساب يبدأ برصيد افتراضي **15,000 جنيه**. الدفع محاكاة داخلية بلا أموال حقيقية.
 
-للإيقاف بدون حذف البيانات: `bash stop.sh`.  
-لو Docker مش شغال، افتح Docker Desktop وجرب `bash install.sh` تاني.
+## أثناء التدريب
+- ادخل **My Account → Services** للخدمات المرتبطة بالمتجر.
+- استخدم حسابًا في Firefox والآخر في نافذة Private أو متصفح مختلف إذا أردت اختبار فصل الحسابات.
+- Burp Suite يمكن ضبطه على Proxy **127.0.0.1:8080** مع Firefox، بينما الموقع يعمل على **localhost:8081**؛ لا تخلط بين البورتين.
+- للتوقف بدون حذف البيانات: **bash stop.sh**.
+- لبداية جديدة وحذف بياناتك المحلية: **bash reset.sh** ثم **bash install.sh**.
 
-**مهم:** شغّل المتجر على جهازك فقط، وما تنشرش البورت أو تفتحه للعامة.
+**حل سريع:** إذا لم يفتح الموقع، تأكد أن Docker يعمل، وأنك نفذت الأمر من داخل المجلد الصحيح، وأن بورت 8081 غير مستخدم. لا تنشر الموقع على الإنترنت ولا ترسل الحزمة لطرف خارجي.

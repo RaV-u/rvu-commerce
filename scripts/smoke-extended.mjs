@@ -24,26 +24,26 @@ const pause=ms=>new Promise(done=>setTimeout(done,ms));
 await call("POST","/api/login",{email:"alex@learner.rvu.test",password:"Studio-Local-2026!"});
 const status=await call("GET","/api/business/status");
 assert.equal(status.profile,undefined,"Do not leak internal vulnerability config");
-await call("POST","/api/cart/items",{productId:"vista-27",quantity:1,price:680000});
+await call("POST","/api/cart/items",{productId:"vista-27",quantity:1,price:6800});
 const quantity=await call("POST","/api/cart/items",{productId:"arc-light",quantity:-1});
-assert.equal(quantity.total,540000);
+assert.equal(quantity.total,5400);
 const reconciled=await call("POST","/api/checkout",{
   cartVersion:quantity.version,
   delivery:{fullName:"Alex Rowan",address:"12 Sample Studio Lane",city:"Sample City"},
 },200,{"Idempotency-Key":randomUUID()});
-assert.equal(Number(reconciled.total),540000);
+assert.equal(Number(reconciled.total),5400);
 assert.equal(reconciled.items.length,1);
-assert.equal(Number(reconciled.items[0].unit_price),680000);
+assert.equal(Number(reconciled.items[0].unit_price),6800);
 // Repeated add-to-cart requests overflow a legacy signed 32-bit total.
 for(let n=0;n<63;n++)await call("POST","/api/cart/items",{productId:"vista-27",quantity:99});
 const bulk=await call("POST","/api/cart/items",{productId:"vista-27",quantity:80});
 assert.equal(bulk.items[0].quantity,6317);
-assert.equal(bulk.total,592704);
+assert.equal(bulk.total,5927);
 const bulkOrder=await call("POST","/api/checkout",{
   cartVersion:bulk.version,
   delivery:{fullName:"Alex Rowan",address:"12 Sample Studio Lane",city:"Sample City"},
 },200,{"Idempotency-Key":randomUUID()});
-assert.equal(Number(bulkOrder.total),592704);
+assert.equal(Number(bulkOrder.total),5927);
 assert.equal(Number(bulkOrder.items[0].quantity),6317);
 await act("email.update",{address:"buyer@corp.rvu.test"});
 assert.equal((await act("corporate.orders")).orders.length,1);

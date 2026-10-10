@@ -19,7 +19,7 @@ Open **http://localhost:8081**. All account services are within **My Account →
 | `rvu` | `rvucamp` |
 | `rvu_2` | `rvucamp` |
 
-Both accounts have separate sessions, shopping carts, wallets, inboxes, and order histories, preserved when they sign back in. Currency and payment operations are simulated locally.
+Both accounts have separate sessions, shopping carts, wallets, inboxes, and order histories, preserved when they sign back in. Currency and payment operations are simulated locally. Monetary API values and database values use whole EGP pounds: 1 means EGP 1 and 100 means EGP 100. New accounts start with EGP 15,000.
 
 Stop containers without deleting data:
 
@@ -56,3 +56,7 @@ npm run test:ui
 ```
 
 CI also checks Docker/PostgreSQL, account isolation, purchase/refund, and browser layout. The store binds to **127.0.0.1:8081** only and must not be internet-exposed. Database migrations and security regression tests remain part of the instructor source repository.
+
+## Currency upgrade
+
+The monetary contract is **whole Egyptian pounds (EGP)** end-to-end. On the first upgrade from older cent-denominated builds, migration 007 updates catalog, promotion and voucher values and activates a fresh training run. Existing historical runs and ledger entries remain archived without being re-denominated. This avoids altering financial journals or mixing different units inside a wallet. Rebuild the student package before distributing it.

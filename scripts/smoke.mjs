@@ -77,16 +77,16 @@ const order = await request(
   },
   { "Idempotency-Key": randomUUID() },
 );
-assert.equal(Number(order.total), 198000);
-assert.equal((await request("/api/wallet")).balance, 1302000);
+assert.equal(Number(order.total), 1980);
+assert.equal((await request("/api/wallet")).balance, 13020);
 await request(`/api/orders/${order.id}/refund`, "POST", {});
-assert.equal((await request("/api/wallet")).balance, 1500000);
+assert.equal((await request("/api/wallet")).balance, 15000);
 await request("/api/logout", "POST", {});
 assert.equal((await request("/api/session")).user, null);
 const other=await request("/api/login","POST",{username:"rvu_2",password:"rvucamp"});
 assert.notEqual(other.user.id,signedIn.user.id,"Two distinct named accounts required");
 assert.equal(other.user.colleagueEmail,signedIn.user.email);
-assert.equal((await request("/api/wallet")).balance,1500000);
+assert.equal((await request("/api/wallet")).balance,15000);
 assert.equal((await request("/api/cart")).items.length,0);
 await request("/api/logout","POST",{});
 const returned=await request("/api/login","POST",{username:"rvu",password:"rvucamp"});

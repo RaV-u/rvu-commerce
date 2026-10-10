@@ -124,7 +124,7 @@ test("register → private inbox → email verification → wallet", async () =>
   await request(bob, "POST", "/api/verify", { code });
   await request(bob, "POST", "/api/verify", { code }, 400);
   const wallet = await request(bob, "GET", "/api/wallet");
-  assert.equal(wallet.balance, 1500000);
+  assert.equal(wallet.balance, 15000);
   assert.equal(wallet.transactions.length, 1);
   await request(alex, "POST", "/api/login", {
     email: "alex@learner.rvu.test",
@@ -200,7 +200,7 @@ test("cart → one coupon → checkout → one settlement → order → idempote
   const c = await request(alex, "POST", "/api/cart/coupon", {
     code: "WELCOME10",
   });
-  assert.equal(c.total, 198000);
+  assert.equal(c.total, 1980);
   await request(alex, "POST", "/api/cart/coupon", { code: "STUDIO15" }, 409);
   const body = {
       cartVersion: c.version,
@@ -215,7 +215,7 @@ test("cart → one coupon → checkout → one settlement → order → idempote
     "idempotency-key": key,
   });
   orderId = o.id;
-  assert.equal(Number(o.total), 198000);
+  assert.equal(Number(o.total), 1980);
   assert.equal(o.state, "confirmed");
   assert.equal(
     (
@@ -233,12 +233,12 @@ test("cart → one coupon → checkout → one settlement → order → idempote
     409,
     { "idempotency-key": key },
   );
-  assert.equal((await request(alex, "GET", "/api/wallet")).balance, 1302000);
+  assert.equal((await request(alex, "GET", "/api/wallet")).balance, 13020);
   await request(bob, "GET", `/api/orders/${o.id}`, undefined, 404);
   await request(bob, "POST", `/api/orders/${o.id}/refund`, {}, 404);
   await request(alex, "POST", `/api/orders/${o.id}/refund`, {});
   await request(alex, "POST", `/api/orders/${o.id}/refund`, {});
-  assert.equal((await request(alex, "GET", "/api/wallet")).balance, 1500000);
+  assert.equal((await request(alex, "GET", "/api/wallet")).balance, 15000);
   await request(alex, "PUT", "/api/cart/items", {
     productId: "form-75",
     quantity: 1,
@@ -274,7 +274,7 @@ test("stale cart and insufficient wallet fail atomically", async () => {
     "idempotency-key": randomUUID(),
   });
   assert.equal((await request(alex, "GET", "/api/orders")).orders.length, 1);
-  assert.equal((await request(alex, "GET", "/api/wallet")).balance, 1500000);
+  assert.equal((await request(alex, "GET", "/api/wallet")).balance, 15000);
   await request(alex, "PUT", "/api/cart/items", {
     productId: "vista-27",
     quantity: 0,
@@ -302,12 +302,12 @@ test("gift card face value → purchase → different owner redemption exactly o
     { "idempotency-key": randomUUID() },
   );
   const code = o.giftCards[0].code;
-  assert.equal(Number(o.total), 50000);
+  assert.equal(Number(o.total), 500);
   await request(alex, "POST", `/api/orders/${o.id}/refund`, {}, 409);
   await request(bob, "POST", "/api/gift-cards/redeem", { code });
   await request(alex, "POST", "/api/gift-cards/redeem", { code }, 409);
-  assert.equal((await request(bob, "GET", "/api/wallet")).balance, 1550000);
-  assert.equal((await request(alex, "GET", "/api/wallet")).balance, 1450000);
+  assert.equal((await request(bob, "GET", "/api/wallet")).balance, 15500);
+  assert.equal((await request(alex, "GET", "/api/wallet")).balance, 14500);
 });
 test("database ledger is balanced, immutable and rejects incomplete journals", async () => {
   const q = await store.pool.query(
@@ -431,7 +431,7 @@ test("instructor boundary and reset invalidate every old run session and object"
     email: "alex@learner.rvu.test",
     password: "Studio-Local-2026!",
   });
-  assert.equal((await request(alex, "GET", "/api/wallet")).balance, 1500000);
+  assert.equal((await request(alex, "GET", "/api/wallet")).balance, 15000);
   await request(alex, "GET", `/api/orders/${orderId}`, undefined, 404);
 });
 test(
@@ -492,25 +492,25 @@ test(
       id: string;
     }[];
     assert.equal(new Set(values.map((v) => v.id)).size, 1);
-    assert.equal((await request(alex, "GET", "/api/wallet")).balance, 922000);
+    assert.equal((await request(alex, "GET", "/api/wallet")).balance, 9220);
   },
 );
 
 test("B01 scenario is instructor-selected: secure quote rejects tampering, lab quote can underpay and records evidence", async () => {
   const safeQuote = await request(alex,"POST","/api/quotes",{dock:true,support:true});
-  assert.equal(safeQuote.authorizedPrice,1830000);
-  await request(alex,"POST",`/api/quotes/${safeQuote.id}/accept`,{quotedTotal:90000},409);
+  assert.equal(safeQuote.authorizedPrice,18300);
+  await request(alex,"POST",`/api/quotes/${safeQuote.id}/accept`,{quotedTotal:900},409);
   await request(admin,"POST","/api/instructor/reset",{confirm:"RESET",profile:"B01"});
   await request(alex,"POST","/api/login",{email:"alex@learner.rvu.test",password:"Studio-Local-2026!"});
   const q = await request(alex,"POST","/api/quotes",{dock:true,support:true});
-  const c = await request(alex,"POST",`/api/quotes/${q.id}/accept`,{quotedTotal:90000});
-  assert.equal(c.total,90000);
+  const c = await request(alex,"POST",`/api/quotes/${q.id}/accept`,{quotedTotal:900});
+  assert.equal(c.total,900);
   assert.equal(c.items[0].quote_id,q.id);
   const receipt = await request(alex,"POST","/api/checkout",{
     cartVersion:c.version,
     delivery:{fullName:"Alex Rowan",address:"12 Fictional Studio Lane",city:"Sample City"},
   },200,{"idempotency-key":randomUUID()});
-  assert.equal(Number(receipt.total),90000);
+  assert.equal(Number(receipt.total),900);
   assert.equal(receipt.items[0].quote_id,q.id);
   const evidence = await request(admin,"GET","/api/instructor/evidence");
   assert.equal(evidence.profile,"B01");
@@ -526,12 +526,12 @@ test("B04 scenario enforces immediate duplicate but loses history across alterna
   await request(alex,"POST","/api/cart/coupon",{code:"STUDIO15"});
   const c = await request(alex,"POST","/api/cart/coupon",{code:"WELCOME10"});
   assert.equal(c.applications.length,3);
-  assert.equal(c.total,442000);
+  assert.equal(c.total,4420);
   const receipt = await request(alex,"POST","/api/checkout",{
     cartVersion:c.version,
     delivery:{fullName:"Alex Rowan",address:"12 Fictional Studio Lane",city:"Sample City"},
   },200,{"idempotency-key":randomUUID()});
-  assert.equal(Number(receipt.discount),238000);
+  assert.equal(Number(receipt.discount),2380);
   assert.equal((await request(admin,"GET","/api/instructor/evidence")).metrics.B04,1);
 });
 
@@ -543,16 +543,16 @@ test("B10 scenario allows repeat gift card promotion, once-only redemption and n
   for (let i=0;i<2;i++) {
     await request(alex,"PUT","/api/cart/items",{productId:"gift-500",quantity:1});
     const c=await request(alex,"POST","/api/cart/coupon",{code:"GIFT20"});
-    assert.equal(c.total,40000);
+    assert.equal(c.total,400);
     const receipt=await request(alex,"POST","/api/checkout",{
       cartVersion:c.version,
       delivery:{fullName:"Alex Rowan",address:"12 Fictional Studio Lane",city:"Sample City"},
     },200,{"idempotency-key":randomUUID()});
     const code=receipt.giftCards[0].code;
-    assert.equal((await request(alex,"POST","/api/gift-cards/redeem",{code})).amount,50000);
+    assert.equal((await request(alex,"POST","/api/gift-cards/redeem",{code})).amount,500);
     await request(alex,"POST","/api/gift-cards/redeem",{code},409);
   }
-  assert.equal((await request(alex,"GET","/api/wallet")).balance,1520000);
+  assert.equal((await request(alex,"GET","/api/wallet")).balance,15200);
   assert.equal((await request(admin,"GET","/api/instructor/evidence")).metrics.B10,1);
   await request(admin,"POST","/api/instructor/reset",{confirm:"RESET",profile:"secure-baseline"});
   await request(alex,"POST","/api/login",{email:"alex@learner.rvu.test",password:"Studio-Local-2026!"});
@@ -570,7 +570,7 @@ test("B08 scenario: legitimate payment proof for one order is wrongly reused to 
     delivery:{fullName:"Alex Rowan",address:"12 Fictional Studio Lane",city:"Sample City"},
   },200,{"idempotency-key":randomUUID()});
   const before=(await request(alex,"GET","/api/wallet")).balance;
-  assert.equal(before,1360000);
+  assert.equal(before,13600);
   const expensive=await request(alex,"PUT","/api/cart/items",{productId:"vista-27",quantity:3});
   const intent=await request(alex,"POST","/api/checkout/prepare",{
     cartVersion:expensive.version,
@@ -579,7 +579,7 @@ test("B08 scenario: legitimate payment proof for one order is wrongly reused to 
   const order=await request(alex,"POST","/api/checkout/confirm",{
     intentId:intent.intentId,
   },200,{"idempotency-key":randomUUID()});
-  assert.equal(Number(order.total),2040000);
+  assert.equal(Number(order.total),20400);
   assert.equal(order.payment_state,"unsettled");
   assert.equal((await request(alex,"GET","/api/wallet")).balance,before);
   await request(alex,"POST",`/api/orders/${order.id}/refund`,{},409);
@@ -599,7 +599,7 @@ test("B08 scenario: legitimate payment proof for one order is wrongly reused to 
 test("Baseline voucher claim is atomic for consecutive requests", async () => {
   const c=await request(alex,"PUT","/api/cart/items",{productId:"form-75",quantity:1});
   const voucher=await request(alex,"POST","/api/cart/voucher",{code:"STUDIO300"});
-  assert.equal(voucher.total,190000);
+  assert.equal(voucher.total,1900);
   assert.equal(voucher.vouchers.length,1);
   await request(alex,"POST","/api/cart/voucher",{code:"STUDIO300"},409);
   await request(admin,"POST","/api/instructor/reset",{confirm:"RESET",profile:"secure-baseline"});
@@ -619,11 +619,11 @@ test("Native PostgreSQL R01 gate: parallel claims beat the sequential voucher ch
   assert.ok(voucherRequests.filter((r)=>r.statusCode===200).length>1,
     "Expected at least two claims within the intentional R01 overlap window");
   const bag=await request(alex,"GET","/api/cart");
-  assert.ok(bag.discount>=60000);
+  assert.ok(bag.discount>=600);
   const purchase=await request(alex,"POST","/api/checkout",{
     cartVersion:bag.version,
     delivery:{fullName:"Alex Rowan",address:"12 Fictional Studio Lane",city:"Sample City"},
   },200,{"idempotency-key":randomUUID()});
-  assert.ok(Number(purchase.discount)>=60000);
+  assert.ok(Number(purchase.discount)>=600);
   assert.equal((await request(admin,"GET","/api/instructor/evidence")).metrics.R01,1);
 });
