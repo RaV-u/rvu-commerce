@@ -25,9 +25,9 @@ Open **http://localhost:8081**.
 
 The accounts have separate sessions, carts, wallets, inboxes, and orders. Amounts use **whole Egyptian pounds**: `1` is EGP 1, and `100` is EGP 100. Payments are simulated; no real money is involved.
 
-You can stop the student store with `bash stop.sh` from its folder, then restart with `bash install.sh`. For a fresh lab run, use `bash reset.sh`.
+You can stop the student store with `bash stop.sh` from its folder, then restart with `bash install.sh`. To fetch and apply any later GitHub Release update, run **`bash update.sh`** from inside `RVU-Commerce-Student`. It replaces app files and images, preserves `.env` and named Docker volumes, and restarts the app. For a fresh lab run, use `bash reset.sh`.
 
-The [Arabic installation guide](student/README_AR.md) contains troubleshooting and Burp proxy setup. **Download the named `RVU-Commerce-Student.tar.gz` Release asset; do not use GitHub's automatic "Source code" archives.** Source archives lack prebuilt Docker images and may reveal training exercises.
+If you already installed an old package without `update.sh`, bootstrap it once from the [standalone updater](https://github.com/RaV-u/rvu-commerce/releases/download/student-latest/update.sh) in your existing student folder, then run `bash update.sh`. The [Arabic installation guide](student/README_AR.md) contains troubleshooting and Burp proxy setup. **Download the named `RVU-Commerce-Student.tar.gz` Release asset; do not use GitHub's automatic "Source code" archives.** Source archives lack prebuilt Docker images and may reveal training exercises.
 
 ## Instructor workspace
 

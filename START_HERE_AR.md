@@ -4,7 +4,7 @@
 
 **التحميل المباشر:** https://github.com/RaV-u/rvu-commerce/releases/latest/download/RVU-Commerce-Student.tar.gz
 
-الطلاب ينزّلوا `RVU-Commerce-Student.tar.gz` من GitHub Releases (مش Download ZIP بتاع السورس)، ويتبعوا [دليل التثبيت بالعربي](student/README_AR.md).
+الطلاب ينزّلوا `RVU-Commerce-Student.tar.gz` من GitHub Releases (مش Download ZIP بتاع السورس)، ويتبعوا [دليل التثبيت بالعربي](student/README_AR.md). وبعد التثبيت، أي تحديث من نفس المجلد بأمر واحد: `bash update.sh`.
 
 موقع واحد: **http://localhost:8081**، والحسابين `rvu` و`rvu_2` بكلمة المرور `rvucamp`، وكل حساب يبدأ بـ **15,000 جنيه افتراضي**. الحسابات محفوظة ومنفصلة.
 

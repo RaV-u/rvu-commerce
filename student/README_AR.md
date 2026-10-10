@@ -39,6 +39,17 @@ bash install.sh
 - لو بتستخدم Burp، خليه يسمع على `127.0.0.1:8080`، والموقع نفسه `localhost:8081`.
 - للإيقاف بدون حذف بيانات: `bash stop.sh` من مجلد `RVU-Commerce-Student`.
 - للتشغيل بعد الإيقاف: `bash install.sh`.
+- **لتحديث الموقع كل مرة (أمر واحد فقط):** `bash update.sh`، من داخل مجلد `RVU-Commerce-Student`. بيجيب أحدث نسخة من GitHub ويعيد تشغيل الموقع بدون حذف Docker Volume.
 - لإعادة ضبط اللاب وبداية تدريب جديدة: `bash reset.sh` (بيبدأ Run جديد وبيحتفظ بالسجلات القديمة داخل قاعدة البيانات).
 
 لو حصل خطأ، تأكد إن Docker Desktop شغال والـWSL integration مفعّل، وإنك داخل المجلد الصحيح وبورت 8081 فاضي. الموقع محلي فقط وماينفعش يتعرض للإنترنت.
+
+## لو ثبّت نسخة قديمة وما عندكش update.sh
+نفّذ الأمرين دول **مرة واحدة بس** من داخل مجلد `RVU-Commerce-Student`:
+
+```bash
+curl -fL https://github.com/RaV-u/rvu-commerce/releases/download/student-latest/update.sh -o update.sh
+bash update.sh
+```
+
+بعدها أي تحديث مستقبلي محتاج `bash update.sh` فقط. التحديث قد يبدأ Run جديد عند وجود تغيير في قاعدة البيانات؛ بيانات الـRuns القديمة مش بتتمسح.

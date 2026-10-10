@@ -142,12 +142,13 @@ jobs:
           RVU_CHROME="$browser" node scripts/check-mobile-layout.mjs
       - name: Create and validate student installation package
         run: |
-          bash -n student/install.sh student/stop.sh student/reset.sh scripts/export-student-package.sh
+          bash -n student/install.sh student/stop.sh student/reset.sh student/update.sh scripts/export-student-package.sh
           docker compose --env-file .env -f student/compose.yaml config --quiet
           bash scripts/export-student-package.sh
           archive=dist-packages/RVU-Commerce-Student.tar.gz
           test -s "$archive"
           tar -tzf "$archive" | grep -q 'RVU-Commerce-Student/install.sh'
+          tar -tzf "$archive" | grep -q 'RVU-Commerce-Student/update.sh'
           tar -tzf "$archive" | grep -q 'RVU-Commerce-Student/images.tar.gz'
           if tar -tzf "$archive" | grep -Eq '/(apps|tests|docs|node_modules)/'; then
             echo 'The student package unexpectedly contains source or instructor material'
@@ -170,6 +171,10 @@ jobs:
             cd "$RUNNER_TEMP/rvu-student-proof/RVU-Commerce-Student"
             bash install.sh
             test -s .env
+            before="$(sha256sum .env | cut -d ' ' -f 1)"
+            RVU_STUDENT_PACKAGE_URL="file://$GITHUB_WORKSPACE/dist-packages/RVU-Commerce-Student.tar.gz" bash update.sh
+            after="$(sha256sum .env | cut -d ' ' -f 1)"
+            test "$before" = "$after"
             docker compose ps
           )
           node scripts/smoke.mjs
@@ -208,6 +213,7 @@ jobs:
         with:
           name: RVU-Commerce-Student-Installer
           path: release-assets
+      - uses: actions/checkout@v5
       - name: Publish stable download as GitHub Release asset
         env:
           GH_TOKEN: ${{ github.token }}
@@ -215,13 +221,15 @@ jobs:
         run: |
           set -euo pipefail
           asset=release-assets/RVU-Commerce-Student.tar.gz
+          cp student/update.sh release-assets/update.sh
           test -s "$asset"
+          test -s release-assets/update.sh
           if gh release view student-latest >/dev/null 2>&1; then
-            gh release upload student-latest "$asset" --clobber
+            gh release upload student-latest "$asset" release-assets/update.sh --clobber
           else
-            gh release create student-latest "$asset" \
+            gh release create student-latest "$asset" release-assets/update.sh \
               --title "RVU Commerce - Student Installer" \
               --notes "Verified offline Docker installer for the RVU Commerce training store. Extract RVU-Commerce-Student.tar.gz and run bash install.sh in Ubuntu WSL (Docker Desktop and WSL2 required on Windows). Opens at http://localhost:8081. Training accounts: rvu / rvucamp and rvu_2 / rvucamp. All amounts are whole Egyptian pounds (EGP)." \
               --target "$GITHUB_SHA" --latest
           fi
-          gh release view student-latest --json assets --jq '.assets[] | select(.name=="RVU-Commerce-Student.tar.gz") | .url'
+          gh release view student-latest --json assets --jq '.assets[] | select(.name=="RVU-Commerce-Student.tar.gz" or .name=="update.sh") | .url'
