@@ -138,39 +138,42 @@ jobs:
         run: |
           browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           RVU_CHROME="$browser" node scripts/check-mobile-layout.mjs
-      - name: Create and validate student installation package
+      - name: Create and validate single distribution
         run: |
-          bash -n student/install.sh student/stop.sh student/reset.sh student/update.sh scripts/export-student-package.sh
+          bash -n student/setup.sh student/install.sh student/stop.sh student/reset.sh student/update.sh scripts/export-student-package.sh
           docker compose --env-file .env -f student/compose.yaml config --quiet
           bash scripts/export-student-package.sh
-          archive=dist-packages/RVU-Commerce-Student.tar.gz
+          archive=dist-packages/RVU-Commerce.tar.gz
           test -s "$archive"
-          tar -tzf "$archive" | grep -q 'RVU-Commerce-Student/install.sh'
-          tar -tzf "$archive" | grep -q 'RVU-Commerce-Student/update.sh'
-          tar -tzf "$archive" | grep -q 'RVU-Commerce-Student/images.tar.gz'
+          tar -tzf "$archive" | grep -q 'RVU-Commerce/install.sh'
+          tar -tzf "$archive" | grep -q 'RVU-Commerce/setup.sh'
+          tar -tzf "$archive" | grep -q 'RVU-Commerce/update.sh'
+          tar -tzf "$archive" | grep -q 'RVU-Commerce/images.tar.gz'
           if tar -tzf "$archive" | grep -Eq '/(apps|tests|docs|node_modules)/'; then
             echo 'The student package unexpectedly contains source or instructor material'
             exit 1
           fi
-      - name: Publish downloadable student package
+      - name: Publish downloadable common package
         uses: actions/upload-artifact@v4
         with:
-          name: RVU-Commerce-Student-Installer
-          path: dist-packages/RVU-Commerce-Student.tar.gz
+          name: RVU-Commerce-Installer
+          path: dist-packages/RVU-Commerce.tar.gz
           if-no-files-found: error
           retention-days: 30
           compression-level: 0
-      - name: Test installation directly from the distributed student archive
+      - name: Test one-version installation and update
         run: |
           docker compose down --remove-orphans
-          mkdir -p "$RUNNER_TEMP/rvu-student-proof"
-          tar -xzf dist-packages/RVU-Commerce-Student.tar.gz -C "$RUNNER_TEMP/rvu-student-proof"
+          mkdir -p "$RUNNER_TEMP/rvu-unified-test"
           (
-            cd "$RUNNER_TEMP/rvu-student-proof/RVU-Commerce-Student"
-            bash install.sh
+            cd "$RUNNER_TEMP/rvu-unified-test"
+            RVU_INSTALL_DIR="$PWD/RVU-Commerce-install" \
+            RVU_PACKAGE_URL="file://$GITHUB_WORKSPACE/dist-packages/RVU-Commerce.tar.gz" \
+              bash "$GITHUB_WORKSPACE/student/setup.sh"
+            cd RVU-Commerce-install
             test -s .env
             before="$(sha256sum .env | cut -d ' ' -f 1)"
-            RVU_STUDENT_PACKAGE_URL="file://$GITHUB_WORKSPACE/dist-packages/RVU-Commerce-Student.tar.gz" bash update.sh
+            RVU_PACKAGE_URL="file://$GITHUB_WORKSPACE/dist-packages/RVU-Commerce.tar.gz" bash update.sh
             after="$(sha256sum .env | cut -d ' ' -f 1)"
             test "$before" = "$after"
             docker compose ps
@@ -197,8 +200,8 @@ jobs:
         if: always()
         run: docker compose down -v --remove-orphans
 
-  publish-student-release:
-    name: Publish direct GitHub download
+  publish-common-release:
+    name: Publish universal GitHub download
     needs: [docker-smoke]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
@@ -207,27 +210,31 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v5
-      - name: Download fully tested student installer
+      - name: Download fully tested common installer
         uses: actions/download-artifact@v4
         with:
-          name: RVU-Commerce-Student-Installer
+          name: RVU-Commerce-Installer
           path: release-assets
-      - name: Publish stable download as GitHub Release asset
+      - name: Publish stable single-version release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          asset=release-assets/RVU-Commerce-Student.tar.gz
-          cp student/update.sh release-assets/update.sh
+          asset=release-assets/RVU-Commerce.tar.gz
+          cp student/setup.sh student/update.sh release-assets/
           test -s "$asset"
+          test -s release-assets/setup.sh
           test -s release-assets/update.sh
-          if gh release view student-latest >/dev/null 2>&1; then
-            gh release upload student-latest "$asset" release-assets/update.sh --clobber
+          if gh release view rvu-latest >/dev/null 2>&1; then
+            gh release upload rvu-latest "$asset" release-assets/setup.sh release-assets/update.sh --clobber
           else
-            gh release create student-latest "$asset" release-assets/update.sh \
-              --title "RVU Commerce - Student Installer" \
-              --notes "Verified offline Docker installer for the RVU Commerce training store. Extract RVU-Commerce-Student.tar.gz and run bash install.sh in Ubuntu WSL (Docker Desktop and WSL2 required on Windows). Opens at http://localhost:8081. Training accounts: rvu / rvucamp and rvu_2 / rvucamp. All amounts are whole Egyptian pounds (EGP)." \
+            gh release create rvu-latest "$asset" release-assets/setup.sh release-assets/update.sh \
+              --title "RVU Commerce - Universal Installer" \
+              --notes "One identical Docker distribution for the instructor and learners. Windows: enable Ubuntu WSL2 integration in Docker Desktop. Linux: use Docker Engine. Download setup.sh and execute bash setup.sh to run the local site on http://localhost:8081." \
               --target "$GITHUB_SHA" --latest
           fi
-          gh release view student-latest --json assets --jq '.assets[] | select(.name=="RVU-Commerce-Student.tar.gz" or .name=="update.sh") | .url'
+          gh release view rvu-latest --json assets --jq '.assets[] | select(.name=="RVU-Commerce.tar.gz" or .name=="setup.sh" or .name=="update.sh") | .url'
+          if gh release view student-latest >/dev/null 2>&1; then
+            gh release delete student-latest --yes --cleanup-tag
+          fi
