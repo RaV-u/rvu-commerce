@@ -15,10 +15,10 @@ sh scripts/start.sh
 The setup script creates local `.env` credentials on first run and preserves existing ones. It builds the Docker stack and removes orphaned services from old instructor-console editions.
 
 - Store: http://localhost:8080
-- Business services: http://localhost:8080/services
+- All business and account services appear **inside the My Account → Services tab**. There is no second website. Old `/services` bookmarks return to the shop.
 - No instructor website; port 8081 is no longer published
-- Single learner login: **Username `rvu` / Password `rvucamp`** (localhost classroom only)
-- Each sign-in provisions a fresh, verified fictional workspace, its own basket/wallet/inbox, and an isolated company-colleague account visible under Account/Business services. No registration or email verification step is needed.
+- Two persistent fictional logins: **`rvu` / `rvucamp`** and **`rvu_2` / `rvucamp`** (localhost classroom only)
+- Each login has its own verified account, basket, wallet, inbox and saved order history. Both accounts remain the same after sign-out and sign-in. No registration or email verification is required.
 - Opening fictional wallet credit: **EGP 15,000**
 
 **Upgrade an already-running local installation:**
@@ -34,13 +34,13 @@ Migration 004 upgrades pre-existing PostgreSQL volumes without deleting them. Th
 
 ### Repeat a scenario
 
-Students sign out and sign in again using the same pair to receive a fresh fictional practice workspace. Signing in again starts a new account and does **not** restore orders or funds from a previous login. To reset the entire active training run as the **local machine operator**, run:
+Signing out and back in returns to the **same** account and restores its cart, wallet and order history. Use `rvu` and `rvu_2` in different browser profiles (or a private window) to test two-user workflows. To start again from a clean state, the **local machine operator** can reset the active training run:
 
 ```bash
 docker compose run --rm migrate node --import tsx scripts/reset-local.mjs RESET
 ```
 
-That command is **not** exposed via the website; it rotates the active run. Existing customer sessions become invalid; new logins provision their own workspaces. The prior run remains in PostgreSQL until you intentionally delete the volume.
+That command is **not** exposed via the website; it rotates the active run and creates fresh versions of both named accounts when they next sign in. Previous sessions become invalid, while historical runs remain in PostgreSQL. No PostgreSQL volume is deleted.
 
 To stop the app without erasing the database: `docker compose down`.
 
@@ -78,8 +78,8 @@ Real PostgreSQL concurrency tests, account workflow regressions and Docker proxy
 
 - One local Docker installation runs **all conceptual weaknesses at once**; each student should use a separate local installation for repeatable blind-hunting practice when possible.
 - The deliberately simple `rvucamp` password is intended strictly for loopback-only training. It must never be used for an internet-facing deployment.
-- Every `rvu` sign-in also receives a distinct fictional company colleague and corresponding login-attempt quota. This lets learners investigate account maintenance, recovery, and concurrent login controls without competing for one shared test identity. Publicly guessing another trainee's randomly generated address remains theoretically possible in this intentionally vulnerable local software, so separate Docker installations are still preferable for classes.
-- Current CI gates include individual regression tests for all 18 families, real-Docker checks for 14 families, and a native PostgreSQL combined account-workflow regression for the remaining four. A separate stability smoke tests parallel browsing plus legitimate checkout/refund for three independently signed-in customers. This is **not** a guarantee that every pairwise interaction across the 18 has been tested.
+- The optional second login `rvu_2` is the peer account for cross-account security tests. Both accounts are stable per active run and can affect one another in this intentionally vulnerable app. They are **not** automatically isolated for different students; distribute an independent Docker installation per learner if their findings should not interfere.
+- Current CI gates include individual regression tests for all 18 families, real-Docker checks for 14 families, and a native PostgreSQL combined account-workflow regression for the remaining four. A separate stability smoke tests parallel browsing plus legitimate checkout/refund for the two persistent named customers. This is **not** a guarantee that every pairwise interaction across the 18 has been tested.
 - The HTTP performance measurements come from a disposable GitHub Actions runner. They do not measure CPU/RAM contention or browser responsiveness on students' Windows/WSL laptops.
 - Certain specialized workflows demonstrate the trust-boundary failure without recreating a real SMTP parser or a full administrative account session. Review the original PortSwigger learning goals before promising identical learner outcomes.
 
