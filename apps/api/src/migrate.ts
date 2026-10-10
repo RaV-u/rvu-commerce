@@ -39,6 +39,10 @@ export async function migrate(url: string, instructorPassword: string) {
       await db.query(await readFile(new URL("../../../db/migrations/004_integrated_storefront.sql", import.meta.url), "utf8"));
       await db.query("INSERT INTO public.schema_migrations(version) VALUES(4)");
     }
+    if (!(await db.query("SELECT 1 FROM public.schema_migrations WHERE version=5")).rowCount) {
+      await db.query(await readFile(new URL("../../../db/migrations/005_signed_cart_quantity.sql", import.meta.url), "utf8"));
+      await db.query("INSERT INTO public.schema_migrations(version) VALUES(5)");
+    }
     await seedCatalog(db);
     // Production installations run a single integrated vulnerable storefront.
     // Existing data is preserved, and the active run is rotated on upgrade.
