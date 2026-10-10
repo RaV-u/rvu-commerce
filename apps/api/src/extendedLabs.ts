@@ -94,6 +94,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
     const profile=a.profile;
     switch(action){
       case "cart.reconcile": {
+        if(profile==="open-playground")throw new HttpError(404,"Use the standard shopping cart");
         requireProfile(a,["B02"]);
         const lines=z.array(z.object({sku:z.string().max(40),quantity:z.number().int().min(-10).max(10)}).strict()).min(1).max(8).parse(p.lines);
         if(!hasWeakness(a.profile,"B02")&&lines.some(x=>x.quantity<0)) fail("Negative quantities are not permitted");
