@@ -24,9 +24,16 @@ const pause=ms=>new Promise(done=>setTimeout(done,ms));
 await call("POST","/api/login",{email:"alex@learner.rvu.test",password:"Studio-Local-2026!"});
 const status=await call("GET","/api/business/status");
 assert.equal(status.profile,undefined,"Do not leak internal vulnerability config");
-const quantity=await act("cart.reconcile",{lines:[{sku:"vista-27",quantity:1},{sku:"arc-light",quantity:-1}]});
-assert.equal(quantity.delivered,680000);
-assert.equal(quantity.charged,540000);
+await call("POST","/api/cart/items",{productId:"vista-27",quantity:1,price:680000});
+const quantity=await call("POST","/api/cart/items",{productId:"arc-light",quantity:-1});
+assert.equal(quantity.total,540000);
+const reconciled=await call("POST","/api/checkout",{
+  cartVersion:quantity.version,
+  delivery:{fullName:"Alex Rowan",address:"12 Sample Studio Lane",city:"Sample City"},
+},200,{"Idempotency-Key":randomUUID()});
+assert.equal(Number(reconciled.total),540000);
+assert.equal(reconciled.items.length,1);
+assert.equal(Number(reconciled.items[0].unit_price),680000);
 const bulk=await act("bulk.invoice",{quantity:85900});
 assert.equal(bulk.charged,32704);
 assert.equal(bulk.delivered,4295000000);
