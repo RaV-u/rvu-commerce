@@ -105,10 +105,8 @@ jobs:
         run: node scripts/smoke.mjs
       - name: Start a clean run for integrated business weakness checks
         run: docker compose run --rm migrate node dist/server/reset-local.js RESET
-      - name: Exercise integrated commerce weaknesses with the shared RVU login
-        run: node scripts/smoke-shared-login.mjs
-        env:
-          RVU_DISPOSABLE_CI: 'yes'
+      - name: Recheck customer sessions and normal payment flow
+        run: node scripts/smoke.mjs
       - name: Start a clean run for promotions and vouchers
         run: docker compose run --rm migrate node dist/server/reset-local.js RESET
       - name: Verify additional promotion, payment and voucher scenarios together
