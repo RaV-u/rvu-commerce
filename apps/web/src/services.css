@@ -1,0 +1,31 @@
+.service-page{background:#faf9f5;color:#213b32;min-height:100vh;font-family:Arial,Helvetica,sans-serif}
+.service-header{height:90px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #dedfd5;padding:12px clamp(20px,5vw,90px)}
+.service-header a:last-child{font-size:13px;text-decoration:underline;text-underline-offset:5px}
+.service-content{max-width:1320px;margin:0 auto;padding:clamp(30px,5vw,70px) clamp(18px,4vw,44px)}
+.service-intro{max-width:690px;margin-bottom:56px}
+.service-eyebrow{font-size:11px;font-weight:700;letter-spacing:.18em;color:#877351}
+.service-intro h1{font-family:Georgia,serif;font-size:clamp(44px,7vw,78px);font-weight:400;letter-spacing:-.05em;margin:15px 0}
+.service-intro p,.service-workspace>p{color:#687269;max-width:670px;line-height:1.75}
+.service-columns{display:grid;grid-template-columns:300px minmax(0,1fr);gap:clamp(20px,5vw,78px)}
+.service-menu{border-top:1px solid #dedfd5;padding-top:20px}
+.service-menu>p{font-size:11px;color:#6a756d;letter-spacing:.13em;text-transform:uppercase}
+.service-group{border-bottom:1px solid #dedfd5;padding:15px 0}
+.service-group h2{font-size:12px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:#6b7069}
+.service-group button{display:block;text-align:left;width:100%;border:0;background:transparent;padding:11px 14px;margin:2px 0;font-size:14px;border-radius:5px}
+.service-group button:hover,.service-group button.chosen{background:#eae9e1;color:#183e32}
+.service-workspace{border:1px solid #dedfd5;background:#fff;padding:clamp(20px,4vw,46px);align-self:start}
+.service-workspace h2{font-family:Georgia,serif;font-size:34px;font-weight:400;margin:12px 0 6px}
+.service-workspace form{margin-top:30px}
+.service-workspace label{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;font-size:13px;font-weight:700;margin-bottom:12px}
+.service-workspace label span{color:#677269;font-family:monospace;font-weight:400;overflow-wrap:anywhere}
+.service-workspace textarea{width:100%;display:block;resize:vertical;font:13px/1.6 ui-monospace,Consolas,monospace;border:1px solid #cfd6cd;background:#fcfcfa;padding:16px;color:#213b32;border-radius:4px;min-height:190px}
+.service-hint{font-size:12px;color:#737b73;line-height:1.6;margin:10px 0 25px}
+.service-workspace form button{background:#183e32;color:white;padding:14px 24px;border:0;font-weight:700;min-height:46px}
+.service-result{margin-top:24px;border-top:1px solid #dedfd5;padding-top:20px}
+.service-result strong{font-size:13px}
+.service-result pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;background:#f0f2ed;padding:15px;line-height:1.5;border-radius:5px;font-size:12px}
+.service-result.error pre{background:#fff3f0;color:#994638}
+.service-signed-out{background:#fff;padding:34px;border:1px solid #dedfd5}
+.service-signed-out a{display:inline-block;margin-top:15px;text-decoration:underline}
+.service-footer{border-top:1px solid #dedfd5;text-align:center;font-size:12px;padding:26px;color:#777d76}
+@media(max-width:760px){.service-header{height:75px}.service-header img{width:160px}.service-header a:last-child{font-size:11px}.service-content{padding-top:38px}.service-intro{margin-bottom:26px}.service-columns{grid-template-columns:1fr;gap:28px}.service-menu{max-height:220px;overflow:auto;padding:10px;border:1px solid #dedfd5}.service-workspace{padding:22px}.service-workspace h2{font-size:27px}}
