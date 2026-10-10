@@ -97,6 +97,10 @@ jobs:
         run: node scripts/smoke-shared-login.mjs
         env:
           RVU_DISPOSABLE_CI: 'yes'
+      - name: Verify additional promotion, payment and voucher scenarios together
+        run: node scripts/smoke-commerce-integrated.mjs
+        env:
+          RVU_DISPOSABLE_CI: 'yes'
       - name: Check three independent customers after training scenarios
         run: node scripts/smoke-stability.mjs
         env:
