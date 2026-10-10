@@ -1,6 +1,5 @@
 import {useEffect,useMemo,useState,type FormEvent} from "react";
 import {api,setCsrf,type Session} from "./api.ts";
-import "./services.css";
 type Operation={section:string;title:string;description:string;path:string;body:Record<string,unknown>};
 const operations:Operation[]=[
   {section:"Buying",title:"Cart reconciliation",description:"Review an order made of multiple catalogue lines.",path:"/lab/action",body:{action:"cart.reconcile",lines:[{sku:"vista-27",quantity:1},{sku:"arc-light",quantity:1}]}},
