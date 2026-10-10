@@ -1,5 +1,8 @@
 # RVU Commerce M2 — Instructor-only test cases
 
+> **تنبيه: مرجع قديم فقط.** النص أدناه يخص نسخة M2 المبنية على Instructor Profiles. نسخة المتجر الحالية لا تنشر Instructor Console على 8081، وتشغّل الـ18 مفهومًا معًا. بعض السيناريوهات أصبحت ضمن سلة المتجر الطبيعية بدل الـEndpoints الموضحة هنا. استخدم [FINAL_UNIFIED_AUDIT_AR.md](FINAL_UNIFIED_AUDIT_AR.md) و[README](../README.md) للمراجعة الحالية؛ لا تعتبر أرقام اللابات الناقصة أو خطوات الـReset القديمة وصفًا لحالة المشروع.
+
+
 > لا ترسل الملف للطلاب: يحتوي Expected behaviors وطرق التحقق. الاختبارات مكتوبة في `tests/commerce.test.ts`، ونجحت الـ21 Backend tests (ومنها سيناريوهات M2) على PostgreSQL حقيقي في GitHub Actions بتاريخ 10 أكتوبر 2026. ما زال لازم تتأكد من التشغيل على Docker/WSL قبل السيشن.
 
 ## قاعدة البداية
