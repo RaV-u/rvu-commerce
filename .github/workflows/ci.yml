@@ -93,8 +93,8 @@ jobs:
           exit 1
       - name: Exercise real proxy, application and PostgreSQL
         run: node scripts/smoke.mjs
-      - name: Exercise integrated commerce weaknesses through the real Docker proxy
-        run: node scripts/smoke-extended.mjs
+      - name: Exercise integrated commerce weaknesses with the shared RVU login
+        run: node scripts/smoke-shared-login.mjs
         env:
           RVU_DISPOSABLE_CI: 'yes'
       - name: Check three independent customers after training scenarios
