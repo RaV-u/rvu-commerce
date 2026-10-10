@@ -37,18 +37,23 @@ assert.equal(forbidden.status, 404);
 const catalog = await request("/api/catalog");
 assert.equal(catalog.products.length, 8);
 assert.equal(catalog.promotions.length, 3, "Integrated storefront exposes the store promotion family");
-await request("/api/register", "POST", {
-  name: "Local Smoke Customer",
-  email: `smoke-${randomUUID().slice(0, 8)}@learner.rvu.test`,
-  password: "Fictional-Smoke-2026!",
-});
+const signedIn = await request("/api/login", "POST", { username: "rvu", password: "rvucamp" });
+assert.equal(signedIn.user.verified, true);
 const directory = await request("/api/business/status");
 assert.equal(directory.profile, undefined, "Learner must not discover internal profile");
 assert.equal(directory.states, undefined, "Learner must not receive lab state or tokens");
-const inbox = await request("/api/inbox");
-await request("/api/verify", "POST", {
-  code: inbox.messages[0].body.split(": ")[1],
+const unregistered = await fetch(origin + "/api/register", {
+  method:"POST",
+  headers: {Origin:origin,"Content-Type":"application/json"},
+  body: JSON.stringify({name:"Unknown",email:"new@learner.rvu.test",password:"Not-Allowed-2026!"}),
 });
+assert.equal(unregistered.status, 404, "Self-registration must be disabled");
+const former = await fetch(origin + "/api/login", {
+  method:"POST",
+  headers: {Origin:origin,"Content-Type":"application/json"},
+  body: JSON.stringify({email:"alex@learner.rvu.test",password:"Studio-Local-2026!"}),
+});
+assert.equal(former.status, 401, "The previous demo login must be disabled");
 await request("/api/cart/items", "PUT", { productId: "form-75", quantity: 1 });
 const cart = await request("/api/cart/coupon", "POST", { code: "WELCOME10" });
 const order = await request(
@@ -71,5 +76,5 @@ assert.equal((await request("/api/wallet")).balance, 1500000);
 await request("/api/logout", "POST", {});
 assert.equal((await request("/api/session")).user, null);
 console.log(
-  "PASS: proxy → frontend assets → API → PostgreSQL registration, email, coupon, settlement, refund and logout.",
+  "PASS: one RVU login → private workspace → no registration → coupon, payment, refund and logout.",
 );
