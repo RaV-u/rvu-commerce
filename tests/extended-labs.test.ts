@@ -269,6 +269,10 @@ test("R06: registration is exploitable only while token provisioning is incomple
 
 test("integrated storefront keeps multiple independent business weaknesses active together",async()=>{
   await fresh("open-playground");
+  // The combined site demonstrates B01 in the ordinary cart price field.
+  // A separate custom-workstation quote is NOT an alternative underpayment path.
+  const quote=await call(alex,"POST","/api/quotes",{dock:true,support:true});
+  await call(alex,"POST","/api/quotes/"+quote.id+"/accept",{quotedTotal:90000},409);
   const account=await act("email.update",{address:"buyer@corp.rvu.test"});
   assert.equal(account.verified,true);
   assert.equal((await act("corporate.orders")).orders.length,1);
