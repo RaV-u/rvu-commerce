@@ -153,10 +153,17 @@ jobs:
             echo 'The student package unexpectedly contains source or instructor material'
             exit 1
           fi
-      - name: Exercise student-only Docker installation
+      - name: Test installation directly from the distributed student archive
         run: |
           docker compose down --remove-orphans
-          docker compose --env-file .env -f student/compose.yaml up -d --wait --wait-timeout 180
+          mkdir -p "$RUNNER_TEMP/rvu-student-proof"
+          tar -xzf dist-packages/RVU-Commerce-Student.tar.gz -C "$RUNNER_TEMP/rvu-student-proof"
+          (
+            cd "$RUNNER_TEMP/rvu-student-proof/RVU-Commerce-Student"
+            bash install.sh
+            test -s .env
+            docker compose ps
+          )
           node scripts/smoke.mjs
       - name: Save review screenshots
         if: always()
