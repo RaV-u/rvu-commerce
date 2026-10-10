@@ -324,3 +324,60 @@ test("two RVU sign-ins isolate their company colleague, account recovery scope a
   assert.equal((await call(first,"GET","/api/wallet")).balance,1500000);
   assert.equal((await call(second,"GET","/api/wallet")).balance,1500000);
 });
+
+test("unified RVU session supports corporate verification and concurrent account workflows together",{
+  skip:!process.env.TEST_DATABASE_URL?"Requires parallel native PostgreSQL connections":false,
+},async()=>{
+  await fresh("open-playground");
+  const learner:Client={cookie:"",csrf:""};
+  const login=await call(learner,"POST","/api/login",{username:"rvu",password:"rvucamp"});
+  const teammate=login.user.colleagueEmail as string;
+  const own=login.user.email as string;
+  const changed=await call(learner,"POST","/api/business/actions",{
+    action:"password.maintain",targetEmail:teammate,
+    newPassword:"Corporate-Local-2026!",
+  });
+  assert.equal(changed.usedSupportBranch,true);
+  assert.ok(await proof("B07")>0);
+
+  const address="=?utf-7?q?"+own.replace("@","&AEA-")+"&ACA-?=@corp.rvu.test";
+  await call(learner,"POST","/api/business/actions",{action:"parser.register",address});
+  const inbox=await call(learner,"GET","/api/inbox");
+  const verification=inbox.messages.find((m:{subject:string})=>m.subject==="Corporate verification");
+  assert.ok(verification);
+  const code=String(verification.body).split(": ").at(-1)?.trim()??"";
+  await call(learner,"POST","/api/business/actions",{action:"parser.verify",code});
+  assert.equal((await call(learner,"POST","/api/business/actions",{action:"corporate.orders"})).orders.length,1);
+  assert.ok(await proof("B12")>0);
+
+  const initial=call(learner,"POST","/api/business/email-change",{address:own,delayMs:280});
+  await pause(40);
+  const next=call(learner,"POST","/api/business/email-change",{address:"manager@corp.rvu.test",delayMs:50});
+  await Promise.all([initial,next]);
+  const messages=await call(learner,"GET","/api/inbox");
+  const confirmation=messages.messages.find((m:{subject:string})=>m.subject==="Email change confirmation");
+  assert.ok(confirmation);
+  const confirmationCode=String(confirmation.body).split(": ").at(-1)?.trim()??"";
+  await call(learner,"POST","/api/business/actions",{action:"email.confirm",code:confirmationCode});
+  await call(learner,"POST","/api/business/actions",{action:"corporate.orders"});
+  assert.ok(await proof("R04")>0);
+
+  let matched=false;
+  for(let attempt=0;attempt<5&&!matched;attempt++){
+    await call(learner,"POST","/api/business/actions",{action:"reset.request",email:own});
+    const owned=await call(learner,"GET","/api/inbox");
+    const recovery=owned.messages.find((m:{subject:string})=>m.subject==="Account recovery");
+    assert.ok(recovery);
+    const recoveryCode=String(recovery.body).split(": ").at(-1)?.trim()??"";
+    await call(learner,"POST","/api/business/actions",{action:"reset.request",email:teammate});
+    const response=await store.app.inject({
+      method:"POST",url:"/api/business/actions",
+      headers:{origin:"http://localhost:8080",cookie:learner.cookie,"x-csrf-token":learner.csrf},
+      payload:{action:"reset.complete",email:teammate,code:recoveryCode,newPassword:"Renewed-Corporate-2026!"},
+    });
+    assert.ok([200,400].includes(response.statusCode),response.body);
+    matched=response.statusCode===200;
+  }
+  assert.ok(matched);
+  assert.ok(await proof("R05")>0);
+});
