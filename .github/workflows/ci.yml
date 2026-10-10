@@ -74,13 +74,23 @@ jobs:
           DB_PASSWORD=CI-local-owner-Password-Only-2026
           STORE_DB_PASSWORD=CI-local-store-Password-Only-2026
           CONTROL_DB_PASSWORD=CI-local-control-Password-Only-2026
-          INSTRUCTOR_PASSWORD=CI-local-instructor-Password-Only-2026
           EOF
           chmod 600 .env
       - name: Validate Compose configuration
         run: docker compose config --quiet
       - name: Build and start isolated application
         run: docker compose up --build --wait --wait-timeout 180
+      - name: Verify runtime image includes no source, tests, or instructor interface
+        run: |
+          docker compose run --rm --no-deps store sh -ec '
+            test -f dist/server/main.js
+            test -f dist/server/migrate.js
+            test -f dist/server/reset-local.js
+            test ! -d apps
+            test ! -d tests
+            test ! -d docs
+            test ! -d dist/control
+          '
       - name: Wait for published HTTP ports
         run: |
           for attempt in $(seq 1 30); do
@@ -94,26 +104,26 @@ jobs:
       - name: Exercise real proxy, application and PostgreSQL
         run: node scripts/smoke.mjs
       - name: Start a clean run for integrated business weakness checks
-        run: docker compose run --rm migrate node --import tsx scripts/reset-local.mjs RESET
+        run: docker compose run --rm migrate node dist/server/reset-local.js RESET
       - name: Exercise integrated commerce weaknesses with the shared RVU login
         run: node scripts/smoke-shared-login.mjs
         env:
           RVU_DISPOSABLE_CI: 'yes'
       - name: Start a clean run for promotions and vouchers
-        run: docker compose run --rm migrate node --import tsx scripts/reset-local.mjs RESET
+        run: docker compose run --rm migrate node dist/server/reset-local.js RESET
       - name: Verify additional promotion, payment and voucher scenarios together
         run: node scripts/smoke-commerce-integrated.mjs
         env:
           RVU_DISPOSABLE_CI: 'yes'
       - name: Start a clean run for two-account consistency checks
-        run: docker compose run --rm migrate node --import tsx scripts/reset-local.mjs RESET
+        run: docker compose run --rm migrate node dist/server/reset-local.js RESET
       - name: Check two persistent accounts after training scenarios
         run: node scripts/smoke-stability.mjs
         env:
           RVU_DISPOSABLE_CI: 'yes'
       - name: Verify repeatable local reset without the instructor website
         run: |
-          docker compose run --rm migrate node --import tsx scripts/reset-local.mjs RESET
+          docker compose run --rm migrate node dist/server/reset-local.js RESET
           node scripts/smoke.mjs
       - name: Render single storefront and legacy bookmark in headless Chrome
         run: |

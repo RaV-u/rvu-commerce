@@ -56,6 +56,16 @@ This is a purpose-built educational application, not a byte-for-byte recreation 
 
 Integration test coverage and instructor notes are kept in this **source repository**. If it remains public, students can inspect these files and Git history. **Make the repository private and distribute a runnable image or local installation rather than source code** if you want discovery to be a genuine blind exercise.
 
+## Instructor distribution
+
+Build student-only images and prepare an offline Docker package from your own WSL machine:
+
+```bash
+bash scripts/export-student-package.sh
+```
+
+This creates a large `RVU-Commerce-Student.tar.gz` bundle. Share **that archive** with students, not this source repository. The bundle contains a compiled/minified application image and an installation script; no source code, tests, solution guides, or old instructor UI are copied into its runtime image. Students still need Docker Desktop with WSL2. Keep this GitHub repository **private** before classroom use, since public Git history retains old solution material.
+
 ## Architecture / acceptance
 
 - React/Vite storefront and customer business services

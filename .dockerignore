@@ -3,3 +3,8 @@ dist
 .git
 .env
 test-results
+docs
+student
+artifacts
+*.tar.gz
+*.zip

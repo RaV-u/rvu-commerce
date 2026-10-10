@@ -698,7 +698,7 @@ export async function buildApp(config: Config) {
       ),
     );
     registerExtendedLabs({app,pool,userRoute,actor});
-  } else {
+  } else if (process.env.RVU_CONTROL_SERVICE !== "disabled") {
     async function instructor(db: DB, req: FastifyRequest) {
       const s = (
         await db.query(

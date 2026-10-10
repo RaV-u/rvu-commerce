@@ -7,12 +7,13 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "build": "vite build --config apps/web/vite.config.ts && vite build --config apps/control/vite.config.ts",
+    "build": "vite build --config apps/web/vite.config.ts && npm run build:server",
     "typecheck": "tsc --noEmit",
     "start": "node --import tsx apps/api/src/main.ts",
     "migrate": "node --import tsx apps/api/src/migrate.ts",
     "test": "node --import tsx --test --test-concurrency=1 tests/*.test.ts",
-    "test:ui": "node --import tsx --test tests/ui.test.tsx"
+    "test:ui": "node --import tsx --test tests/ui.test.tsx",
+    "build:server": "node node_modules/esbuild/bin/esbuild apps/api/src/main.ts apps/api/src/migrate.ts scripts/reset-local.mjs --bundle --minify --platform=node --format=esm --packages=external --define:process.env.RVU_CONTROL_SERVICE='\"disabled\"' --outdir=dist/server --log-level=warning"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.3",

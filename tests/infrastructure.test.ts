@@ -81,3 +81,15 @@ test("business services are embedded in My Account, not a separate website",asyn
   assert.ok(services.includes("export function AccountServices"));
   assert.ok(!services.includes("className=\"service-page\""));
 });
+
+test("student runtime image is source-free and keeps only compiled services",async()=>{
+  const dockerfile=await readFile("Dockerfile","utf8");
+  const packageFile=JSON.parse(await readFile("package.json","utf8"));
+  const source=await readFile("apps/api/src/app.ts","utf8");
+  assert.match(dockerfile,/COPY --from=build --chown=node:node \/app\/dist\/server/);
+  assert.ok(!dockerfile.includes("COPY --from=build --chown=node:node /app /app"));
+  assert.ok(!dockerfile.includes('CMD ["node","--import","tsx"'));
+  assert.match(packageFile.scripts["build:server"],/--minify/);
+  assert.match(packageFile.scripts["build:server"],/RVU_CONTROL_SERVICE/);
+  assert.ok(source.includes('process.env.RVU_CONTROL_SERVICE !== "disabled"'));
+});

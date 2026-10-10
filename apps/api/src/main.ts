@@ -5,7 +5,7 @@ import { deliverMail } from "./mail.ts";
 const config = envConfig();
 const { app, pool } = await buildApp({
   ...config,
-  webRoot: resolve(config.mode === "store" ? "dist/web" : "dist/control"),
+  webRoot: resolve("dist/web"),
   logger: true,
 });
 let sending = false;
