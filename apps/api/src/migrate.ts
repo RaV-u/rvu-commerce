@@ -36,8 +36,12 @@ export async function migrate(url: string, instructorPassword: string) {
       await db.query("INSERT INTO public.schema_migrations(version) VALUES(3)");
     }
     await seedCatalog(db);
-    if (!(await db.query("SELECT 1 FROM store.runtime")).rowCount)
-      await newRun(db);
+    // Production installations run a single integrated vulnerable storefront.
+    // Existing data is preserved, and the active run is rotated on upgrade.
+    const integrated = process.env.RVU_INTEGRATED_MODE === "1";
+    const current = await db.query("SELECT r.profile FROM store.runtime rt JOIN store.runs r ON r.id=rt.active_run");
+    if (!current.rowCount || (integrated && current.rows[0].profile !== "open-playground"))
+      await newRun(db, integrated ? "open-playground" : "secure-baseline");
     if (!(await db.query("SELECT 1 FROM control.instructors")).rowCount)
       await db.query("INSERT INTO control.instructors VALUES($1,$2,$3)", [
         randomUUID(),
