@@ -175,6 +175,7 @@ export async function checkout(
     ],
   );
   for (const p of c.items) {
+    if (p.quantity < 0) continue; // Negative reconciliation lines reduce the charge but are not fulfilled.
     await db.query(
       "INSERT INTO store.order_items(id,run_id,order_id,product_id,name,unit_price,quantity,kind,quote_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)",
       [randomUUID(), a.run, id, p.id, p.name, p.price, p.quantity, p.kind, p.quote_id ?? null],
@@ -192,6 +193,14 @@ export async function checkout(
             p.price,
           ],
         );
+  }
+  if (hasWeakness(a.profile,"B02") && c.items.some((item:{quantity:number})=>item.quantity<0)) {
+    const shipped = c.items.filter((item:{quantity:number})=>item.quantity>0)
+      .reduce((sum:number,item:{price:string;quantity:number})=>sum+Number(item.price)*item.quantity,0);
+    await db.query(
+      "INSERT INTO store.lab_evidence(id,run_id,user_id,scenario,kind,detail) VALUES($1,$2,$3,'B02','underpaid',$4)",
+      [randomUUID(),a.run,a.id,JSON.stringify({orderId:id,charged:c.total,shipped})],
+    );
   }
   const merchant = (
     await db.query(
