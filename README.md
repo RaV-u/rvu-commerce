@@ -1,148 +1,78 @@
-# RVU Commerce
+# RVU Commerce — intentionally vulnerable local storefront
 
-A local commerce training application for RVU Camp, built on the approved blueprint at `docs/RVU_Commerce_Research_and_Architecture.md`.
+RVU Commerce is a fictional, locally hosted retail site for RVU Mentorship Camp. It provides an integrated collection of business-logic and concurrency weaknesses in a single customer experience, rather than asking learners to select named challenges.
 
-**Extended lab release (2026-10-10):** All **18 instructor-selected training scenarios** have an executable backend workflow, persisted lab state/evidence, an isolated instructor reset profile, and scenario regression coverage. The original five core labs (B01/B04/B08/B10/R01) continue to run alongside 13 additional labs documented in [`docs/EXTENDED_LABS_INSTRUCTOR_AR.md`](docs/EXTENDED_LABS_INSTRUCTOR_AR.md). A student-facing **Account services** workspace is available at `/services` for fictional workflows. The specialist email/legacy labs (notably B06/B12) use explicit teaching adapters rather than claiming byte-for-byte compatibility with a public PortSwigger lab. CI verification includes **39 native-PostgreSQL backend tests**, **4 connected React UI tests**, **portable PGlite tests**, and a Docker Compose host-to-proxy smoke job. Real-browser appearance, timing stability across student laptops, and all 18 instructor-led walkthroughs remain separate acceptance requirements.
+**Local and fictional only. Never expose ports or Docker containers to the public internet.** Products, currency, customers and account privileges are fictitious.
 
-A rebuilt horizontal SVG logo replaces the previously misaligned vertical wordmark, and the storefront adds a responsive mobile navigation, custom workstation quotes, two-step checkout review and one-use store vouchers. Instructor-only evidence metrics are derived from persisted server data.
+## Start (Windows 11 + Docker Desktop + WSL2)
 
-The storefront uses a cream, forest-green and muted-gold identity, original local SVG product illustrations, responsive product grids, native modal dialogs and locally available fonts. There are no CDN dependencies or external payment services.
+From the repository directory in Ubuntu:
 
-## Run on Windows 11 / WSL2
-
-Enable Docker Desktop's WSL integration. Extract this project into your WSL Linux filesystem, for example `~/rvu-commerce`, and run from its root:
-
-```sh
+```bash
 sh scripts/start.sh
 ```
 
-This generates local random credentials using a temporary Node container, then builds and starts Compose. It needs Docker and internet access for the **first image/dependency download**, but does not require Node or PostgreSQL installed on Windows or WSL. The application runtime is local and uses an internal Docker network.
+The setup script creates local `.env` credentials on first run and preserves existing ones. It builds the Docker stack and removes orphaned services from old instructor-console editions.
 
-Open the exact addresses below; they deliberately use different hostnames so browser cookies are not shared across store and instructor origins:
+- Store: http://localhost:8080
+- Business services: http://localhost:8080/services
+- No instructor website; port 8081 is no longer published
+- Demo customer: `alex@learner.rvu.test` / `Studio-Local-2026!`
+- Opening fictional wallet credit: **EGP 15,000**
 
-| Surface | URL | Access |
-| --- | --- | --- |
-| Store | http://localhost:8080 | Register, or use the fictional demo account |
-| Account services (student) | http://localhost:8080/services | Fictional business workflows; sign in at the store first |
-| Instructor console | http://127.0.0.1:8081 | Username `instructor`; generated password printed during first setup and retained in `.env` |
-| PostgreSQL / SMTP / Mailpit web UI | No host port | Internal services only |
+**Upgrade an already-running local installation:**
 
-Demo customer: `alex@learner.rvu.test` / `Studio-Local-2026!`. Each new run seeds this verified account with **EGP 15,000 virtual credit**. You may also register a fictional address such as `sam@learner.rvu.test`; open **Account → Inbox** to verify it.
-
-If you already have Node 24, the equivalent setup is:
-
-```sh
-node scripts/setup.mjs
-docker compose up --build -d
-```
-
-Check startup and stop without deleting data:
-
-```sh
+```bash
+cd ~/rvu-commerce
+git pull origin main
+sh scripts/start.sh
 docker compose ps
-docker compose logs --tail=80 migrate store instructor edge
-docker compose down
 ```
 
-PostgreSQL data persists in a named volume. Re-running setup preserves `.env`. Changing generated database passwords in `.env` does not rotate credentials inside an existing database volume. Keep `.env` with your local installation and out of source control.
+Migration 004 upgrades pre-existing PostgreSQL volumes without deleting them. The first integrated-mode startup changes the active run, which invalidates sessions from older versions; sign back in using the demo account. Do **not** use `docker compose down -v` if you need existing data.
 
-## Implemented journeys
+### Repeat a scenario
 
-- Registration, local email verification, login, server-side sessions and logout; expired/reset sessions return the UI to sign-in.
-- Eight fictional products, search, category filtering, price sorting, product details and local assets.
-- Persistent cart, quantity changes/removal, authoritative catalog prices and stale-cart detection. Custom workstation quotes retain a server-authorized amount and are verified in the secure baseline; B01 deliberately trusts the accepted client amount.
-- Secure-baseline coupons with physical-product eligibility and history tracking; B04 provides an isolated history enforcement flaw. Gift-card promotions are normally excluded; the B10 scenario deliberately enables a repeatable GIFT20 discount.
-- Normal checkout with server-validated, short-lived review intents and virtual wallet settlement. Confirmed order, payment record and balanced ledger commit together in all profiles except the instructor-selected B08 payment-proof reuse exercise. Replaying an identical checkout key returns its original order.
-- Order list/details, product/price snapshots, full refund of eligible physical orders, and idempotent refunds.
-- Full-face-value gift-card purchase, code issuance after payment, redemption into another customer's wallet and single-redemption enforcement. Orders containing gift cards are final sale.
-- Wallet balance and chronological transaction activity.
-- Transactional email outbox, SMTP delivery worker and a database-backed, owner-scoped student inbox. The raw Mailpit inbox is not published.
-- Independently built instructor UI/API with independent authentication, instructor-only run reset/profile selection and run-scoped evidence counts for all 18 included scenarios.
-- Single-use store voucher, atomic under secure baseline, with a deliberately split check-and-claim path in R01 to teach a genuine overlapping-request race.
+Students may create new `@learner.rvu.test` accounts. To start an entirely new isolated storefront state as the **local machine operator**, run:
 
-There is no real shipment, external payment gateway, stock reservation, or partial-item return. Password recovery is a fictional isolated R05 training flow, never an internet-facing recovery system. The additional service workflows are intentionally separate from checkout and are exposed in the local Account services portal; see the instructor guide for exact scope and limitations.
+```bash
+docker compose run --rm migrate node --import tsx scripts/reset-local.mjs RESET
+```
 
+That command is **not** exposed via the website; it rotates the active run. Existing customer sessions become invalid and demo accounts are reseeded. The prior run remains in PostgreSQL until you intentionally delete the volume.
 
-## Extended training scenarios (13)
+To stop the app without erasing the database: `docker compose down`.
 
-B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11, B12, R01, R02, R03, R04, R05, R06 are selectable as separate instructor profiles (B01/B04/B08/B10/R01 are the original core five). Advanced and specialist workflows are served by `apps/api/src/extendedLabs.ts`, persist state in migration 003, and are exercised by `tests/extended-labs.test.ts`. Each scenario is activated **only** when the instructor chooses that run profile; the clean baseline remains the default. The student workspace at `/services` exposes normal business operations without reporting which profile the instructor selected.
+## Learning experience
 
-**Fidelity limitation:** These are educational implementations of the distinct security invariants, not claimed literal PortSwigger clones. In particular B06 and B12 use explicit email/storage/parser teaching adapters instead of real third-party SMTP address parsing; B11 uses an intentionally insecure local ECB adapter; R05 depends on a time-derived token collision. Do not confuse an automated passing test with a guarantee of browser UX perfection or challenge difficulty. Instructor verification and real-browser testing are still necessary.
+The storefront covers real-seeming checkout, carts, coupon promotions, custom quotes, virtual wallets, gift cards, refunds, customer accounts, password changes, business registration, workspaces, account services, and overlapping asynchronous operations.
 
-## Verification and its limits
+All **18 conceptual vulnerability families** are active together in the integrated run. The former B01–B12 and R01–R06 labels are internal development identifiers, **not** student-facing challenges. Learners are expected to explore normal workflows; the storefront does not publish solution counts, instructor metrics or the active run profile.
 
-The files in `docs/verification/` are historical **M1 snapshots**, not results of the current M2 code. **Current M2 evidence is in [GitHub Actions](https://github.com/RaV-u/rvu-commerce/actions):** typecheck and builds pass, backend integration tests run on PostgreSQL 17 with all 39 passing (including native concurrency and R01), and all four connected React/PGlite UI tests pass. An additional Compose smoke job has passed, exercising the actual proxy and local service stack. Real-browser layout/responsive appearance and your Windows/WSL2 resource usage still require local acceptance.
+### Important fidelity boundary
 
-Backend integration tests run against **native PostgreSQL 17 in GitHub Actions**, including real independent transactions, account and instructor database roles, all 18 training scenarios and their persisted evidence. React tests run with **PGlite (PostgreSQL/WASM)** using JSDOM and an in-process Fastify adapter; no mocked business responses. Separately, Docker Compose has successfully booted the actual nginx proxy, PostgreSQL 18, API services and UIs and passed a host-to-proxy purchase/refund smoke test in CI. Real-browser visual QA and Windows/WSL2 resource use remain local acceptance work.
+This is a purpose-built educational application, not a byte-for-byte recreation of 18 PortSwigger lab implementations. Some mechanics remain separate business-service adapters (especially B05, B06, B11, B12, R02, R05 and R06), and some scenarios can be reached by alternative routes when all weaknesses coexist. The original challenge recipes and unique-only solve paths are **not guaranteed**. Do not market this site as an exact PortSwigger clone.
 
-### Required native PostgreSQL gate
+Integration test coverage and instructor notes are kept in this **source repository**. If it remains public, students can inspect these files and Git history. **Make the repository private and distribute a runnable image or local installation rather than source code** if you want discovery to be a genuine blind exercise.
 
-Repeat the real PostgreSQL tests on your own WSL2 Docker installation before teaching the race lab:
+## Architecture / acceptance
 
-```sh
+- React/Vite storefront and customer business services
+- Fastify REST/JSON backend
+- PostgreSQL 18 Docker runtime; isolated PGlite/native PostgreSQL tests
+- Nginx proxy bound to `127.0.0.1:8080` only
+- Student inbox backed by scoped local PostgreSQL/outbox records
+- No live mail integrations, real money or external payment gateways
+
+Run the test suite on your machine if needed:
+
+```bash
 docker compose --profile test up --build --force-recreate --abort-on-container-exit --exit-code-from tests tests
 docker compose --profile test rm -sf tests test-postgres
 ```
 
-Tests use a separate ephemeral `rvu_test` database, not the store database. Explicitly recreating the test database ensures a clean seed. In this mode, `TEST_DATABASE_URL` enables three native-only gates:
+Real PostgreSQL concurrency tests, account workflow regressions and Docker proxy smoke run in [GitHub Actions](https://github.com/RaV-u/rvu-commerce/actions). Green CI is evidence of the tested workflows, **not** proof that every challenge reproduces a third-party solution exactly or that a real browser session is defect-free.
 
-1. Two real HTTP requests hold overlapping database transactions and return different `pg_backend_pid()` values. A rendezvous fails if they are serialized.
-2. Twelve concurrent ordinary coupon requests produce one benefit, then twelve identical checkouts produce one order and one wallet debit.
-3. In **R01 only**, two or more parallel claims for the same STUDIO300 voucher can produce multiple persisted benefit records; a clean sequential control is rejected. This check is intentionally native-only.
+## Instructor / internal notes
 
-The React test suite uses PGlite to verify UI → Fastify → SQL. Backend integration and true concurrency gates have passed on native PostgreSQL 17 in GitHub Actions. The Compose stack uses PostgreSQL 18; check the latest Docker smoke job for container-level acceptance.
-
-For host-to-proxy-to-database smoke testing, if Node 24 is available on WSL:
-
-```sh
-node scripts/smoke.mjs
-```
-
-It creates a fictional customer, verifies the scoped email, buys with a coupon, refunds the order, and logs out. It does not reset the active run. It has not been executed against Docker here.
-
-For source development with Node 24:
-
-```sh
-npm ci
-node scripts/verify.mjs
-npm run build
-```
-
-`npm test` intentionally reports the two native-only tests as skipped when `TEST_DATABASE_URL` is absent. A green portable run does **not** close the concurrency gate.
-
-## Project map
-
-| Location | Responsibility |
-| --- | --- |
-| `apps/web` | React storefront and original local assets |
-| `apps/control` | Separately built instructor frontend |
-| `apps/api/src/app.ts` | HTTP validation, session boundaries and route registration |
-| `apps/api/src/commerce.ts` | Cart, checkout, refund and gift-card transactions |
-| `apps/api/src/policy.ts` | Immutable secure-baseline rules and future Core identifiers |
-| `apps/api/src/seed.ts` | Reproducible catalog, run seed and double-entry transfers |
-| `apps/api/src/db.ts` | Connection pool and shared/exclusive reset locking |
-| `apps/api/src/mail.ts` | Transactional outbox delivery |
-| `db/migrations` / `db/grants.sql` | Schema, deferred constraints, indexes and database permissions |
-| `infra` | Internal proxy and database role bootstrap |
-| `tests` | Functional, permission, isolation, UI and native-concurrency checks |
-| `IMPLEMENTATION_PROGRESS.md` | Current evidence, decisions, blockers and exact continuation steps |
-
-## Run isolation and reset
-
-Every mutable commerce object is scoped to a run. Composite foreign keys prevent cross-run references. Every protected route derives the active run and owner from the server-side session; there is no client-selectable `run_id`.
-
-Normal transactions acquire a **shared** advisory transaction lock, which permits concurrent transactions. Reset takes the **exclusive** counterpart, waits for in-flight transactions/outbox work, closes the previous run and seeds a new one atomically. Old session tokens, order IDs and gift codes no longer resolve in student APIs. Prior runs remain archived in the database; reset is not data deletion. The reset console requires typing `RESET`.
-
-One installation supports one active run/profile. It is designed for one learner's local instance, with multiple fictional accounts available for cross-account tests. Multi-tenant concurrent scenario scheduling is a later milestone.
-
-## Core scenario preparation
-
-See `docs/CORE_READINESS.md` and `docs/EXTENDED_LABS_INSTRUCTOR_AR.md`. The 18 selectable instructor training implementations now have scenario-specific behavior and regression tests; the 13 additional labs are implemented as isolated service workflows, including documented teaching-adapter limitations. The native R01 concurrency gate passed in CI, but instructor-led acceptance and repeatability on the student's local Docker environment remain release checks.
-
-## Resource and packaging decisions
-
-Compose caps PostgreSQL at 768 MB, store at 384 MB, instructor at 256 MB, Mailpit at 128 MB and proxy at 64 MB. These are configured limits, **not measured consumption**. Start with a 4 GB WSL budget and measure alongside Windows, Burp and a browser on the 16 GB laptop. Initial builds and the optional test profile need extra headroom.
-
-The image deliberately retains development tooling for this first testable milestone. A smaller production runtime image and image digest locking are release-packaging work. Image patch tags are pinned; their upstream existence was checked, but images were not pulled/built here. No Redis, Kubernetes, paid service, external font or analytics connection is required.
-
-The local proxy currently serves HTTP/1.1. HTTP/2 and precise race transport instrumentation are explicitly deferred to the native validation/race preparation milestone. Cookies are HttpOnly, host-scoped and SameSite=Strict; Secure and HSTS are disabled only because this installation uses loopback HTTP.
+Instructor guides in `docs/` are internal implementation reference material, **not** learner handouts. The former instructor UI remains in the repository for historical and regression-test reasons but is not built as a running Compose service or exposed on any host port.
