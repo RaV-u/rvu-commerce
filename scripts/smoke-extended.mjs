@@ -34,9 +34,17 @@ const reconciled=await call("POST","/api/checkout",{
 assert.equal(Number(reconciled.total),540000);
 assert.equal(reconciled.items.length,1);
 assert.equal(Number(reconciled.items[0].unit_price),680000);
-const bulk=await act("bulk.invoice",{quantity:85900});
-assert.equal(bulk.charged,32704);
-assert.equal(bulk.delivered,4295000000);
+// Repeated add-to-cart requests overflow a legacy signed 32-bit total.
+for(let n=0;n<63;n++)await call("POST","/api/cart/items",{productId:"vista-27",quantity:99});
+const bulk=await call("POST","/api/cart/items",{productId:"vista-27",quantity:80});
+assert.equal(bulk.items[0].quantity,6317);
+assert.equal(bulk.total,592704);
+const bulkOrder=await call("POST","/api/checkout",{
+  cartVersion:bulk.version,
+  delivery:{fullName:"Alex Rowan",address:"12 Sample Studio Lane",city:"Sample City"},
+},200,{"Idempotency-Key":randomUUID()});
+assert.equal(Number(bulkOrder.total),592704);
+assert.equal(Number(bulkOrder.items[0].quantity),6317);
 await act("email.update",{address:"buyer@corp.rvu.test"});
 assert.equal((await act("corporate.orders")).orders.length,1);
 assert.equal((await act("workspace.admin")).approved,true);
