@@ -92,6 +92,10 @@ export async function buildApp(config: Config) {
     if (e.statusCode && e.statusCode < 500)
       return reply.code(e.statusCode).send({ error: "Request rejected" });
     req.log.error(err);
+    if (process.env.RVU_TEST_DIAGNOSTICS === "1" && process.env.NODE_ENV === "test") {
+      const detail = err as { code?: string; message?: string; detail?: string; constraint?: string };
+      process.stderr.write(`[RVU test diagnostic] ${req.method} ${req.url}: ${JSON.stringify({ code: detail.code, message: detail.message, detail: detail.detail, constraint: detail.constraint })}\n`);
+    }
     return reply
       .code(500)
       .send({ error: "The request could not be completed" });
