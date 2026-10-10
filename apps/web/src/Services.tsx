@@ -2,29 +2,32 @@ import {useEffect,useMemo,useState,type FormEvent} from "react";
 import {api,setCsrf,type Session} from "./api.ts";
 type Operation={section:string;title:string;description:string;path:string;body:Record<string,unknown>};
 const operations:Operation[]=[
-  {section:"Buying",title:"Cart reconciliation",description:"Review an order made of multiple catalogue lines.",path:"/business/actions",body:{action:"cart.reconcile",lines:[{sku:"vista-27",quantity:1},{sku:"arc-light",quantity:1}]}},
-  {section:"Buying",title:"Bulk business invoice",description:"Create a wholesale invoice for a component order.",path:"/business/actions",body:{action:"bulk.invoice",quantity:3}},
-  {section:"Buying",title:"Pay for current cart",description:"Settle a reviewed bag after processing time.",path:"/business/checkout",body:{delayMs:120}},
+  {section:"Buying",title:"Order adjustments",description:"Review an order made of multiple catalogue lines.",path:"/business/actions",body:{action:"cart.reconcile",lines:[{sku:"vista-27",quantity:1},{sku:"arc-light",quantity:1}]}},
+  {section:"Buying",title:"Wholesale invoice",description:"Create a wholesale invoice for a component order.",path:"/business/actions",body:{action:"bulk.invoice",quantity:3}},
+  {section:"Buying",title:"Express purchase",description:"Settle a reviewed bag after processing time.",path:"/business/checkout",body:{delayMs:120}},
   {section:"Accounts",title:"Update contact email",description:"Maintain the email address for your business identity.",path:"/business/actions",body:{action:"email.update",address:"alex@learner.rvu.test"}},
   {section:"Accounts",title:"Password maintenance",description:"Change the current account password after confirming the old one.",path:"/business/actions",body:{action:"password.maintain",targetEmail:"alex@learner.rvu.test",currentPassword:"",newPassword:"New-Training-Password-2026!"}},
-  {section:"Accounts",title:"Legacy onboarding",description:"Register an older-style corporate billing address.",path:"/business/actions",body:{action:"legacy.register",address:"alex@learner.rvu.test"}},
-  {section:"Accounts",title:"Confirm onboarding email",description:"Redeem the code delivered to the account inbox.",path:"/business/actions",body:{action:"legacy.verify",code:""}},
+  {section:"Accounts",title:"Business account registration",description:"Register an older-style corporate billing address.",path:"/business/actions",body:{action:"legacy.register",address:"alex@learner.rvu.test"}},
+  {section:"Accounts",title:"Confirm business address",description:"Redeem the code delivered to the account inbox.",path:"/business/actions",body:{action:"legacy.verify",code:""}},
   {section:"Accounts",title:"Request password recovery",description:"Send a recovery code to the selected account's inbox.",path:"/business/actions",body:{action:"reset.request",email:"alex@learner.rvu.test"}},
   {section:"Accounts",title:"Complete password recovery",description:"Use a recovery code with a new account password.",path:"/business/actions",body:{action:"reset.complete",email:"alex@learner.rvu.test",code:"",newPassword:"Recovered-Training-2026!"}},
-  {section:"Accounts",title:"Corporate registration",description:"Create a pending corporate identity and finish provisioning.",path:"/business/registration",body:{email:"sample@corp.rvu.test",delayMs:150}},
-  {section:"Accounts",title:"Confirm corporate registration",description:"Verify a corporate identity by registration reference.",path:"/business/actions",body:{action:"registration.confirm",registrationId:"",code:""}},
+  {section:"Accounts",title:"Register company contact",description:"Create a pending corporate identity and finish provisioning.",path:"/business/registration",body:{email:"sample@corp.rvu.test",delayMs:150}},
+  {section:"Accounts",title:"Verify company contact",description:"Verify a corporate identity by registration reference.",path:"/business/actions",body:{action:"registration.confirm",registrationId:"",code:""}},
   {section:"Workspace",title:"Select workspace",description:"Select the workspace permitted by your membership.",path:"/business/actions",body:{action:"workspace.select"}},
-  {section:"Workspace",title:"Business approval",description:"Access a business administration workflow.",path:"/business/actions",body:{action:"workspace.admin"}},
-  {section:"Workspace",title:"Corporate order history",description:"Review corporate customer order records.",path:"/business/actions",body:{action:"corporate.orders"}},
-  {section:"Workspace",title:"Corporate email change",description:"Request a new contact email and send confirmation.",path:"/business/email-change",body:{address:"alex@learner.rvu.test",delayMs:120}},
+  {section:"Workspace",title:"Approve company order",description:"Access a business administration workflow.",path:"/business/actions",body:{action:"workspace.admin"}},
+  {section:"Workspace",title:"Company orders",description:"Review corporate customer order records.",path:"/business/actions",body:{action:"corporate.orders"}},
+  {section:"Workspace",title:"Update company contact",description:"Request a new contact email and send confirmation.",path:"/business/email-change",body:{address:"alex@learner.rvu.test",delayMs:120}},
   {section:"Workspace",title:"Confirm changed email",description:"Finish an earlier email change from its confirmation message.",path:"/business/actions",body:{action:"email.confirm",code:""}},
-  {section:"Workspace",title:"Corporate email onboarding",description:"Verify an employee mailbox under the corporate account policy.",path:"/business/actions",body:{action:"parser.register",address:"employee@corp.rvu.test"}},
+  {section:"Workspace",title:"Invite a team member",description:"Verify an employee mailbox under the corporate account policy.",path:"/business/actions",body:{action:"parser.register",address:"employee@corp.rvu.test"}},
   {section:"Workspace",title:"Confirm corporate email",description:"Validate a corporate invitation or mailbox verification.",path:"/business/actions",body:{action:"parser.verify",code:""}},
-  {section:"Support",title:"Send encrypted notification",description:"Encode a message with the legacy notification system.",path:"/business/actions",body:{action:"notification.encrypt",body:"Delivery update"}},
-  {section:"Support",title:"Remembered sign-in",description:"Resume a remembered session from its encrypted credential.",path:"/business/actions",body:{action:"remember.login",ciphertext:""}},
-  {section:"Support",title:"Account login verification",description:"Submit a login attempt to the protected business account.",path:"/business/login-verification",body:{password:"",delayMs:80}},
+  {section:"Support",title:"Send delivery notice",description:"Encode a message with the legacy notification system.",path:"/business/actions",body:{action:"notification.encrypt",body:"Delivery update"}},
+  {section:"Support",title:"Restore remembered access",description:"Resume a remembered session from its encrypted credential.",path:"/business/actions",body:{action:"remember.login",ciphertext:""}},
+  {section:"Support",title:"Company account sign-in",description:"Submit a login attempt to the protected business account.",path:"/business/login-verification",body:{password:"",delayMs:80}},
 ];
 function pretty(value:unknown){return JSON.stringify(value,null,2);}
+function humanize(name:string):string {
+  return name.replace(/([a-z])([A-Z])/g,"$1 $2").replace(/(^|\\s)\\w/g,c=>c.toUpperCase());
+}
 export function Services(){
   const [session,setSession]=useState<Session>({user:null});
   const [ready,setReady]=useState(false);
@@ -43,6 +46,16 @@ export function Services(){
       .finally(()=>{if(mounted)setReady(true);});
     return ()=>{mounted=false;};
   },[]);
+  function updateField(key:string, raw:string) {
+    const next=JSON.parse(payload) as Record<string,unknown>;
+    const sample=op.body[key];
+    if(typeof sample==="number") next[key]=Number(raw);
+    else if(typeof sample==="boolean") next[key]=raw==="true";
+    else if(typeof sample==="object"){
+      try{next[key]=JSON.parse(raw);}catch{return;}
+    }else next[key]=raw;
+    setPayload(pretty(next));
+  }
   async function submit(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
     setError("");setResponse("");setSending(true);
@@ -77,13 +90,29 @@ export function Services(){
             <h2>{op.title}</h2>
             <p>{op.description}</p>
             <form onSubmit={e=>void submit(e)}>
-              <label htmlFor="service-request">Request details <span>POST /api{op.path}</span></label>
-              <textarea id="service-request" spellCheck={false} rows={10} value={payload} onChange={e=>setPayload(e.target.value)} />
-              <p className="service-hint">Editable request details are provided for this local training edition. Inspect the network request with your usual debugging tools.</p>
-              <button type="submit" disabled={sending}>{sending?"Processing…":"Submit request →"}</button>
+              <div className="service-fields">
+                {Object.entries(op.body).filter(([key])=>key!=="action" && key!=="delayMs").map(([key,example])=>{
+                  const current=(JSON.parse(payload) as Record<string,unknown>)[key];
+                  return <label className="service-field" htmlFor={"business-"+key} key={key}>
+                    <span>{humanize(key)}</span>
+                    {typeof example==="object"
+                      ? <textarea id={"business-"+key} rows={4} spellCheck={false}
+                          value={pretty(current)} onChange={e=>updateField(key,e.target.value)} />
+                      : typeof example==="boolean"
+                        ? <select id={"business-"+key} value={String(current)} onChange={e=>updateField(key,e.target.value)}>
+                            <option value="true">Yes</option><option value="false">No</option>
+                          </select>
+                        : <input id={"business-"+key}
+                            type={typeof example==="number"?"number":key.toLowerCase().includes("password")?"password":"text"}
+                            value={String(current??"")} onChange={e=>updateField(key,e.target.value)}
+                          />}
+                  </label>;
+                })}
+              </div>
+              <button type="submit" disabled={sending}>{sending?"Processing…":"Continue →"}</button>
             </form>
-            {error&&<div className="service-result error" role="alert"><strong>Request not completed</strong><pre>{error}</pre></div>}
-            {response&&<div className="service-result"><strong>Service response</strong><pre>{response}</pre></div>}
+            {error&&<div className="service-result error" role="alert"><strong>Request not completed</strong><p>{error}</p></div>}
+            {response&&<div className="service-result"><strong>Request completed</strong><p>Your account records have been updated.</p><details><summary>View transaction details</summary><pre>{response}</pre></details></div>}
           </section>
         </div>}
     </main>
