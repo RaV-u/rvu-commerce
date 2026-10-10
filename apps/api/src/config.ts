@@ -13,7 +13,7 @@ export function envConfig(): Config {
     databaseUrl: process.env.DATABASE_URL,
     origin:
       process.env.APP_ORIGIN ??
-      (mode === "store" ? "http://localhost:8080" : "http://127.0.0.1:8081"),
+      (mode === "store" ? "http://localhost:8081" : "http://127.0.0.1:8082"),
     cookieSecure: process.env.COOKIE_SECURE === "true",
     mode,
     webRoot: process.env.WEB_ROOT,

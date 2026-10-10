@@ -12,8 +12,8 @@ let wasm: PGlite | undefined, socket: PGLiteSocketServer | undefined;
 let store: Awaited<ReturnType<typeof buildApp>>,
   control: Awaited<ReturnType<typeof buildApp>>;
 let url = process.env.TEST_DATABASE_URL ?? "";
-const origin = "http://localhost:8080",
-  adminOrigin = "http://127.0.0.1:8081",
+const origin = "http://localhost:8081",
+  adminOrigin = "http://127.0.0.1:8082",
   password = "Local-Instructor-Test-2026!";
 type Client = { cookie: string; csrf: string };
 const alex: Client = { cookie: "", csrf: "" },

@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 assert.equal(process.env.RVU_DISPOSABLE_CI, "yes", "Disposable CI required");
-const origin="http://localhost:8080";
+const origin="http://localhost:8081";
 let cookie="",csrf="";
 async function call(method,path,payload,expected=200,extraHeaders={}) {
   const res=await fetch(origin+path,{

@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
 assert.equal(process.env.RVU_DISPOSABLE_CI,"yes","CI-only local exercise");
-const root="http://localhost:8080";
+const root="http://localhost:8081";
 async function newShopper(){
   let cookie="",csrf="";
   async function call(method,path,payload,status=200,extra={}){

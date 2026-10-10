@@ -7,4 +7,4 @@ if [ ! -f .env ]; then
     node:24.21.0-bookworm-slim node scripts/setup.mjs
 fi
 docker compose up --build -d --remove-orphans
-printf '\nRVU Commerce: http://localhost:8080\nBusiness services: http://localhost:8080/services\n'
+printf '\nRVU Commerce: http://localhost:8081\nBusiness services: My Account -> Services (on the same site)\n'

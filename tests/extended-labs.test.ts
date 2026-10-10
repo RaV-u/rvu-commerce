@@ -22,7 +22,7 @@ async function call(c:Client,method:string,path:string,body?:unknown,status=200,
     // Each instructor reset starts a fresh fictional learner client. Avoid
     // conflating its global per-IP login limiter with the R02 quota experiment.
     remoteAddress:path==="/api/login"?"192.0.2."+String(10+(loginCounter++%240)):"127.0.0.1",
-    headers:{origin:isAdmin?"http://127.0.0.1:8081":"http://localhost:8080",cookie:c.cookie,"x-csrf-token":c.csrf,...extra},
+    headers:{origin:isAdmin?"http://127.0.0.1:8082":"http://localhost:8081",cookie:c.cookie,"x-csrf-token":c.csrf,...extra},
     ...(body===undefined?{}:{payload:body as object}),
   });
   assert.equal(r.statusCode,status,method+" "+path+" "+r.body);
@@ -59,8 +59,8 @@ before(async()=>{
   await bootstrap.query("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='rvu_store') THEN CREATE ROLE rvu_store; END IF; IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='rvu_control') THEN CREATE ROLE rvu_control; END IF; END $$");
   await bootstrap.end();
   await migrate(url,password);
-  store=await buildApp({databaseUrl:url,origin:"http://localhost:8080",cookieSecure:false,mode:"store"});
-  control=await buildApp({databaseUrl:url,origin:"http://127.0.0.1:8081",cookieSecure:false,mode:"control"});
+  store=await buildApp({databaseUrl:url,origin:"http://localhost:8081",cookieSecure:false,mode:"store"});
+  control=await buildApp({databaseUrl:url,origin:"http://127.0.0.1:8082",cookieSecure:false,mode:"control"});
   if(process.env.TEST_DATABASE_URL){
     store.pool.options.verify=(client,done)=>{void client.query("SET ROLE rvu_store").then(()=>done(),done);};
     control.pool.options.verify=(client,done)=>{void client.query("SET ROLE rvu_control").then(()=>done(),done);};
@@ -76,9 +76,9 @@ test("instructor proof details are isolated from unauthenticated and student ser
   await act("corporate.orders");
   const evidenceLog=await call(admin,"GET","/api/instructor/evidence/events");
   assert.ok(evidenceLog.events.some((e:{scenario:string})=>e.scenario==="B03"));
-  const unauthorized=await control.app.inject({method:"GET",url:"/api/instructor/evidence/events",headers:{origin:"http://127.0.0.1:8081"}});
+  const unauthorized=await control.app.inject({method:"GET",url:"/api/instructor/evidence/events",headers:{origin:"http://127.0.0.1:8082"}});
   assert.equal(unauthorized.statusCode,401);
-  const student=await store.app.inject({method:"GET",url:"/api/instructor/evidence/events",headers:{origin:"http://localhost:8080",cookie:alex.cookie}});
+  const student=await store.app.inject({method:"GET",url:"/api/instructor/evidence/events",headers:{origin:"http://localhost:8081",cookie:alex.cookie}});
   assert.equal(student.statusCode,404);
   await fresh("secure-baseline");
   assert.equal((await call(admin,"GET","/api/instructor/evidence/events")).events.length,0);
@@ -393,7 +393,7 @@ test("unified RVU session supports corporate verification and concurrent account
     await call(learner,"POST","/api/business/actions",{action:"reset.request",email:teammate});
     const response=await store.app.inject({
       method:"POST",url:"/api/business/actions",
-      headers:{origin:"http://localhost:8080",cookie:learner.cookie,"x-csrf-token":learner.csrf},
+      headers:{origin:"http://localhost:8081",cookie:learner.cookie,"x-csrf-token":learner.csrf},
       payload:{action:"reset.complete",email:teammate,code:recoveryCode,newPassword:"Renewed-Corporate-2026!"},
     });
     assert.ok([200,400].includes(response.statusCode),response.body);
