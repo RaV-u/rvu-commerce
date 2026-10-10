@@ -716,12 +716,23 @@ export async function buildApp(config: Config) {
           [run],
         )).rows[0].n);
         const extra=(await db.query(
-          "SELECT scenario,count(DISTINCT id)::int AS solved FROM store.lab_evidence WHERE run_id=$1 GROUP BY scenario",
+          "SELECT scenario,count(DISTINCT user_id)::int AS solved FROM store.lab_evidence WHERE run_id=$1 AND kind<>'partial-confirm' GROUP BY scenario",
           [run],
         )).rows as {scenario:string;solved:number}[];
         const training=Object.fromEntries(Object.keys(extendedLabels).map(k=>[k,0])) as Record<string,number>;
         for(const row of extra)if(row.scenario in training)training[row.scenario]=Number(row.solved);
         return {run,profile,metrics:{B01:quoteMismatch,B04:repeatedPromotion,B08:unpaidConfirmed,B10:giftProfit,R01:repeatedVoucher,...training}};
+      }),
+    );
+    app.get("/api/instructor/evidence/events", (req) =>
+      transaction(pool,async db=>{
+        await instructor(db,req);
+        const run=await activeRun(db);
+        const events=(await db.query(
+          "SELECT scenario,kind,detail,created_at FROM store.lab_evidence WHERE run_id=$1 ORDER BY created_at DESC,id DESC LIMIT 100",
+          [run],
+        )).rows;
+        return {run,events};
       }),
     );
     app.post("/api/instructor/reset", (req) =>
