@@ -1,58 +1,40 @@
 # RVU Commerce
 
-An intentionally vulnerable, locally hosted retail training application with a React storefront, account services, PostgreSQL, and Docker Compose.
+One identical Docker distribution for the instructor and all students. All machines run the same application and receive updates from the same GitHub Release; each keeps its own local database.
 
-## Student download (Windows + WSL2)
+## Windows + WSL2
+1. Open PowerShell as Administrator: `wsl --install -d Ubuntu`. Restart when prompted, then open Ubuntu and create your Linux account.
+2. Docker Desktop > Settings > General: enable WSL 2 engine if shown. Settings > Resources > WSL Integration: enable Ubuntu and Apply & Restart.
+3. In Ubuntu run `docker info` and `docker compose version` to confirm Docker is accessible.
 
-**[Download RVU Commerce for students](https://github.com/RaV-u/rvu-commerce/releases/latest/download/RVU-Commerce-Student.tar.gz)** — single offline Docker package from the latest verified GitHub Release. No Node.js or Git required. Docker Desktop and Ubuntu WSL2 must be installed and Docker WSL integration enabled.
+## Native Linux
+WSL is not needed. Start Docker Engine with the Compose plugin. Check `docker info` and `docker compose version`. Make sure your Linux user can access Docker.
 
-In **Ubuntu (WSL)** run:
+## Install the same app for everyone
+In the Ubuntu WSL terminal or native Linux terminal:
 
 ```bash
-mkdir -p ~/rvu-commerce-student && cd ~/rvu-commerce-student
-curl -fL "https://github.com/RaV-u/rvu-commerce/releases/latest/download/RVU-Commerce-Student.tar.gz" -o RVU-Commerce-Student.tar.gz
-tar -xzf RVU-Commerce-Student.tar.gz
-cd RVU-Commerce-Student
-bash install.sh
+curl -fL https://github.com/RaV-u/rvu-commerce/releases/download/rvu-latest/setup.sh -o rvu-setup.sh
+bash rvu-setup.sh
 ```
 
-Open **http://localhost:8081**.
+The script downloads `RVU-Commerce.tar.gz` from GitHub and installs prebuilt Docker images into `~/RVU-Commerce`. Open **http://localhost:8081**.
 
-| Username | Password | Starting wallet |
-| --- | --- | --- |
+| Username | Password | Opening wallet |
+|---|---|---|
 | `rvu` | `rvucamp` | EGP 15,000 |
 | `rvu_2` | `rvucamp` | EGP 15,000 |
 
-The accounts have separate sessions, carts, wallets, inboxes, and orders. Amounts use **whole Egyptian pounds**: `1` is EGP 1, and `100` is EGP 100. Payments are simulated; no real money is involved.
+Every amount is denominated in **whole Egyptian pounds**; 1 means EGP 1.
 
-You can stop the student store with `bash stop.sh` from its folder, then restart with `bash install.sh`. To fetch and apply any later GitHub Release update, run **`bash update.sh`** from inside `RVU-Commerce-Student`. It replaces app files and images, preserves `.env` and named Docker volumes, and restarts the app. For a fresh lab run, use `bash reset.sh`.
-
-If you already installed an old package without `update.sh`, bootstrap it once from the [standalone updater](https://github.com/RaV-u/rvu-commerce/releases/download/student-latest/update.sh) in your existing student folder, then run `bash update.sh`. The [Arabic installation guide](student/README_AR.md) contains troubleshooting and Burp proxy setup. **Download the named `RVU-Commerce-Student.tar.gz` Release asset; do not use GitHub's automatic "Source code" archives.** Source archives lack prebuilt Docker images and may reveal training exercises.
-
-## Instructor workspace
-
+## Update or stop
 ```bash
-git clone https://github.com/RaV-u/rvu-commerce.git
-cd rvu-commerce
-bash scripts/start.sh
+cd ~/RVU-Commerce
+bash update.sh
 ```
 
-The instructor source contains automated tests and intended training vulnerabilities. **This public repository is not appropriate for a blind hunt when learners can browse source or Git history.** Students should receive the Release asset link, not source access. If spoiler prevention is important, host student releases in a separate public repository and restrict access to this source.
+Start/restart with `bash install.sh`, stop without wiping records via `bash stop.sh`, and begin a fresh training run only when desired via `bash reset.sh`. Updates preserve the local Docker database volume and environment credentials.
 
-The instructor app is bound to **127.0.0.1:8081** only. All account services appear under **My Account → Services**.
+The repository's source code is used only to build the very same distribution via `bash scripts/export-student-package.sh`; it is not a separate instructor edition. GitHub Actions tests the common package and publishes it at https://github.com/RaV-u/rvu-commerce/releases/tag/rvu-latest.
 
-## Development checks
-
-```bash
-npm ci
-npm run typecheck
-npm run build
-npm test
-npm run test:ui
-```
-
-On every passing push to `main`, GitHub Actions runs PostgreSQL, app/UI and Docker installation tests, then refreshes the stable [student Release](https://github.com/RaV-u/rvu-commerce/releases/latest). An offline instructor export is also available via `bash scripts/export-student-package.sh`.
-
-## Currency upgrade
-
-The application uses whole EGP pounds end to end. Migration 007 converts catalog, promotion and voucher defaults and activates a fresh training run on the first upgrade. Older historical runs remain archived without rewriting financial ledgers.
+See [Arabic guide](student/README_AR.md). Do not download the GitHub source archive for installation; it can reveal lab implementation and lacks the prebuilt images. This repository is public, so blind-hunting spoilers remain visible in source history. Keep the intentionally vulnerable lab on localhost, not the public internet.
