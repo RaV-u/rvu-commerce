@@ -143,7 +143,7 @@ jobs:
       - name: Create and validate student installation package
         run: |
           bash -n student/install.sh student/stop.sh student/reset.sh scripts/export-student-package.sh
-          docker compose -f student/compose.yaml config --quiet
+          docker compose --env-file .env -f student/compose.yaml config --quiet
           bash scripts/export-student-package.sh
           archive=dist-packages/RVU-Commerce-Student.tar.gz
           test -s "$archive"
@@ -156,7 +156,7 @@ jobs:
       - name: Exercise student-only Docker installation
         run: |
           docker compose down --remove-orphans
-          docker compose -f student/compose.yaml up -d --wait --wait-timeout 180
+          docker compose --env-file .env -f student/compose.yaml up -d --wait --wait-timeout 180
           node scripts/smoke.mjs
       - name: Save review screenshots
         if: always()
@@ -174,7 +174,7 @@ jobs:
         run: docker compose logs --tail=100
       - name: Remove student edition CI containers and volumes
         if: always()
-        run: docker compose -f student/compose.yaml down -v --remove-orphans || true
+        run: docker compose --env-file .env -f student/compose.yaml down -v --remove-orphans || true
       - name: Remove CI containers and volumes
         if: always()
         run: docker compose down -v --remove-orphans
