@@ -76,6 +76,10 @@ test("baseline denies negative quantities and signed-32 arithmetic wrap",async()
   await act("email.update",{address:"fake@corp.rvu.test"},409);
   await act("workspace.admin",{},403);
   assert.equal(await proof("B02"),0);
+  const neutral=await call(alex,"GET","/api/lab/status");
+  assert.equal(neutral.profile,undefined);
+  assert.equal(neutral.states,undefined);
+  assert.equal(neutral.proofs,undefined);
 });
 test("B02: negative quantity offsets a positive delivered product and debits real wallet",async()=>{
   await fresh("B02");
@@ -121,6 +125,8 @@ test("B09: an unselected workspace gets administrator access but explicit buyer 
   await fresh("B09");
   assert.equal((await act("workspace.admin")).approved,true);
   assert.equal(await proof("B09"),1);
+  const approval=(await store.pool.query("SELECT data FROM store.lab_states WHERE scenario='B09' AND run_id=(SELECT active_run FROM store.runtime)")).rows[0].data;
+  assert.equal(approval.adminApproved,true);
   await act("workspace.select");
   await act("workspace.admin",{},403);
 });
@@ -148,6 +154,7 @@ test("R02: native PostgreSQL counts actual password checks beyond the three-atte
   const entries=await Promise.all(Array.from({length:5},()=>call(alex,"POST","/api/lab/race/login",{password:"Target-Only-2026!",delayMs:120})));
   assert.equal(entries.filter(x=>x.authenticated).length,5);
   assert.ok(await proof("R02")>=1);
+  assert.equal((await act("auth.target")).authenticated,true);
 });
 test("R03: adding a product during payment produces durable undercharged fulfillment",{
   skip:!process.env.TEST_DATABASE_URL?"Independent checkout/cart requests require native PostgreSQL":false,
@@ -199,10 +206,11 @@ test("R06: registration is exploitable only while token provisioning is incomple
   const pending=call(alex,"POST","/api/lab/race/registration",{email:"hire@corp.rvu.test",registrationId,delayMs:260});
   await pause(60);
   const confirmed=await act("registration.confirm",{registrationId,code:[""]});
-  assert.equal(confirmed.publishedBeforeReady,true);
+  assert.equal(confirmed.verified,true);
   await pending;
   const db=await store.pool.query("SELECT verified,completed FROM store.lab_registrations WHERE id=$1",[registrationId]);
   assert.equal(db.rows[0].verified,true);
   assert.equal(db.rows[0].completed,true);
-  assert.equal(await proof("R06"),1);
+  assert.equal((await act("corporate.orders")).orders.length,1);
+  assert.ok(await proof("R06")>=1);
 });

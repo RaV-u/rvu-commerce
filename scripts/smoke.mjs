@@ -28,6 +28,9 @@ const html = await fetch(origin);
 assert.equal(html.status, 200);
 assert.match(await html.text(), /RVU Commerce/);
 assert.ok(html.headers.get("content-security-policy"));
+const servicesPage = await fetch(origin + "/services");
+assert.equal(servicesPage.status, 200, "Service portal SPA route must be published");
+assert.match(await servicesPage.text(), /RVU Commerce/);
 // Both published hosts must be usable, but student authentication and API
 // routes must never cross the instructor boundary.
 const instructorOrigin = "http://127.0.0.1:8081";
@@ -55,6 +58,9 @@ await request("/api/register", "POST", {
   email: `smoke-${randomUUID().slice(0, 8)}@learner.rvu.test`,
   password: "Fictional-Smoke-2026!",
 });
+const directory = await request("/api/lab/status");
+assert.equal(directory.profile, undefined, "Learner must not discover instructor training profile");
+assert.equal(directory.states, undefined, "Learner must not receive lab state or tokens");
 const inbox = await request("/api/inbox");
 await request("/api/verify", "POST", {
   code: inbox.messages[0].body.split(": ")[1],
