@@ -56,11 +56,12 @@ jobs:
           node-version: '24'
       - name: Prepare disposable CI credentials
         run: |
-          printf '%s\\n' \\
-            'DB_PASSWORD=CI-local-owner-Password-Only-2026' \\
-            'STORE_DB_PASSWORD=CI-local-store-Password-Only-2026' \\
-            'CONTROL_DB_PASSWORD=CI-local-control-Password-Only-2026' \\
-            'INSTRUCTOR_PASSWORD=CI-local-instructor-Password-Only-2026' > .env
+          cat > .env <<'EOF'
+          DB_PASSWORD=CI-local-owner-Password-Only-2026
+          STORE_DB_PASSWORD=CI-local-store-Password-Only-2026
+          CONTROL_DB_PASSWORD=CI-local-control-Password-Only-2026
+          INSTRUCTOR_PASSWORD=CI-local-instructor-Password-Only-2026
+          EOF
           chmod 600 .env
       - name: Validate Compose configuration
         run: docker compose config --quiet
