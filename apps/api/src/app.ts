@@ -16,6 +16,7 @@ import {
 } from "./security.ts";
 import { createCustomer, newRun } from "./seed.ts";
 import { activeTrainingProfiles } from "./policy.ts";
+import { registerExtendedLabs, extendedLabels } from "./extendedLabs.ts";
 import {
   cart,
   checkout,
@@ -623,6 +624,7 @@ export async function buildApp(config: Config) {
           .parse(req.body).code,
       ),
     );
+    registerExtendedLabs({app,pool,userRoute,actor});
   } else {
     async function instructor(db: DB, req: FastifyRequest) {
       const s = (
@@ -713,7 +715,13 @@ export async function buildApp(config: Config) {
                       WHERE g.run_id=$1 AND g.redeemed_by=a.user_id AND o.discount>0)`,
           [run],
         )).rows[0].n);
-        return {run,profile,metrics:{B01:quoteMismatch,B04:repeatedPromotion,B08:unpaidConfirmed,B10:giftProfit,R01:repeatedVoucher}};
+        const extra=(await db.query(
+          "SELECT scenario,count(DISTINCT id)::int AS solved FROM store.lab_evidence WHERE run_id=$1 GROUP BY scenario",
+          [run],
+        )).rows as {scenario:string;solved:number}[];
+        const training=Object.fromEntries(Object.keys(extendedLabels).map(k=>[k,0])) as Record<string,number>;
+        for(const row of extra)if(row.scenario in training)training[row.scenario]=Number(row.solved);
+        return {run,profile,metrics:{B01:quoteMismatch,B04:repeatedPromotion,B08:unpaidConfirmed,B10:giftProfit,R01:repeatedVoucher,...training}};
       }),
     );
     app.post("/api/instructor/reset", (req) =>
