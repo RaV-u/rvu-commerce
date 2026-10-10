@@ -1,3 +1,5 @@
+> **Historical plan only:** The current single storefront is on http://localhost:8081; its instructor console is not deployed. Follow README.md instead of legacy two-site notes below.
+
 # Current M2 verification checkpoint — 2026-10-10
 
 **Status:** All **18 of 18** instructor-selected scenarios have executable training code and automated scenario tests (five original core plus thirteen new extended). B06 and B12 use explicit teaching parser/legacy-email adapters rather than external SMTP equivalence. Browser and student-machine acceptance remain outstanding.

@@ -1,5 +1,7 @@
 # RVU Commerce — GitHub and local Docker
 
+> **أرشيف إعداد قديم:** الموقع الحالي واحد فقط على `http://localhost:8081` والحسابان `rvu` و`rvu_2`؛ لا توجد لوحة مدرب منشورة. اتبع [START_HERE_AR.md](START_HERE_AR.md) للتشغيل الحالي.
+
 Owner: `RaV-u` (GitHub account associated with `ramzmedhat@gmail.com`).
 
 ## Repository model

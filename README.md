@@ -14,9 +14,9 @@ sh scripts/start.sh
 
 The setup script creates local `.env` credentials on first run and preserves existing ones. It builds the Docker stack and removes orphaned services from old instructor-console editions.
 
-- Store: http://localhost:8080
+- Store: http://localhost:8081
 - All business and account services appear **inside the My Account → Services tab**. There is no second website. Old `/services` bookmarks return to the shop.
-- No instructor website; port 8081 is no longer published
+- No instructor website; only the storefront is published on loopback port 8081 (not 8080)
 - Two persistent fictional logins: **`rvu` / `rvucamp`** and **`rvu_2` / `rvucamp`** (localhost classroom only)
 - Each login has its own verified account, basket, wallet, inbox and saved order history. Both accounts remain the same after sign-out and sign-in. No registration or email verification is required.
 - Opening fictional wallet credit: **EGP 15,000**
@@ -61,7 +61,7 @@ Integration test coverage and instructor notes are kept in this **source reposit
 - React/Vite storefront and customer business services
 - Fastify REST/JSON backend
 - PostgreSQL 18 Docker runtime; isolated PGlite/native PostgreSQL tests
-- Nginx proxy bound to `127.0.0.1:8080` only
+- Nginx proxy bound to `127.0.0.1:8081` only
 - Student inbox backed by scoped local PostgreSQL/outbox records
 - No live mail integrations, real money or external payment gateways
 
