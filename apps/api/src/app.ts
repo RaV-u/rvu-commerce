@@ -517,7 +517,7 @@ export async function buildApp(config: Config) {
       return transaction(pool,async db=>{
         const a=await actor(db,req,true);
         if(!hasWeakness(a.profile,"R01") || a.run!==prepared.checked!.run)
-          throw new HttpError(409,"Training run changed during voucher claim");
+          throw new HttpError(409,"Your account session has changed during voucher claim");
         return claim(db,a,prepared.checked!);
       });
     });
