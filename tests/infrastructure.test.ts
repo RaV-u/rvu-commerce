@@ -55,7 +55,7 @@ test("all 18 vulnerability families are present in one student-facing commerce e
   const visibleContracts=[
     [storefront,["/cart/items","/cart/coupon","/cart/voucher","/checkout/prepare","/checkout/confirm","Gift cards"]],
     [services,["email.update","password.maintain","legacy.register","workspace.admin","corporate.orders",
-      "notification.encrypt","remember.login","parser.register","reset.request","reset.complete",
+      "notification.encrypt","remember.login","support.queue","workspace.approvals","parser.register","reset.request","reset.complete",
       "/business/checkout","/business/email-change","/business/registration","registration.confirm",
       "/business/login-verification"]],
     [api,["/api/cart/items","/api/checkout/confirm","/api/gift-cards/redeem"]],

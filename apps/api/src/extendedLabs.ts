@@ -191,6 +191,12 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         await evidence(db,a,"B09","admin-action",{missingContext:true,approval});
         return {action:"corporate-refund-approval",approved:true,approval};
       }
+      case "workspace.approvals": {
+        requireProfile(a,["B09"]);
+        const state=await data(db,a,"B09");
+        if(state.adminApproved!==true)throw new HttpError(403,"Business approval privileges required");
+        return {history:[{id:state.approval,kind:"company-order-approval",status:"approved",amount:960000}]};
+      }
       case "auth.target": {
         requireProfile(a,["R02"]);
         const s=await data(db,a,"R02");
@@ -207,8 +213,16 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         const hex=z.string().regex(/^[0-9a-f]+$/).max(2048).parse(p.ciphertext);
         const plaintext=decrypt(a,hex);
         if(!hasWeakness(a.profile,"B11") || !plaintext.startsWith("kind=remember&user=store-admin")) throw new HttpError(403,"Not a remembered login credential");
+        const state=await data(db,a,"B11");
+        await save(db,a,"B11",{...state,role:"store-admin",authenticatedAt:Date.now()});
         await evidence(db,a,"B11","remembered-admin",{token:hash(hex)});
         return {role:"store-admin",authenticated:true};
+      }
+      case "support.queue": {
+        requireProfile(a,["B11"]);
+        const state=await data(db,a,"B11");
+        if(state.role!=="store-admin")throw new HttpError(403,"Support staff access required");
+        return {cases:[{id:"SUP-1002",customer:"corporate@corp.rvu.test",type:"order-adjustment",status:"needs-review"}]};
       }
       case "legacy.register": {
         requireProfile(a,["B06"]);

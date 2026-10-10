@@ -173,6 +173,7 @@ test("B07: missing currentPassword chooses unsafe support branch and changes a d
 test("B09: an unselected workspace gets administrator access but explicit buyer context does not",async()=>{
   await fresh("B09");
   assert.equal((await act("workspace.admin")).approved,true);
+  assert.equal((await act("workspace.approvals")).history.length,1);
   assert.equal(await proof("B09"),1);
   const approval=(await store.pool.query("SELECT data FROM store.lab_states WHERE scenario='B09' AND run_id=(SELECT active_run FROM store.runtime)")).rows[0].data;
   assert.equal(approval.adminApproved,true);
@@ -183,7 +184,9 @@ test("B11: ECB notification oracle allows extracted encrypted blocks to become a
   await fresh("B11");
   const oracle=await act("notification.encrypt",{body:"A".repeat(9)+"kind=remember&user=store-admin"});
   const forged=Buffer.from(oracle.ciphertext,"hex").subarray(32).toString("hex");
+  await act("support.queue",{},403);
   assert.equal((await act("remember.login",{ciphertext:forged})).authenticated,true);
+  assert.equal((await act("support.queue")).cases.length,1);
   await act("remember.login",{ciphertext:oracle.ciphertext},403);
   assert.equal(await proof("B11"),1);
 });

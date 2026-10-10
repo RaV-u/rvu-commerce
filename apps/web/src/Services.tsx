@@ -14,12 +14,14 @@ const operations:Operation[]=[
   {section:"Workspace",title:"Select workspace",description:"Select the workspace permitted by your membership.",path:"/business/actions",body:{action:"workspace.select"}},
   {section:"Workspace",title:"Approve company order",description:"Access a business administration workflow.",path:"/business/actions",body:{action:"workspace.admin"}},
   {section:"Workspace",title:"Company orders",description:"Review corporate customer order records.",path:"/business/actions",body:{action:"corporate.orders"}},
+  {section:"Workspace",title:"Company approval history",description:"View the history of authorised company order approvals.",path:"/business/actions",body:{action:"workspace.approvals"}},
   {section:"Workspace",title:"Update company contact",description:"Request a new contact email and send confirmation.",path:"/business/email-change",body:{address:"alex@learner.rvu.test",delayMs:120}},
   {section:"Workspace",title:"Confirm changed email",description:"Finish an earlier email change from its confirmation message.",path:"/business/actions",body:{action:"email.confirm",code:""}},
   {section:"Workspace",title:"Invite a team member",description:"Verify an employee mailbox under the corporate account policy.",path:"/business/actions",body:{action:"parser.register",address:"employee@corp.rvu.test"}},
   {section:"Workspace",title:"Confirm corporate email",description:"Validate a corporate invitation or mailbox verification.",path:"/business/actions",body:{action:"parser.verify",code:""}},
   {section:"Support",title:"Send delivery notice",description:"Encode a message with the legacy notification system.",path:"/business/actions",body:{action:"notification.encrypt",body:"Delivery update"}},
   {section:"Support",title:"Restore remembered access",description:"Resume a remembered session from its encrypted credential.",path:"/business/actions",body:{action:"remember.login",ciphertext:""}},
+  {section:"Support",title:"Support case queue",description:"Review restricted customer support cases.",path:"/business/actions",body:{action:"support.queue"}},
   {section:"Support",title:"Company account sign-in",description:"Sign in to a separate company account in your workspace.",path:"/business/login-verification",body:{email:"target@learner.rvu.test",password:"",delayMs:80}},
 ];
 function pretty(value:unknown){return JSON.stringify(value,null,2);}
