@@ -232,10 +232,17 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         const raw=z.string().min(5).max(400).parse(p.address);
         if(!raw.endsWith("@corp.rvu.test"))throw new HttpError(403,"Corporate domain required");
         const word=raw.slice(0,-"@corp.rvu.test".length);
-        const m=/^=\?UTF-8\?B\?([A-Za-z0-9+/=]+)\?=$/i.exec(word);
-        const destination=m?Buffer.from(m[1],"base64").toString("utf8"):raw;
-        const deliverable=destination.toLowerCase()===a.email.toLowerCase();
-        if(!deliverable)throw new HttpError(403,"Training adapter cannot deliver to another person's mailbox");
+        // Match the UTF-7 Q-encoded word used by the original parser-boundary
+        // technique. The corporate-domain validator sees the literal suffix,
+        // while the mail-address decoder reveals an earlier mailbox followed
+        // by UTF-7's encoded space (&ACA-).
+        const encoded=/^=\?utf-7\?q\?([^?]+)\?=$/i.exec(word);
+        const decoded=encoded?.[1].replace(/&AEA-/gi,"@").replace(/&ACA-/gi," ");
+        const mailAddress=decoded?.trim().split(/\s+/)[0];
+        const destination=decoded?.includes(" ") && mailAddress
+          ? mailAddress : null;
+        if(!destination || destination.toLowerCase()!==a.email.toLowerCase())
+          throw new HttpError(403,"The supplied corporate address cannot be verified");
         if(!hasWeakness(a.profile,"B12")) fail("Encoded mailbox local parts are forbidden");
         const code=token(),s=await data(db,a,"B12");
         await save(db,a,"B12",{...s,address:raw,recipient:destination,verification:hash(code),verified:false});

@@ -38,7 +38,7 @@
 
 **B11 — Encryption purpose confusion:** `notification.encrypt` يستخدم AES-128-ECB (تدريبي فقط)، و`remember.login` يقبل Clipboard blocks كهوية. يمكن اختيار Notification body يبدأ بعد محاذاة كتل ثم استخراج كتل Ciphertext لتشكيل `kind=remember&user=store-admin`. لا يستخدم مسار Production أي AES-ECB لهذا الغرض.
 
-**B12 — Encoded corporate email parser:** `parser.register` يفحص النص الخام وينتهي الدومين corporate، بينما adapter يفك RFC-2047 Encoded-word Base64 ويستخرج عنوانًا يُسلّم لصندوق الطالب. بعد `parser.verify` و`corporate.orders` يظهر الأثر. **محاكاة Parser A/Parser B بمسارين واضحين**، وليس إثبات اختلاف Nodemailer أو Mailpit القياسي أو تسليم SMTP حقيقي لعنوان RFC غير قياسي.
+**B12 — Encoded corporate email parser:** `parser.register` يفحص النص الخام وينتهي الدومين corporate، بينما adapter يفك RFC-2047 UTF-7 Q-encoded word (مثل `&AEA-` للـ@ و`&ACA-` للمسافة) ويفصل عنوان التسليم عن نطاق التحقق ويستخرج عنوانًا يُسلّم لصندوق الطالب. بعد `parser.verify` و`corporate.orders` يظهر الأثر. **محاكاة Parser A/Parser B بمسارين واضحين**، وليس إثبات اختلاف Nodemailer أو Mailpit القياسي أو تسليم SMTP حقيقي لعنوان RFC غير قياسي.
 
 **R05 — Time-derived password recovery:** `reset.request` لحساب Alex والهدف قرب نفس الثانية يولّد Hash زمن متكرر، مع فصل صندوق الهدف. `reset.complete` يقبل الرمز الذي وصل لصندوق Alex لإعادة كلمة مرور الهدف ثم يمكن الدخول إليه. ليست Race Condition تقليدية؛ إنها Timestamp Token Collision. Baseline يولّد رموز CSPRNG مستقلة.
 

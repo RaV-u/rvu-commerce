@@ -103,8 +103,10 @@ test("baseline isolates password, notification, parser and legacy storage contro
   const forged=Buffer.from(encrypted.ciphertext,"hex").subarray(32).toString("hex");
   await act("remember.login",{ciphertext:forged},403);
   await act("legacy.register",{address:"A".repeat(241)+"@corp.rvu.test@learner.rvu.test"},400);
-  const encoded="=?UTF-8?B?"+Buffer.from("alex@learner.rvu.test").toString("base64")+"?=@corp.rvu.test";
+  const encoded="=?utf-7?q?alex&AEA-learner.rvu.test&ACA-?=@corp.rvu.test";
   await act("parser.register",{address:encoded},409);
+  await act("parser.register",{address:"=?UTF-8?B?"+Buffer.from("alex@learner.rvu.test").toString("base64")+"?=@corp.rvu.test"},403);
+  await act("parser.register",{address:"=?utf-7?q?alex&AEA-learner.rvu.test?=@corp.rvu.test"},403);
 });
 test("secure baseline rejects a cart update during authorization",{
   skip:!process.env.TEST_DATABASE_URL?"Requires real parallel PostgreSQL sessions":false,
@@ -187,7 +189,7 @@ test("B11: ECB notification oracle allows extracted encrypted blocks to become a
 });
 test("B12: encoded-word parser routes a corporate-validated address into the owned inbox",async()=>{
   await fresh("B12");
-  const raw="=?UTF-8?B?"+Buffer.from("alex@learner.rvu.test").toString("base64")+"?=@corp.rvu.test";
+  const raw="=?utf-7?q?alex&AEA-learner.rvu.test&ACA-?=@corp.rvu.test";
   const prepared=await act("parser.register",{address:raw});
   assert.equal(prepared.deliveryMailbox,"alex@learner.rvu.test");
   await act("parser.verify",{code:await latestCode()});
