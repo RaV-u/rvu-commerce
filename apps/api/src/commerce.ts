@@ -2,7 +2,7 @@ import { randomUUID, randomBytes } from "node:crypto";
 import type { DB } from "./db.ts";
 import { HttpError, hash } from "./security.ts";
 import { transfer } from "./seed.ts";
-import { totalFor } from "./policy.ts";
+import { totalFor, hasWeakness } from "./policy.ts";
 export type Actor = {
   id: string;
   run: string;
@@ -39,7 +39,7 @@ export async function cart(db: DB, a: Actor) {
         [a.run, c.id],
       )
     ).rows[0] ?? null;
-  const applications = a.profile === "B04"
+  const applications = hasWeakness(a.profile,"B04")
     ? (await db.query(
         "SELECT id,code,amount FROM store.cart_discount_applications WHERE run_id=$1 AND cart_id=$2 AND order_id IS NULL ORDER BY created_at,id",
         [a.run,c.id],
@@ -51,7 +51,7 @@ export async function cart(db: DB, a: Actor) {
   )).rows;
   const voucherDiscount = vouchers.reduce((sum: number,entry:{amount:string})=>sum+Number(entry.amount),0);
   const base = totalFor(items,coupon ?? undefined,{
-    giftEligible:a.profile === "B10" && coupon?.code === "GIFT20",
+    giftEligible:hasWeakness(a.profile,"B10") && coupon?.code === "GIFT20",
   });
   const stackedDiscount = applications.length || vouchers.length
     ? (applications.length
@@ -61,7 +61,7 @@ export async function cart(db: DB, a: Actor) {
   const physicalEligible = items.filter((p:{kind:string})=>p.kind==="physical")
     .reduce((n:number,p:{price:string;quantity:number})=>n+Number(p.price)*p.quantity,0);
   const totals = totalFor(items, coupon ?? undefined, {
-    giftEligible: a.profile === "B10" && coupon?.code === "GIFT20",
+    giftEligible: hasWeakness(a.profile,"B10") && coupon?.code === "GIFT20",
     stackedDiscount,
   });
   return {
@@ -140,7 +140,7 @@ export async function checkout(
       "Your bag no longer qualifies for this promotion. Remove it to continue.",
     );
   if (
-    c.coupon && a.profile !== "B04" && !(a.profile === "B10" && c.coupon.code === "GIFT20") &&
+    c.coupon && !hasWeakness(a.profile,"B04") && !(hasWeakness(a.profile,"B10") && c.coupon.code === "GIFT20") &&
     (
       await db.query(
         "SELECT 1 FROM store.promotion_uses WHERE run_id=$1 AND user_id=$2 AND code=$3",
@@ -219,14 +219,14 @@ export async function checkout(
       "UPDATE store.voucher_claims SET order_id=$3 WHERE run_id=$1 AND cart_id=$2 AND order_id IS NULL",
       [a.run,c.id,id],
     );
-  if (a.profile === "B04" && c.applications.length) {
+  if (hasWeakness(a.profile,"B04") && c.applications.length) {
     await db.query(
       "UPDATE store.cart_discount_applications SET order_id=$3 WHERE run_id=$1 AND cart_id=$2 AND order_id IS NULL",
       [a.run,c.id,id],
     );
     for (const code of new Set<string>(c.applications.map((v: {code:string}) => v.code)))
       await db.query("INSERT INTO store.promotion_uses VALUES($1,$2,$3,$4)", [a.run,a.id,code,id]);
-  } else if (c.coupon && !(a.profile === "B10" && c.coupon.code === "GIFT20")) {
+  } else if (c.coupon && !(hasWeakness(a.profile,"B10") && c.coupon.code === "GIFT20")) {
     await db.query("INSERT INTO store.promotion_uses VALUES($1,$2,$3,$4)", [
       a.run,a.id,c.coupon.code,id,
     ]);
