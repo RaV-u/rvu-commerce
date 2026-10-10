@@ -1,0 +1,75 @@
+name: rvu-commerce-student
+x-app: &app
+  image: rvu-commerce-student:local
+  init: true
+  read_only: true
+  tmpfs: [/tmp]
+  networks: [private]
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_DB: rvu
+      POSTGRES_USER: rvu_owner
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Run bash install.sh first}
+      STORE_DB_PASSWORD: ${STORE_DB_PASSWORD:?Run bash install.sh first}
+      CONTROL_DB_PASSWORD: ${CONTROL_DB_PASSWORD:?Run bash install.sh first}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./infra/init-db.sh:/docker-entrypoint-initdb.d/10-rvu.sh:ro
+    networks: [private]
+    command: [postgres, -c, shared_buffers=128MB, -c, max_connections=60]
+    mem_limit: 768m
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U rvu_owner -d rvu"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  migrate:
+    <<: *app
+    command: [node, dist/server/migrate.js]
+    environment:
+      DATABASE_URL: postgresql://rvu_owner:${DB_PASSWORD}@postgres:5432/rvu
+      RVU_INTEGRATED_MODE: "1"
+    depends_on:
+      postgres: { condition: service_healthy }
+    mem_limit: 384m
+  store:
+    <<: *app
+    environment:
+      DATABASE_URL: postgresql://rvu_store:${STORE_DB_PASSWORD}@postgres:5432/rvu
+      APP_MODE: store
+      APP_ORIGIN: http://localhost:8081
+      RVU_SINGLE_LOGIN: "1"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      mailpit: { condition: service_started }
+    mem_limit: 384m
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+  mailpit:
+    image: axllent/mailpit:v1.27.7
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_SMTP_AUTH_ALLOW_INSECURE: "false"
+    networks: [private]
+    mem_limit: 128m
+  edge:
+    image: nginx:1.28.3-alpine
+    ports: ["127.0.0.1:8081:8081"]
+    volumes: ["./infra/nginx.conf:/etc/nginx/nginx.conf:ro"]
+    depends_on:
+      store: { condition: service_healthy }
+    networks: [private, ingress]
+    mem_limit: 64m
+volumes:
+  postgres-data:
+networks:
+  private:
+    internal: true
+  ingress: {}

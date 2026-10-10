@@ -64,7 +64,7 @@ Build student-only images and prepare an offline Docker package from your own WS
 bash scripts/export-student-package.sh
 ```
 
-This creates a large `RVU-Commerce-Student.tar.gz` bundle. Share **that archive** with students, not this source repository. The bundle contains a compiled/minified application image and an installation script; no source code, tests, solution guides, or old instructor UI are copied into its runtime image. Students still need Docker Desktop with WSL2. Keep this GitHub repository **private** before classroom use, since public Git history retains old solution material.
+This creates a potentially large `dist-packages/RVU-Commerce-Student.tar.gz` bundle, which contains Docker images for offline installation. Share **that archive** with students, not this source repository. The bundle contains a compiled/minified application image and an installation script; no source code, tests, solution guides, or old instructor UI are copied into its runtime image. Students still need Docker Desktop with WSL2. Keep this GitHub repository **private** before classroom use, since public Git history retains old solution material.
 
 ## Architecture / acceptance
 

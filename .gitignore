@@ -21,3 +21,7 @@ playwright-report/
 backups/
 data/
 .DS_Store
+
+# Offline student image bundles (generated locally)
+dist-packages/
+student/images.tar.gz
