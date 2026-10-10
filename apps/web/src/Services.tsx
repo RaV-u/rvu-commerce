@@ -146,7 +146,7 @@ export function Services(){
                 {summarizeResponse(response).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
               </dl>
               <details><summary>View technical details</summary><pre>{response}</pre></details>
-            </div>
+            </div>}
           </section>
         </div>}
     </main>
