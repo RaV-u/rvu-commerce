@@ -3,6 +3,21 @@ import { createRoot } from "react-dom/client";
 import { ShieldCheck, RefreshCw, LogOut } from "lucide-react";
 import { api, setCsrf } from "../../web/src/api.ts";
 import "./style.css";
+const additionalProfiles = [
+  ["B02","Cart quantity reconciliation"],
+  ["B03","Corporate email identity"],
+  ["B05","Legacy bulk integer overflow"],
+  ["B06","Corporate onboarding truncation"],
+  ["B07","Password maintenance permissions"],
+  ["B09","Incomplete workspace session"],
+  ["B11","Encrypted notifications oracle"],
+  ["B12","Corporate email parser boundary"],
+  ["R02","Concurrent login quota"],
+  ["R03","Moving-cart checkout"],
+  ["R04","Concurrent email delivery"],
+  ["R05","Time-derived recovery tokens"],
+  ["R06","Partially provisioned account"],
+] as const;
 function Control() {
   const [session, setSession] = useState<{
       csrf: string;
@@ -15,14 +30,14 @@ function Control() {
     [confirm, setConfirm] = useState(""),
     [ready, setReady] = useState(false),
     [nextProfile, setNextProfile] = useState("secure-baseline"),
-    [evidence, setEvidence] = useState<{B01:number;B04:number;B08:number;B10:number;R01:number}|null>(null);
+    [evidence, setEvidence] = useState<Record<string,number>|null>(null);
   async function refresh() {
     const s = await api<{ csrf: string; run: string; users: number; profile: string }>(
       "/instructor/session",
     );
     setCsrf(s.csrf);
     setSession(s);
-    const status = await api<{metrics:{B01:number;B04:number;B08:number;B10:number;R01:number}}>("/instructor/evidence");
+    const status = await api<{metrics:Record<string,number>}>("/instructor/evidence");
     setEvidence(status.metrics);
   }
   useEffect(() => {
@@ -146,6 +161,9 @@ function Control() {
               <div><dt>B08 · Confirmed orders without settled payment</dt><dd>{evidence?.B08 ?? "…"}</dd></div>
               <div><dt>R01 · Overlapping voucher claims on one order</dt><dd>{evidence?.R01 ?? "…"}</dd></div>
               <div><dt>B10 · Net-positive discounted gift card redemptions</dt><dd>{evidence?.B10 ?? "…"}</dd></div>
+              {additionalProfiles.map(([code,title])=>(
+                <div key={code}><dt>{code} · {title}</dt><dd>{evidence?.[code] ?? "…"}</dd></div>
+              ))}
             </dl>
             <button className="evidence-refresh" disabled={busy} onClick={() => void perform(refresh)}>Refresh evidence</button>
           </section>
@@ -177,6 +195,7 @@ function Control() {
                   <option value="B08">B08 · Returning-customer order confirmation</option>
                   <option value="R01">R01 · Concurrent one-use voucher claims</option>
                   <option value="B10">B10 · Stored-value promotion loop</option>
+                  {additionalProfiles.map(([code,title])=><option key={code} value={code}>{code} · {title}</option>)}
                 </select>
               </label>
               <label>
@@ -193,7 +212,7 @@ function Control() {
                 {busy ? "Resetting…" : "Reset current run"}
               </button>
             </form>
-            <p className="roadmap-note">Available to test: B01, B04, B08, B10 and R01. Remaining 13 scenarios are specified in the research blueprint but are not yet implemented or selectable.</p>
+            <p className="roadmap-note">All 18 scenario families are selectable. Use an isolated run for each lab. Verify each instructor evidence record and the latest CI results before teaching.</p>
           </section>
         </>
       )}
