@@ -308,14 +308,16 @@ export async function buildApp(config: Config) {
         c = await cart(db, a);
       const product = (await db.query("SELECT price,kind FROM store.products WHERE id=$1",[input.productId])).rows[0];
       if (!product) throw new HttpError(404, "Product not found");
-      if (input.quantity < 0 && (req.method!=="POST" || !hasWeakness(a.profile,"B02") || product.kind!=="physical"))
-        throw new HttpError(400,"Quantity must be positive");
-
-      if(input.quantity>10 && (req.method!=="POST" || !hasWeakness(a.profile,"B05")))
-        throw new HttpError(400,"Requested quantity exceeds the normal per-request limit");
       const previousQuantity=Number(c.items.find((item:{id:string;quantity:number})=>item.id===input.productId)?.quantity??0);
       const nextQuantity=req.method==="POST" ? previousQuantity+input.quantity : input.quantity;
-      if(nextQuantity < -99 || nextQuantity > (hasWeakness(a.profile,"B05")?100000:10))
+      // Existing items may be removed with a negative delta. Persisting a
+      // negative physical line is the distinct reconciliation weakness.
+      if (input.quantity < 0 && (req.method!=="POST" ||
+          (nextQuantity < 0 && (!hasWeakness(a.profile,"B02") || product.kind!=="physical"))))
+        throw new HttpError(400,"Quantity must be positive");
+      if(input.quantity>10 && (req.method!=="POST" || !hasWeakness(a.profile,"B05") || product.kind!=="physical"))
+        throw new HttpError(400,"Requested quantity exceeds the normal per-request limit");
+      if(nextQuantity < -99 || nextQuantity > (hasWeakness(a.profile,"B05") && product.kind==="physical"?100000:10))
         throw new HttpError(400,"The cart quantity is outside the permitted range");
       if (input.price !== undefined && input.price !== Number(product.price) && !hasWeakness(a.profile,"B01"))
         throw new HttpError(400, "The current product price has changed");
