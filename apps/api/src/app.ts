@@ -248,7 +248,7 @@ export async function buildApp(config: Config) {
             const run = await activeRun(db);
             // Two concurrent first logins must not provision duplicate wallets.
             // Lock only the local credential-provisioning step, never checkout.
-            await db.query("SELECT pg_advisory_xact_lock(814731)");
+            await db.query("SELECT pg_advisory_xact_lock(814732)");
             const identities:ClassroomUsername[]=["rvu","rvu_2"];
             for(const name of identities){
               const email=classroomAccountEmail(name);
