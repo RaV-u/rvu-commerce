@@ -13,6 +13,7 @@ import type { Actor } from "./commerce.ts";
 import { cart } from "./commerce.ts";
 import { HttpError, hash, token, passwordHash, passwordValid } from "./security.ts";
 import { transfer } from "./seed.ts";
+import { hasWeakness } from "./policy.ts";
 
 type Handler = (db: DB, actor: Actor, req: FastifyRequest) => Promise<unknown>;
 type UserRoute = (method:"GET"|"POST"|"PUT"|"DELETE", path:string, handler:Handler, verified?:boolean) => unknown;
@@ -21,7 +22,7 @@ type Context = { app:FastifyInstance; pool:Pool; userRoute:UserRoute; actor:(db:
 const obj = z.record(z.string(),z.unknown());
 const sleep = (n:number) => new Promise<void>(resolve=>setTimeout(resolve,n));
 const requireProfile = (a:Actor, profiles:string[]) => {
-  if (a.profile!=="secure-baseline" && !profiles.includes(a.profile)) throw new HttpError(404,"Feature not available in this training run");
+  if (a.profile!=="secure-baseline" && a.profile!=="open-playground" && !profiles.includes(a.profile)) throw new HttpError(404,"Feature not available in this training run");
 };
 const fail = (message:string):never => {throw new HttpError(409,message);};
 async function data(db:DB,a:Actor,scenario:string):Promise<LabState> {
@@ -95,7 +96,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
       case "cart.reconcile": {
         requireProfile(a,["B02"]);
         const lines=z.array(z.object({sku:z.string().max(40),quantity:z.number().int().min(-10).max(10)}).strict()).min(1).max(8).parse(p.lines);
-        if(profile!=="B02"&&lines.some(x=>x.quantity<0)) fail("Negative quantities are not permitted");
+        if(!hasWeakness(a.profile,"B02")&&lines.some(x=>x.quantity<0)) fail("Negative quantities are not permitted");
         let charged=0,delivered=0;
         for(const x of lines){
           const item=(await db.query("SELECT price,kind FROM store.products WHERE id=$1",[x.sku])).rows[0];
@@ -112,36 +113,44 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         const exact=50000*quantity;
         // Deliberate signed 32-bit conversion in the isolated legacy adapter.
         const legacy=Math.imul(50000,quantity);
-        if(profile!=="B05" && exact!==legacy) fail("Bulk invoice exceeds supported integer range");
-        const paid=profile==="B05"?legacy:exact;
+        if(!hasWeakness(a.profile,"B05") && exact!==legacy) fail("Bulk invoice exceeds supported integer range");
+        const paid=hasWeakness(a.profile,"B05")?legacy:exact;
         if(paid<=0) fail("Legacy invoice amount cannot be paid");
         return purchase(db,a,"B05",paid,exact,{quantity,unitPrice:50000,legacy});
       }
       case "email.update": {
         requireProfile(a,["B03"]);
         const address=z.string().email().max(120).parse(p.address);
-        if(profile!=="B03") fail("A new address requires fresh mailbox verification");
+        if(!hasWeakness(a.profile,"B03")) fail("A new address requires fresh mailbox verification");
         const s=await data(db,a,"B03");
         await save(db,a,"B03",{...s,address,verified:a.verified});
         return {address,verified:a.verified};
       }
       case "corporate.orders": {
         requireProfile(a,["B03","B06","B12","R04","R06"]);
-        const target=profile==="B03"?"B03":profile;
-        const s=await data(db,a,target);
-        let address=s.address;
-        let verified=s.verified===true;
-        if(target==="R06") {
-          const registration=(await db.query(
-            "SELECT email FROM store.lab_registrations WHERE run_id=$1 AND user_id=$2 AND verified=true AND completed=true AND email LIKE '%@corp.rvu.test' ORDER BY created_at DESC LIMIT 1",
-            [a.run,a.id],
-          )).rows[0];
-          address=registration?.email;
-          verified=!!registration;
+        // The shared storefront can grant corporate access via any of its
+        // independent onboarding and account-maintenance workflows.
+        const targets = profile==="open-playground"
+          ? ["B03","B06","B12","R04","R06"] : [profile];
+        let approvedScenario:string|undefined, approvedAddress:string|undefined;
+        for(const target of targets) {
+          const state=await data(db,a,target);
+          let address=state.address;
+          let verified=state.verified===true;
+          if(target==="R06") {
+            const registration=(await db.query(
+              "SELECT email FROM store.lab_registrations WHERE run_id=$1 AND user_id=$2 AND verified=true AND completed=true AND email LIKE '%@corp.rvu.test' ORDER BY created_at DESC LIMIT 1",
+              [a.run,a.id],
+            )).rows[0];
+            address=registration?.email;
+            verified=!!registration;
+          }
+          if(typeof address==="string" && address.endsWith("@corp.rvu.test") && verified) {
+            approvedScenario=target; approvedAddress=address; break;
+          }
         }
-        const corp=typeof address==="string"&&address.endsWith("@corp.rvu.test");
-        if(!corp || !verified) throw new HttpError(403,"Verified corporate membership required");
-        await evidence(db,a,target,"corporate-access",{address,order:"CORP-DEMO-1001"});
+        if(!approvedScenario) throw new HttpError(403,"Verified corporate membership required");
+        await evidence(db,a,approvedScenario,"corporate-access",{address:approvedAddress,order:"CORP-DEMO-1001"});
         return {orders:[{id:"CORP-DEMO-1001",status:"approved",value:960000}]};
       }
       case "password.maintain": {
@@ -149,7 +158,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         const target=z.string().email().parse(p.targetEmail),newPassword=z.string().min(12).max(128).parse(p.newPassword);
         const supplied=p.currentPassword;
         const isOwn=target===a.email;
-        if(profile==="B07" && supplied===undefined) {
+        if(hasWeakness(a.profile,"B07") && supplied===undefined) {
           const updated=await db.query("UPDATE store.users SET password_hash=$3 WHERE run_id=$1 AND email=$2 RETURNING id",[a.run,target,await passwordHash(newPassword)]);
           if(!updated.rowCount)throw new HttpError(404,"No such training account");
           if(!isOwn)await evidence(db,a,"B07","foreign-password-change",{target});
@@ -171,7 +180,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
       case "workspace.admin": {
         requireProfile(a,["B09"]);
         const s=await data(db,a,"B09");
-        if(profile!=="B09" || s.context==="buyer") throw new HttpError(403,"Administrator membership required");
+        if(!hasWeakness(a.profile,"B09") || s.context==="buyer") throw new HttpError(403,"Administrator membership required");
         const approval=randomUUID();
         await save(db,a,"B09",{...s,adminApproved:true,approval,context:null});
         await evidence(db,a,"B09","admin-action",{missingContext:true,approval});
@@ -192,7 +201,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         requireProfile(a,["B11"]);
         const hex=z.string().regex(/^[0-9a-f]+$/).max(2048).parse(p.ciphertext);
         const plaintext=decrypt(a,hex);
-        if(profile!=="B11" || !plaintext.startsWith("kind=remember&user=store-admin")) throw new HttpError(403,"Not a remembered login credential");
+        if(!hasWeakness(a.profile,"B11") || !plaintext.startsWith("kind=remember&user=store-admin")) throw new HttpError(403,"Not a remembered login credential");
         await evidence(db,a,"B11","remembered-admin",{token:hash(hex)});
         return {role:"store-admin",authenticated:true};
       }
@@ -202,8 +211,8 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         // Legacy delivery parses the final @; identity adapter stores first 255.
         const recipient=raw.slice(raw.lastIndexOf("@")+1).toLowerCase();
         if(recipient!=="learner.rvu.test") throw new HttpError(400,"Only learner-owned local mailboxes can receive training mail");
-        if(profile!=="B06"&&raw.length>254) throw new HttpError(400,"Address too long");
-        const stored=profile==="B06"?raw.slice(0,255):raw;
+        if(!hasWeakness(a.profile,"B06")&&raw.length>254) throw new HttpError(400,"Address too long");
+        const stored=hasWeakness(a.profile,"B06")?raw.slice(0,255):raw;
         const s=await data(db,a,"B06"),code=token();
         await save(db,a,"B06",{...s,address:stored,verification:hash(code),verified:false,raw});
         await message(db,a,a.email,"Legacy onboarding verification","Your training code: "+code);
@@ -225,7 +234,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         const destination=m?Buffer.from(m[1],"base64").toString("utf8"):raw;
         const deliverable=destination.toLowerCase()===a.email.toLowerCase();
         if(!deliverable)throw new HttpError(403,"Training adapter cannot deliver to another person's mailbox");
-        if(profile!=="B12") fail("Encoded mailbox local parts are forbidden");
+        if(!hasWeakness(a.profile,"B12")) fail("Encoded mailbox local parts are forbidden");
         const code=token(),s=await data(db,a,"B12");
         await save(db,a,"B12",{...s,address:raw,recipient:destination,verification:hash(code),verified:false});
         await message(db,a,a.email,"Corporate verification","Your training code: "+code);
@@ -250,7 +259,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         const destination=z.string().email().parse(p.email);
         const target=(await db.query("SELECT id FROM store.users WHERE run_id=$1 AND email=$2",[a.run,destination])).rows[0];
         if(!target)throw new HttpError(404,"Training account not found");
-        const code=profile==="R05"
+        const code=hasWeakness(a.profile,"R05")
           ? createHash("sha256").update("legacy-time-reset:"+a.run+":"+Math.floor(Date.now()/1000)).digest("hex")
           : token();
         await db.query("INSERT INTO store.lab_resets(id,run_id,user_id,token_hash,expires_at) VALUES($1,$2,$3,$4,now()+interval '15 minutes')",
@@ -280,8 +289,8 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         // NULL stored tokens to an empty string. This is only exploitable while
         // the registration is committed but not completely provisioned.
         const candidate=typeof p.code==="string"?p.code:Array.isArray(p.code)?String(p.code[0]??""):"";
-        if(profile!=="R06" && !r.completed)fail("Account is not fully provisioned");
-        if(profile!=="R06" && typeof p.code!=="string")fail("Verification code must be a string");
+        if(!hasWeakness(a.profile,"R06") && !r.completed)fail("Account is not fully provisioned");
+        if(!hasWeakness(a.profile,"R06") && typeof p.code!=="string")fail("Verification code must be a string");
         if((r.token??"")!==candidate || r.verified) throw new HttpError(400,"Invalid corporate verification code");
         await db.query("UPDATE store.lab_registrations SET verified=true WHERE id=$1",[id]);
         if(!r.completed && r.token===null) await evidence(db,a,"R06","partial-confirm",{registrationId:id,priorToken:null});
@@ -305,7 +314,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
       const a=await actor(db,req,true);
       if(a.run!==initial.run||a.id!==initial.actorId) fail("Training run changed");
       const c=await cart(db,a);
-      if(a.profile!=="R03" && c.version!==initial.version)fail("Cart changed while payment was being authorized");
+      if(!hasWeakness(a.profile,"R03") && c.version!==initial.version)fail("Cart changed while payment was being authorized");
       const delivered=c.items.reduce((n:number,x:{price:string;quantity:number})=>n+Number(x.price)*x.quantity,0);
       if(delivered<=0)fail("Empty cart");
       const receipt=await purchase(db,a,"R03",initial.charged,delivered,c.items);
@@ -333,7 +342,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
       const s=await data(db,a,"R04");
       const recipient=prepared.recipient.endsWith("@learner.rvu.test") ? a.email : null;
       if(recipient){
-        const deliveredCode=a.profile==="R04"?String(s.plain):prepared.code;
+        const deliveredCode=hasWeakness(a.profile,"R04")?String(s.plain):prepared.code;
         await message(db,a,recipient,"Email change confirmation","Your training code: "+deliveredCode);
       }
       return {recipient:recipient?"owned mailbox":"unavailable",pendingAddress:s.address,delivered:!!recipient};
@@ -345,7 +354,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
       const a=await actor(db,req,true);requireProfile(a,["R06"]);
       const id=p.registrationId ?? randomUUID(),code=token();
       await db.query("INSERT INTO store.lab_registrations(id,run_id,user_id,email,token) VALUES($1,$2,$3,$4,$5)",
-        [id,a.run,a.id,p.email,a.profile==="R06"?null:code]);
+        [id,a.run,a.id,p.email,hasWeakness(a.profile,"R06")?null:code]);
       return {id,run:a.run,actor:a.id,code};
     });
     await sleep(p.delayMs);
@@ -361,12 +370,12 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
     const checked=await transaction(pool,async db=>{
       const a=await actor(db,req,true);requireProfile(a,["R02"]);
       const username="target@learner.rvu.test";
-      if(a.profile!=="R02"){
+      if(!hasWeakness(a.profile,"R02")){
         await db.query("SELECT pg_advisory_xact_lock(hashtext($1))",["quota:"+a.run+username]);
       }
       const n=Number((await db.query("SELECT count(*)::int AS n FROM store.lab_attempts WHERE run_id=$1 AND username=$2",[a.run,username])).rows[0].n);
       if(n>=3)throw new HttpError(429,"Login attempt quota exhausted");
-      if(a.profile!=="R02"){
+      if(!hasWeakness(a.profile,"R02")){
         const valid=await checkTarget(db,a,p.password);
         await db.query("INSERT INTO store.lab_attempts(id,run_id,username,accepted) VALUES($1,$2,$3,$4)",[randomUUID(),a.run,username,valid]);
         return {run:a.run,actor:a.id,valid,finished:true};
