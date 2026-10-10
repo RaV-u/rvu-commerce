@@ -81,6 +81,39 @@ test("baseline denies negative quantities and signed-32 arithmetic wrap",async()
   assert.equal(neutral.states,undefined);
   assert.equal(neutral.proofs,undefined);
 });
+
+test("baseline isolates password, notification, parser and legacy storage controls",async()=>{
+  await fresh("secure-baseline");
+  await act("password.maintain",{targetEmail:"target@learner.rvu.test",newPassword:"Invalid-Target-2026!"},403);
+  const encrypted=await act("notification.encrypt",{body:"A".repeat(9)+"kind=remember&user=store-admin"});
+  const forged=Buffer.from(encrypted.ciphertext,"hex").subarray(32).toString("hex");
+  await act("remember.login",{ciphertext:forged},403);
+  await act("legacy.register",{address:"A".repeat(241)+"@corp.rvu.test@learner.rvu.test"},400);
+  const encoded="=?UTF-8?B?"+Buffer.from("alex@learner.rvu.test").toString("base64")+"?=@corp.rvu.test";
+  await act("parser.register",{address:encoded},409);
+});
+test("secure baseline rejects a cart update during authorization",{
+  skip:!process.env.TEST_DATABASE_URL?"Requires real parallel PostgreSQL sessions":false,
+},async()=>{
+  await fresh("secure-baseline");
+  await call(alex,"PUT","/api/cart/items",{productId:"arc-light",quantity:1});
+  const pending=call(alex,"POST","/api/lab/race/checkout",{delayMs:200},409);
+  await pause(40);
+  await call(alex,"PUT","/api/cart/items",{productId:"vista-27",quantity:1});
+  await pending;
+  assert.equal((await call(alex,"GET","/api/wallet")).balance,1500000);
+});
+test("secure baseline rejects corporate confirmation before provisioning completes",{
+  skip:!process.env.TEST_DATABASE_URL?"Requires real parallel PostgreSQL sessions":false,
+},async()=>{
+  await fresh("secure-baseline");
+  const registrationId=randomUUID();
+  const pending=call(alex,"POST","/api/lab/race/registration",{email:"hire@corp.rvu.test",registrationId,delayMs:200});
+  await pause(40);
+  await act("registration.confirm",{registrationId,code:[""]},409);
+  await pending;
+  await act("corporate.orders",{},403);
+});
 test("B02: negative quantity offsets a positive delivered product and debits real wallet",async()=>{
   await fresh("B02");
   const sale=await act("cart.reconcile",{lines:[{sku:"vista-27",quantity:1},{sku:"arc-light",quantity:-1}]});
