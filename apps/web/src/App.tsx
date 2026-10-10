@@ -180,7 +180,7 @@ export function App() {
       setCsrf(s.csrf);
       await refresh(s);
       setPanel(null);
-      setNotice("Your RVU training workspace is ready.");
+      setNotice("Your account is ready. Welcome to RVU.");
     });
   }
   async function createQuote(e: FormEvent<HTMLFormElement>) {
@@ -526,7 +526,7 @@ export function App() {
         >
           <p className="muted">
             Sign in once to access your own shop, wallet, orders and business services.
-            Your local practice workspace is isolated from other sign-ins.
+            Your orders, wallet and account services are all in one place.
           </p>
           <form onSubmit={authenticate} className="form">
             <label>
@@ -557,7 +557,7 @@ export function App() {
             </button>
           </form>
           <div className="demo-note">
-            RVU Mentorship Camp · Local training access
+            RVU Commerce · Guest account access
             <br />
             Username: <strong>rvu</strong>
             <br />
@@ -829,7 +829,7 @@ export function App() {
           close={() => setPanel(null)}
         >
           <div className="account-top">
-            <p className="muted">Signed in as rvu · Fictional inbox: {session.user?.email}</p>
+            <p className="muted">Signed in as rvu · Account inbox: {session.user?.email}</p>
             {session.user?.colleagueEmail && <p className="muted">Workspace directory · Company colleague: {session.user.colleagueEmail}</p>}
             <button
               className="text-link"

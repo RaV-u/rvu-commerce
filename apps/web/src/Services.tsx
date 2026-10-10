@@ -5,11 +5,11 @@ const operations:Operation[]=[
   {section:"Buying",title:"Express purchase",description:"Settle a reviewed bag after processing time.",path:"/business/checkout",body:{delayMs:120}},
   {section:"Accounts",title:"Update contact email",description:"Maintain the email address for your business identity.",path:"/business/actions",body:{action:"email.update",address:"alex@learner.rvu.test"}},
   {section:"Accounts",title:"Password maintenance",description:"Change the current account password after confirming the old one.",path:"/business/actions",body:{action:"password.maintain",targetEmail:"alex@learner.rvu.test",currentPassword:"",newPassword:"New-Training-Password-2026!"}},
-  {section:"Accounts",title:"Business account registration",description:"Register an older-style corporate billing address.",path:"/business/actions",body:{action:"legacy.register",address:"alex@learner.rvu.test"}},
+  {section:"Accounts",title:"Business account registration",description:"Add your company billing contact to your account.",path:"/business/actions",body:{action:"legacy.register",address:"alex@learner.rvu.test"}},
   {section:"Accounts",title:"Confirm business address",description:"Redeem the code delivered to the account inbox.",path:"/business/actions",body:{action:"legacy.verify",code:""}},
   {section:"Accounts",title:"Request password recovery",description:"Send a recovery code to the selected account's inbox.",path:"/business/actions",body:{action:"reset.request",email:"alex@learner.rvu.test"}},
   {section:"Accounts",title:"Complete password recovery",description:"Use a recovery code with a new account password.",path:"/business/actions",body:{action:"reset.complete",email:"alex@learner.rvu.test",code:"",newPassword:"Recovered-Training-2026!"}},
-  {section:"Accounts",title:"Register company contact",description:"Create a pending corporate identity and finish provisioning.",path:"/business/registration",body:{email:"sample@corp.rvu.test",delayMs:150}},
+  {section:"Accounts",title:"Register company contact",description:"Request access for a company contact.",path:"/business/registration",body:{email:"sample@corp.rvu.test",delayMs:150}},
   {section:"Accounts",title:"Verify company contact",description:"Verify a corporate identity by registration reference.",path:"/business/actions",body:{action:"registration.confirm",registrationId:"",code:""}},
   {section:"Workspace",title:"Select workspace",description:"Select the workspace permitted by your membership.",path:"/business/actions",body:{action:"workspace.select"}},
   {section:"Workspace",title:"Approve company order",description:"Access a business administration workflow.",path:"/business/actions",body:{action:"workspace.admin"}},
@@ -19,8 +19,8 @@ const operations:Operation[]=[
   {section:"Workspace",title:"Confirm changed email",description:"Finish an earlier email change from its confirmation message.",path:"/business/actions",body:{action:"email.confirm",code:""}},
   {section:"Workspace",title:"Invite a team member",description:"Verify an employee mailbox under the corporate account policy.",path:"/business/actions",body:{action:"parser.register",address:"employee@corp.rvu.test"}},
   {section:"Workspace",title:"Confirm corporate email",description:"Validate a corporate invitation or mailbox verification.",path:"/business/actions",body:{action:"parser.verify",code:""}},
-  {section:"Support",title:"Send delivery notice",description:"Encode a message with the legacy notification system.",path:"/business/actions",body:{action:"notification.encrypt",body:"Delivery update"}},
-  {section:"Support",title:"Restore remembered access",description:"Resume a remembered session from its encrypted credential.",path:"/business/actions",body:{action:"remember.login",ciphertext:""}},
+  {section:"Support",title:"Send delivery notice",description:"Prepare a delivery notification for your account.",path:"/business/actions",body:{action:"notification.encrypt",body:"Delivery update"}},
+  {section:"Support",title:"Restore remembered access",description:"Restore a remembered device session.",path:"/business/actions",body:{action:"remember.login",ciphertext:""}},
   {section:"Support",title:"Support case queue",description:"Review restricted customer support cases.",path:"/business/actions",body:{action:"support.queue"}},
   {section:"Support",title:"Company account sign-in",description:"Sign in to a separate company account in your workspace.",path:"/business/login-verification",body:{email:"target@learner.rvu.test",password:"",delayMs:80}},
 ];
@@ -37,7 +37,21 @@ function accountDefaults(op:Operation, user?:Session["user"]) {
   return pretty(body);
 }
 function humanize(name:string):string {
-  return name.replace(/([a-z])([A-Z])/g,"$1 $2").replace(/(^|\s)\w/g,c=>c.toUpperCase());
+  return name.replace(/([a-z])([A-Z])/g,"$1 $2").replace(/[._]/g," ").replace(/(^|\s)\w/g,c=>c.toUpperCase());
+}
+function summarizeResponse(response:string):[string,string][] {
+  try {
+    const value=JSON.parse(response) as unknown;
+    if(!value || typeof value!=="object" || Array.isArray(value)) return [];
+    return Object.entries(value as Record<string,unknown>).slice(0,8).map(([field,item])=>{
+      let display:string;
+      if(Array.isArray(item)) display=item.length+" "+(item.length===1?"record":"records");
+      else if(item && typeof item==="object")display="Details available";
+      else if(typeof item==="boolean") display=item?"Yes":"No";
+      else display=String(item??"—");
+      return [humanize(field),display.length>115?display.slice(0,115)+"…":display];
+    });
+  } catch {return [];}
 }
 export function Services(){
   const [session,setSession]=useState<Session>({user:null});
@@ -86,11 +100,11 @@ export function Services(){
     <main className="service-content">
       <div className="service-intro"><span className="service-eyebrow">RVU BUSINESS SERVICES</span>
         <h1>Work, connected.</h1>
-        <p>Manage business purchases, account access, company workspaces and support requests. These services run entirely on fictional data in your local installation.</p>
+        <p>Manage business purchases, account access, company workspaces and support requests. Keep your purchases, company contacts and account settings in one place.</p>
         {session.user?.colleagueEmail && <p className="service-workspace-peer">Company directory · Colleague: <strong>{session.user.colleagueEmail}</strong></p>}
       </div>
       {!ready?<p>Checking your account…</p>:!session.user?.verified?
-        <section className="service-signed-out"><h2>Sign in to use your account services.</h2><p>Sign in once on the storefront using the RVU classroom access, then return here. No separate registration or mailbox verification is needed.</p><a href="/">Go to the store →</a></section>:
+        <section className="service-signed-out"><h2>Sign in to use your account services.</h2><p>Sign in from the shop to manage your account and company services. You won't need to sign in again here.</p><a href="/">Go to the store →</a></section>:
         <div className="service-columns">
           <aside className="service-menu"><p>Service directory</p>
             {categories.map(group=><div key={group} className="service-group"><h2>{group}</h2>
@@ -125,7 +139,14 @@ export function Services(){
               <button type="submit" disabled={sending}>{sending?"Processing…":"Continue →"}</button>
             </form>
             {error&&<div className="service-result error" role="alert"><strong>Request not completed</strong><p>{error}</p></div>}
-            {response&&<div className="service-result"><strong>Request completed</strong><p>Your account records have been updated.</p><details><summary>View transaction details</summary><pre>{response}</pre></details></div>}
+            {response&&<div className="service-result">
+              <strong>Request completed</strong>
+              <p>The service returned the following information.</p>
+              <dl className="service-overview">
+                {summarizeResponse(response).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+              </dl>
+              <details><summary>View technical details</summary><pre>{response}</pre></details>
+            </div>
           </section>
         </div>}
     </main>

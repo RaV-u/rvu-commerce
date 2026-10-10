@@ -201,6 +201,7 @@ test("Services portal renders actual business workflows and sends typed requests
   await user.click(screen.getByRole("button", {name:"Send delivery notice"}));
   await user.click(screen.getByRole("button", {name:"Continue →"}));
   await screen.findByText("Request completed");
+  assert.ok(screen.getByText("Ciphertext"));
   assert.match(screen.getByText(/"ciphertext":/).textContent ?? "", /ciphertext/);
   await user.click(screen.getByRole("button",{name:"Password maintenance"}));
   const ownEmail=screen.getByLabelText("Target Email") as HTMLInputElement;
