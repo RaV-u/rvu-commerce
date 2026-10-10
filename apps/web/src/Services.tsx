@@ -87,6 +87,6 @@ export function Services(){
           </section>
         </div>}
     </main>
-    <footer className="service-footer">RVU Commerce · Local, simulated accounts and orders · No real payments</footer>
+    <footer className="service-footer footer-mentorship"><span>RVU Mentorship Camp</span><span>By: Ramez Medhat</span><a href="https://rv-u.tech" target="_blank" rel="noopener noreferrer">rv-u.tech ↗</a></footer>
   </div>;
 }
