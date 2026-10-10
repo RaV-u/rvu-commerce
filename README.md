@@ -2,7 +2,7 @@
 
 A local commerce training application for RVU Camp, built on the approved blueprint at `docs/RVU_Commerce_Research_and_Architecture.md`.
 
-**Milestone 2 verification (2026-10-10):** Five instructor-selected training scenarios are implemented: **B01, B04, B08, B10, R01**, alongside `secure-baseline`. The other **13 of 18** planned labs are not implemented. GitHub Actions now verifies strict TypeScript checks, both Vite builds, **21/21 backend tests on native PostgreSQL 17 (including real concurrent transactions and R01)** and **3/3 connected React UI tests**. The Docker Compose end-to-end CI gate has passed; see the latest Actions run for verification. These checks do not replace interactive browser acceptance on the student's device.
+**Extended lab release (2026-10-10):** All **18 instructor-selected training scenarios** have an executable backend workflow, persisted lab state/evidence, an isolated instructor reset profile, and scenario regression coverage. The original five core labs (B01/B04/B08/B10/R01) continue to run alongside 13 additional labs documented in [`docs/EXTENDED_LABS_INSTRUCTOR_AR.md`](docs/EXTENDED_LABS_INSTRUCTOR_AR.md). A student-facing **Account services** workspace is available at `/services` for fictional workflows. The specialist email/legacy labs (notably B06/B12) use explicit teaching adapters rather than claiming byte-for-byte compatibility with a public PortSwigger lab. CI verification includes **35 native-PostgreSQL backend tests**, **3 connected React UI tests**, **portable PGlite tests**, and a Docker Compose host-to-proxy smoke job. Real-browser appearance, timing stability across student laptops, and all 18 instructor-led walkthroughs remain separate acceptance requirements.
 
 A rebuilt horizontal SVG logo replaces the previously misaligned vertical wordmark, and the storefront adds a responsive mobile navigation, custom workstation quotes, two-step checkout review and one-use store vouchers. Instructor-only evidence metrics are derived from persisted server data.
 
@@ -23,6 +23,7 @@ Open the exact addresses below; they deliberately use different hostnames so bro
 | Surface | URL | Access |
 | --- | --- | --- |
 | Store | http://localhost:8080 | Register, or use the fictional demo account |
+| Account services (student) | http://localhost:8080/services | Fictional business workflows; sign in at the store first |
 | Instructor console | http://127.0.0.1:8081 | Username `instructor`; generated password printed during first setup and retained in `.env` |
 | PostgreSQL / SMTP / Mailpit web UI | No host port | Internal services only |
 
@@ -59,13 +60,20 @@ PostgreSQL data persists in a named volume. Re-running setup preserves `.env`. C
 - Independently built instructor UI/API with independent authentication, instructor-only run reset/profile selection and run-scoped evidence counts for the five included scenarios.
 - Single-use store voucher, atomic under secure baseline, with a deliberately split check-and-claim path in R01 to teach a genuine overlapping-request race.
 
-There is no real shipment, external payment gateway, stock reservation, password recovery, partial-item return, or the 13 not-yet-implemented scenario workflows in this milestone. These are not displayed as available workflows.
+There is no real shipment, external payment gateway, stock reservation, or partial-item return. Password recovery is a fictional isolated R05 training flow, never an internet-facing recovery system. The additional service workflows are intentionally separate from checkout and are exposed in the local Account services portal; see the instructor guide for exact scope and limitations.
+
+
+## Extended training scenarios (13)
+
+B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11, B12, R01, R02, R03, R04, R05, R06 are selectable as separate instructor profiles (B01/B04/B08/B10/R01 are the original core five). Advanced and specialist workflows are served by `apps/api/src/extendedLabs.ts`, persist state in migration 003, and are exercised by `tests/extended-labs.test.ts`. Each scenario is activated **only** when the instructor chooses that run profile; the clean baseline remains the default. The student workspace at `/services` exposes normal business operations without reporting which profile the instructor selected.
+
+**Fidelity limitation:** These are educational implementations of the distinct security invariants, not claimed literal PortSwigger clones. In particular B06 and B12 use explicit email/storage/parser teaching adapters instead of real third-party SMTP address parsing; B11 uses an intentionally insecure local ECB adapter; R05 depends on a time-derived token collision. Do not confuse an automated passing test with a guarantee of browser UX perfection or challenge difficulty. Instructor verification and real-browser testing are still necessary.
 
 ## Verification and its limits
 
-The files in `docs/verification/` are historical **M1 snapshots**, not results of the current M2 code. **Current M2 evidence is in [GitHub Actions](https://github.com/RaV-u/rvu-commerce/actions):** typecheck and builds pass, backend integration tests run on PostgreSQL 17 with all 21 passing (including native concurrency and R01), and all three connected React/PGlite UI tests pass. An additional Compose smoke job has passed, exercising the actual proxy and local service stack. Real-browser layout/responsive appearance and your Windows/WSL2 resource usage still require local acceptance.
+The files in `docs/verification/` are historical **M1 snapshots**, not results of the current M2 code. **Current M2 evidence is in [GitHub Actions](https://github.com/RaV-u/rvu-commerce/actions):** typecheck and builds pass, backend integration tests run on PostgreSQL 17 with all 35 passing (including native concurrency and R01), and all three connected React/PGlite UI tests pass. An additional Compose smoke job has passed, exercising the actual proxy and local service stack. Real-browser layout/responsive appearance and your Windows/WSL2 resource usage still require local acceptance.
 
-Backend integration tests run against **native PostgreSQL 17 in GitHub Actions**, including real independent transactions, account and instructor database roles, all five training scenarios and their persisted evidence. React tests run with **PGlite (PostgreSQL/WASM)** using JSDOM and an in-process Fastify adapter; no mocked business responses. Separately, Docker Compose has successfully booted the actual nginx proxy, PostgreSQL 18, API services and UIs and passed a host-to-proxy purchase/refund smoke test in CI. Real-browser visual QA and Windows/WSL2 resource use remain local acceptance work.
+Backend integration tests run against **native PostgreSQL 17 in GitHub Actions**, including real independent transactions, account and instructor database roles, all 18 training scenarios and their persisted evidence. React tests run with **PGlite (PostgreSQL/WASM)** using JSDOM and an in-process Fastify adapter; no mocked business responses. Separately, Docker Compose has successfully booted the actual nginx proxy, PostgreSQL 18, API services and UIs and passed a host-to-proxy purchase/refund smoke test in CI. Real-browser visual QA and Windows/WSL2 resource use remain local acceptance work.
 
 ### Required native PostgreSQL gate
 
@@ -129,7 +137,7 @@ One installation supports one active run/profile. It is designed for one learner
 
 ## Core scenario preparation
 
-See `docs/CORE_READINESS.md`. The five instructor-selected training implementations (B01, B04, B08, B10, R01) now have scenario-specific behavior and native-PostgreSQL regression tests; the other 13 planned labs are still unimplemented. The native R01 concurrency gate passed in CI, but instructor-led acceptance and repeatability on the student's local Docker environment remain release checks.
+See `docs/CORE_READINESS.md` and `docs/EXTENDED_LABS_INSTRUCTOR_AR.md`. The 18 selectable instructor training implementations now have scenario-specific behavior and regression tests; the 13 additional labs are implemented as isolated service workflows, including documented teaching-adapter limitations. The native R01 concurrency gate passed in CI, but instructor-led acceptance and repeatability on the student's local Docker environment remain release checks.
 
 ## Resource and packaging decisions
 

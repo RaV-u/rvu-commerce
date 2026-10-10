@@ -1,8 +1,10 @@
 # Current M2 verification checkpoint — 2026-10-10
 
-**Status:** Five intentionally vulnerable, instructor-selected scenarios (B01, B04, B08, B10, R01) are implemented. **13 of 18 planned labs remain unimplemented.**
+**Status:** All **18 of 18** instructor-selected scenarios have executable training code and automated scenario tests (five original core plus thirteen new extended). B06 and B12 use explicit teaching parser/legacy-email adapters rather than external SMTP equivalence. Browser and student-machine acceptance remain outstanding.
 
-**Verified in GitHub Actions:** TypeScript, both production builds, **21/21 backend tests on native PostgreSQL 17**, including concurrent independent connections, atomic checkout, permissions and the R01 race; **3/3 connected React UI tests**. Earlier PGlite role leakage and native R01 lock-upgrade deadlock were addressed in the CI integration and runtime code. The Docker Compose + HTTP proxy smoke test passed against PostgreSQL 18 and the local nginx edge, including register → verify → coupon → payment → refund.
+**Verified in GitHub Actions:** TypeScript, both production builds, **35/35 backend tests on native PostgreSQL 17**, including concurrent independent connections, atomic checkout, permissions and the R01 race; **3/3 connected React UI tests**. Earlier PGlite role leakage and native R01 lock-upgrade deadlock were addressed in the CI integration and runtime code. The Docker Compose + HTTP proxy smoke test passed against PostgreSQL 18 and the local nginx edge, including register → verify → coupon → payment → refund.
+
+**Current specialist instructor guide:** `docs/EXTENDED_LABS_INSTRUCTOR_AR.md` documents all new paths, evidence and limitations.
 
 **Not automatically certified:** real-browser visual QA, WSL2/Windows resource use and instructor classroom acceptance. The M1 notes below are an **archived historical record**; their earlier “M2 unverified” and “five profiles not implemented” statements are superseded by this checkpoint.
 

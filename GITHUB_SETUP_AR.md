@@ -4,7 +4,7 @@ Owner: `RaV-u` (GitHub account associated with `ramzmedhat@gmail.com`).
 
 ## Repository model
 
-- The repository is currently **Public**. Switch it to **Private** before distributing sensitive instructor materials or keep the instructor documentation in a separate private repository. The source and `docs/` include instructor-facing scenario information and are not suitable as a blind student handout.
+- The repository is currently **Public** and includes intentionally vulnerable implementation details, tests and instructor solution material. Make it **Private** or separate student-distribution and instructor-source repositories before any black-box challenge. The source and `docs/` include instructor-facing scenario information and are not suitable as a blind student handout.
 - Run everything on local Docker. Do not expose 8080 or 8081 to the Internet.
 - Never commit `.env`, any actual passwords or keys, Docker volumes or database dumps.
 - This source is M2 (5 scenarios, not all planned 18); verify it before distribution.

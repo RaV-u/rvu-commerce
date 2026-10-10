@@ -2,10 +2,12 @@
 
 - `npm run typecheck`: PASS on Node.js 24.
 - `npm run build`: PASS for storefront and instructor bundles.
-- `npm test` against **native PostgreSQL 17**: **21 PASS, 0 FAIL, 0 SKIP**, including B01/B04/B08/B10 and genuine R01 overlapping-request tests.
+- `npm test` against **native PostgreSQL 17**: **35 PASS, 0 FAIL, 0 SKIP**, including all original five and thirteen extended profiles (B02/B03/B05/B06/B07/B09/B11/B12/R02/R03/R04/R05/R06), genuine simultaneous PostgreSQL race tests, and persisted permission/evidence controls.
+- Portable PGlite backend suite: verifies the portable cases; skips native-only database role and race gates deliberately.
 - `npm run test:ui`: **3 PASS, 0 FAIL** via React → Fastify → PGlite SQL.
 - Docker Compose startup, published ingress/proxy port checks and purchase/refund smoke tests are a **separate CI job**. This test has passed against the local nginx proxy and PostgreSQL 18, with a registration → coupon → purchase → refund journey; [GitHub Actions](https://github.com/RaV-u/rvu-commerce/actions) contains the verification.
 - These checks do **not** replace real-browser responsive inspection and local student laptop/WSL2 measurements.
+- See `docs/EXTENDED_LABS_INSTRUCTOR_AR.md` for teaching-adapter limitations (notably B06/B12), exact scenarios and instructor acceptance.
 - The files under `docs/verification/` remain **historical M1 logs**, not the current M2 results.
 
 ## Archived M1 verification notes (historical)
