@@ -202,5 +202,13 @@ test("Services portal renders actual business workflows and sends typed requests
   await user.click(screen.getByRole("button", {name:"Continue →"}));
   await screen.findByText("Request completed");
   assert.match(screen.getByText(/"ciphertext":/).textContent ?? "", /ciphertext/);
+  await user.click(screen.getByRole("button",{name:"Password maintenance"}));
+  const ownEmail=screen.getByLabelText("Target Email") as HTMLInputElement;
+  assert.match(ownEmail.value,/^rvu-[a-f0-9]{32}@learner\.rvu\.test$/);
+  await user.click(screen.getByRole("button",{name:"Company account sign-in"}));
+  const colleague=screen.getByLabelText("Email") as HTMLInputElement;
+  assert.match(colleague.value,/^colleague-[a-f0-9]{32}@learner\.rvu\.test$/);
+  await user.click(screen.getByRole("button",{name:"Register company contact"}));
+  assert.match(screen.getByText(/Application reference:/).textContent??"",/[a-f0-9]{8}-[a-f0-9-]{27,}/);
   cleanup();
 });
