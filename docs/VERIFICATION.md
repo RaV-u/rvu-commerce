@@ -1,3 +1,15 @@
+# Current M2 CI verification — 2026-10-10
+
+- `npm run typecheck`: PASS on Node.js 24.
+- `npm run build`: PASS for storefront and instructor bundles.
+- `npm test` against **native PostgreSQL 17**: **20 PASS, 0 FAIL, 0 SKIP**, including B01/B04/B08/B10 and genuine R01 overlapping-request tests.
+- `npm run test:ui`: **3 PASS, 0 FAIL** via React → Fastify → PGlite SQL.
+- Docker Compose startup, published ingress/proxy port checks and purchase/refund smoke tests are a **separate CI job**. Its status must be read from [GitHub Actions](https://github.com/RaV-u/rvu-commerce/actions).
+- These checks do **not** replace real-browser responsive inspection and local student laptop/WSL2 measurements.
+- The files under `docs/verification/` remain **historical M1 logs**, not the current M2 results.
+
+## Archived M1 verification notes (historical)
+
 > **M2 note, 2026-10-10:** The results below are evidence for the original **M1** sources only. M2 adds migrations, five selectable scenario implementations and tests, but no full M2 runtime execution occurred in the current sandbox (Node 22 only; npm registry DNS resolution unavailable; no Docker daemon). Static syntax parsing of 24 JS/TS files passed. Do not report the M1 pass count as M2 acceptance. Use the WSL Docker commands in `START_HERE_AR.md`, capture raw results and record new M2 evidence before a student session.
 
 # M1 verification record

@@ -4,7 +4,7 @@ Owner: `RaV-u` (GitHub account associated with `ramzmedhat@gmail.com`).
 
 ## Repository model
 
-- Keep `RaV-u/rvu-commerce` **Private** during development. The source and `docs/` include instructor-facing scenario information and are not suitable as a blind student handout.
+- The repository is currently **Public**. Switch it to **Private** before distributing sensitive instructor materials or keep the instructor documentation in a separate private repository. The source and `docs/` include instructor-facing scenario information and are not suitable as a blind student handout.
 - Run everything on local Docker. Do not expose 8080 or 8081 to the Internet.
 - Never commit `.env`, any actual passwords or keys, Docker volumes or database dumps.
 - This source is M2 (5 scenarios, not all planned 18); verify it before distribution.
@@ -46,7 +46,7 @@ docker compose --profile test up --build --force-recreate --abort-on-container-e
 docker compose --profile test rm -sf tests test-postgres
 ```
 
-GitHub Actions runs **portable tests**, not the Docker-native concurrency acceptance tests.
+GitHub Actions now runs **native PostgreSQL concurrency tests and connected React UI tests**, followed by a **Docker Compose / proxy / transaction smoke test**. See the latest Actions run for the actual result. Keep local WSL2 tests before class delivery.
 
 ## Local access for students
 

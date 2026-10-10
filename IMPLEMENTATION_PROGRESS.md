@@ -1,3 +1,15 @@
+# Current M2 verification checkpoint — 2026-10-10
+
+**Status:** Five intentionally vulnerable, instructor-selected scenarios (B01, B04, B08, B10, R01) are implemented. **13 of 18 planned labs remain unimplemented.**
+
+**Verified in GitHub Actions:** TypeScript, both production builds, **20/20 backend tests on native PostgreSQL 17**, including concurrent independent connections, atomic checkout, permissions and the R01 race; **3/3 connected React UI tests**. Earlier PGlite role leakage and native R01 lock-upgrade deadlock were addressed in the CI integration and runtime code. A separate Docker Compose + HTTP proxy smoke test has been added; check its latest CI outcome separately.
+
+**Not automatically certified:** real-browser visual QA, WSL2/Windows resource use and instructor classroom acceptance. The M1 notes below are an **archived historical record**; their earlier “M2 unverified” and “five profiles not implemented” statements are superseded by this checkpoint.
+
+---
+
+## Archived M1 / initial M2 development notes (historical; not current acceptance)
+
 # M2 continuation checkpoint — 2026-10-10
 
 This source package updates M1. New code: horizontal logo, favicon, mobile navigation, workstation quote flow, two-stage checkout intents, voucher flow, five instructor-only selectable run profiles (B01/B04/B08/B10/R01), run-scoped evidence queries, migrations v2 and new integration tests. Secure-baseline pathways remain the default.
