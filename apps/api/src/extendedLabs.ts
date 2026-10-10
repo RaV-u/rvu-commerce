@@ -109,6 +109,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         return purchase(db,a,"B02",charged,delivered,lines);
       }
       case "bulk.invoice": {
+        if(profile==="open-playground")throw new HttpError(404,"Use the ordinary store purchase flow");
         requireProfile(a,["B05"]);
         const quantity=z.number().int().min(1).max(100000).parse(p.quantity);
         const exact=50000*quantity;
