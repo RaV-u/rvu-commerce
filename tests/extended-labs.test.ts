@@ -14,7 +14,7 @@ let url=process.env.TEST_DATABASE_URL??"",wasm:PGlite|undefined,socket:PGLiteSoc
 let store:Awaited<ReturnType<typeof buildApp>>,control:Awaited<ReturnType<typeof buildApp>>;
 let loginCounter=0;
 const pause=(ms:number)=>new Promise<void>(resolve=>setTimeout(resolve,ms));
-async function call(c:Client,method:string,path:string,body?:unknown,status=200){
+async function call(c:Client,method:string,path:string,body?:unknown,status=200,extra:Record<string,string>={}){
   const isAdmin=path.startsWith("/api/instructor");
   const r=await (isAdmin?control:store).app.inject({
     method:method as "POST",
@@ -22,7 +22,7 @@ async function call(c:Client,method:string,path:string,body?:unknown,status=200)
     // Each instructor reset starts a fresh fictional learner client. Avoid
     // conflating its global per-IP login limiter with the R02 quota experiment.
     remoteAddress:path==="/api/login"?"192.0.2."+String(10+(loginCounter++%240)):"127.0.0.1",
-    headers:{origin:isAdmin?"http://127.0.0.1:8081":"http://localhost:8080",cookie:c.cookie,"x-csrf-token":c.csrf},
+    headers:{origin:isAdmin?"http://127.0.0.1:8081":"http://localhost:8080",cookie:c.cookie,"x-csrf-token":c.csrf,...extra},
     ...(body===undefined?{}:{payload:body as object}),
   });
   assert.equal(r.statusCode,status,method+" "+path+" "+r.body);
@@ -267,8 +267,16 @@ test("integrated storefront keeps multiple independent business weaknesses activ
   const account=await act("email.update",{address:"buyer@corp.rvu.test"});
   assert.equal(account.verified,true);
   assert.equal((await act("corporate.orders")).orders.length,1);
-  const cartSale=await act("cart.reconcile",{lines:[{sku:"vista-27",quantity:1},{sku:"arc-light",quantity:-1}]});
-  assert.equal(cartSale.charged,540000);
+  await call(alex,"POST","/api/cart/items",{productId:"vista-27",quantity:1,price:680000});
+  const cartSale=await call(alex,"POST","/api/cart/items",{productId:"arc-light",quantity:-1});
+  assert.equal(cartSale.total,540000);
+  const paid=await call(alex,"POST","/api/checkout",{
+    cartVersion:cartSale.version,
+    delivery:{fullName:"Alex Rowan",address:"12 Sample Studio Lane",city:"Sample City"},
+  },200,{"Idempotency-Key":randomUUID()});
+  assert.equal(Number(paid.total),540000);
+  assert.equal(paid.items.length,1);
+  assert.equal(Number(paid.items[0].unit_price),680000);
   const bulk=await act("bulk.invoice",{quantity:85900});
   assert.equal(bulk.charged,32704);
   assert.equal((await act("workspace.admin")).approved,true);
