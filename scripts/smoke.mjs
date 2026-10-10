@@ -28,6 +28,26 @@ const html = await fetch(origin);
 assert.equal(html.status, 200);
 assert.match(await html.text(), /RVU Commerce/);
 assert.ok(html.headers.get("content-security-policy"));
+// Both published hosts must be usable, but student authentication and API
+// routes must never cross the instructor boundary.
+const instructorOrigin = "http://127.0.0.1:8081";
+const instructorPage = await fetch(instructorOrigin);
+assert.equal(instructorPage.status, 200);
+assert.match(await instructorPage.text(), /RVU Commerce.*Instructor/);
+const instructorHealth = await fetch(instructorOrigin + "/api/health");
+assert.equal(instructorHealth.status, 200);
+assert.equal((await instructorHealth.json()).service, "control");
+const forbidden = await fetch(instructorOrigin + "/api/instructor/reset", {
+  method: "POST",
+  headers: {
+    Origin: instructorOrigin,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ confirm: "RESET" }),
+});
+assert.equal(forbidden.status, 401, "A visitor must not reset instructor runs");
+const wrongService = await fetch(origin + "/api/instructor/session");
+assert.equal(wrongService.status, 404);
 const catalog = await request("/api/catalog");
 assert.equal(catalog.products.length, 8);
 await request("/api/register", "POST", {

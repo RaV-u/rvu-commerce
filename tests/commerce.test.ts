@@ -327,6 +327,16 @@ test("database ledger is balanced, immutable and rejects incomplete journals", a
     /Unbalanced journal/,
   );
 });
+test("instructor database role cannot modify catalog or student orders", async () => {
+  await assert.rejects(
+    control.pool.query("UPDATE store.products SET price=price WHERE id='vista-27'"),
+    /permission denied/,
+  );
+  await assert.rejects(
+    control.pool.query("UPDATE store.orders SET state=state"),
+    /permission denied/,
+  );
+});
 test("database role cannot read instructor credentials or change catalog prices", async () => {
   await assert.rejects(
     store.pool.query("SELECT * FROM control.instructors"),
