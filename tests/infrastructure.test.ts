@@ -21,6 +21,7 @@ test("Compose configuration exposes only loopback proxy ports and separates cred
   assert.equal(c.services.instructor, undefined, "Instructor service must not be deployed");
   assert.equal(c.services.store.environment.INSTRUCTOR_PASSWORD, undefined);
   assert.equal(c.services.migrate.environment.RVU_INTEGRATED_MODE, "1");
+  assert.equal(c.services.store.environment.RVU_SINGLE_LOGIN, "1");
   assert.equal(
     c.services.store.environment.APP_ORIGIN,
     "http://localhost:8080",
