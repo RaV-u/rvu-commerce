@@ -7,7 +7,7 @@ export const products = [
     "vista-27",
     "Vista 27 Studio Display",
     "Displays",
-    "A quiet canvas for your best work. A fictional 27-inch 4K display with an adjustable aluminium stand.",
+    "A quiet canvas for your best work. A crisp 27-inch 4K display with an adjustable aluminium stand.",
     680000,
     "physical",
     "monitor",
@@ -92,7 +92,7 @@ export const products = [
     [
       "EGP 500 face value",
       "Redeem once to a wallet",
-      "No expiry in this local edition",
+      "No expiry on store credit",
     ],
   ],
 ] as const;

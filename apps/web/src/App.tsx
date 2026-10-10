@@ -787,7 +787,7 @@ export function App() {
               Delivery address
               <input
                 name="address"
-                placeholder="12 Fictional Studio Lane"
+                placeholder="12 Studio Lane"
                 required
                 minLength={5}
                 maxLength={160}
@@ -1100,13 +1100,13 @@ export function App() {
           <div className="policy">
             <p>
               RVU brings together a small collection of workspace essentials.
-              Every product, company and payment in this local edition is
-              fictional.
+              This local showroom uses store credit. No bank card details or
+              real payments are collected.
             </p>
             <h3>Delivery & returns</h3>
             <p>
-              Delivery has no charge. This training edition records your order
-              and fictional address; there is no physical fulfilment.
+              Delivery is complimentary. Orders are recorded against your
+              account, but no physical products are dispatched.
               Physical-product orders can be returned in full from your account
               for the exact amount paid. Orders containing gift cards are final
               sale.
