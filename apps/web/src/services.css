@@ -35,3 +35,13 @@
 .service-footer.footer-mentorship span:nth-child(2){text-align:center}
 .service-footer.footer-mentorship a{justify-self:end;color:inherit;text-decoration:none;border-bottom:1px solid #cbd8cc}
 @media(max-width:760px){.service-footer.footer-mentorship{grid-template-columns:1fr;gap:13px}.service-footer.footer-mentorship span:first-child{text-align:center}.service-footer.footer-mentorship a{justify-self:center}}
+
+.service-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:18px 22px;margin-bottom:26px}
+.service-workspace label.service-field{display:flex;flex-direction:column;align-items:stretch;gap:9px;margin:0;color:#365249;font-size:12px;letter-spacing:.015em}
+.service-workspace .service-field>span{font-family:Arial,Helvetica,sans-serif;font-weight:600;color:#365249}
+.service-workspace .service-field>input,.service-workspace .service-field>select,.service-workspace .service-field>textarea{width:100%;min-height:46px;padding:11px 12px;border:1px solid #c7d0c5;background:#fbfcf8;border-radius:5px;color:#213b32;font:14px/1.4 Arial,Helvetica,sans-serif;min-width:0}
+.service-workspace .service-field>textarea{min-height:95px;font-family:ui-monospace,Consolas,monospace;line-height:1.5}
+.service-workspace .service-field>input:focus,.service-workspace .service-field>textarea:focus{outline:2px solid #afaa7c;outline-offset:2px}
+.service-result p{color:#3e5b4b;font-size:14px}
+.service-result details{margin-top:14px;font-size:12px}
+.service-result summary{cursor:pointer;color:#597061}
