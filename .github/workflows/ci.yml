@@ -67,6 +67,17 @@ jobs:
         run: docker compose config --quiet
       - name: Build and start isolated application
         run: docker compose up --build --wait --wait-timeout 180
+      - name: Wait for published HTTP ports
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl -fsS -H 'Host: localhost:8080' http://127.0.0.1:8080/api/health >/dev/null &&
+               curl -fsS -H 'Host: 127.0.0.1:8081' http://127.0.0.1:8081/api/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose ps
+          exit 1
       - name: Exercise real proxy, application and PostgreSQL
         run: node scripts/smoke.mjs
       - name: Show service diagnostics on failure

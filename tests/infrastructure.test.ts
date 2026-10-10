@@ -6,11 +6,13 @@ import { products } from "../apps/api/src/seed.ts";
 test("Compose configuration exposes only loopback proxy ports and separates credentials", async () => {
   const c = parse(await readFile("compose.yaml", "utf8"), { merge: true });
   assert.equal(c.networks.private.internal, true);
+  assert.ok(c.networks.ingress, "Ingress bridge must exist for loopback-published proxy ports");
+  assert.notEqual(c.networks.ingress.internal, true);
   for (const [name, service] of Object.entries(c.services) as [
     string,
     { ports?: string[]; networks: string[] },
   ][]) {
-    assert.deepEqual(service.networks, ["private"]);
+    assert.deepEqual(service.networks, name === "edge" ? ["private", "ingress"] : ["private"]);
     if (name !== "edge") assert.equal(service.ports, undefined);
     else
       assert.deepEqual(service.ports, [
