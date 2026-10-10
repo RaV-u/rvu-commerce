@@ -173,7 +173,7 @@ export async function buildApp(config: Config) {
         try {
           const a = await actor(db, req);
           const colleagueEmail=classroomColleagueEmail(a.id);
-          const colleagueExists=a.profile==="open-playground" && !!(await db.query(
+          const colleagueExists=!!(await db.query(
             "SELECT 1 FROM store.users WHERE run_id=$1 AND email=$2",[a.run,colleagueEmail]
           )).rowCount;
           return {
