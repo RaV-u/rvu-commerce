@@ -77,6 +77,6 @@ const registration=call("POST","/api/business/registration",{email:"hire@corp.rv
 await pause(60);
 assert.equal((await act("registration.confirm",{registrationId:regId,code:[""]})).verified,true);
 await registration;
-const raceLogins=await Promise.all(Array.from({length:5},()=>call("POST","/api/business/login-verification",{password:"Target-Only-2026!",delayMs:140})));
+const raceLogins=await Promise.all(Array.from({length:5},()=>call("POST","/api/business/login-verification",{password:"Target-Only-2026!",delayMs:280})));
 assert.equal(raceLogins.filter(x=>x.authenticated).length,5);
 console.log("PASS: integrated storefront: B01, B02, B03, B05, B06, B09, B11, R02, R03, R06 and no profile disclosure");
