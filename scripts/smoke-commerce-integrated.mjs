@@ -25,13 +25,13 @@ async function paid(call,cart){
 }
 {
   const call=await newShopper();
-  await call("PUT","/api/cart/items",{productId:"vista-27",quantity:1});
+  await call("PUT","/api/cart/items",{productId:"hush-pro",quantity:1});
   await call("POST","/api/cart/coupon",{code:"WELCOME10"});
   await call("POST","/api/cart/coupon",{code:"STUDIO15"});
   const cart=await call("POST","/api/cart/coupon",{code:"WELCOME10"});
-  assert.equal(cart.total,4420,"Repeated promotional applications must change the actual payable total");
+  assert.equal(cart.total,3380,"Repeated promotional applications must change the actual payable total");
   const order=await paid(call,cart);
-  assert.equal(Number(order.total),4420);
+  assert.equal(Number(order.total),3380);
   await call("POST","/api/orders/"+order.id+"/refund",{});
   console.log("PASS: stacked promotion persisted on actual paid order");
 }
@@ -39,7 +39,7 @@ async function paid(call,cart){
   const call=await newShopper();
   let cart=await call("PUT","/api/cart/items",{productId:"arc-light",quantity:1});
   await paid(call,cart);
-  cart=await call("PUT","/api/cart/items",{productId:"vista-27",quantity:3});
+  cart=await call("PUT","/api/cart/items",{productId:"field-pack",quantity:3});
   const intent=await call("POST","/api/checkout/prepare",{cartVersion:cart.version,delivery});
   const walletBefore=(await call("GET","/api/wallet")).balance;
   const confirmed=await call("POST","/api/checkout/confirm",{intentId:intent.intentId},200,{"Idempotency-Key":randomUUID()});
@@ -62,15 +62,15 @@ async function paid(call,cart){
 }
 {
   const call=await newShopper();
-  await call("PUT","/api/cart/items",{productId:"vista-27",quantity:1});
+  await call("PUT","/api/cart/items",{productId:"bridge-8",quantity:1});
   const requests=await Promise.all(Array.from({length:4},()=>call("POST","/api/cart/voucher",{code:"STUDIO300"}).then(()=>true,()=>false)));
   const successful=requests.filter(Boolean).length;
   assert.ok(successful>=2,"Overlapping voucher claims were not reproduced in this CI run");
   const cart=await call("GET","/api/cart");
   assert.ok(cart.vouchers.length>=2);
-  assert.ok(cart.total<=6200);
+  assert.ok(cart.total<=1350);
   const order=await paid(call,cart);
-  assert.ok(Number(order.total)<=6200);
+  assert.ok(Number(order.total)<=1350);
   console.log("PASS: overlapping voucher claims reach a real order");
 }
 console.log("PASS: four commerce families available simultaneously with one RVU credential, no profile switch");
