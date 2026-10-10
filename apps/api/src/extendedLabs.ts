@@ -25,8 +25,10 @@ const requireProfile = (a:Actor, profiles:string[]) => {
   if (a.profile!=="secure-baseline" && a.profile!=="open-playground" && !profiles.includes(a.profile)) throw new HttpError(404,"Service is not available");
 };
 const fail = (message:string):never => {throw new HttpError(409,message);};
-const colleagueFor = (a:Actor):string => a.profile==="open-playground"
-  ? classroomColleagueEmail(a.id) : "target@learner.rvu.test";
+const colleagueFor = (a:Actor):string =>
+  a.profile==="open-playground"
+    ? (classroomColleagueEmail(a.email) ?? "target@learner.rvu.test")
+    : "target@learner.rvu.test";
 async function data(db:DB,a:Actor,scenario:string):Promise<LabState> {
   await db.query("INSERT INTO store.lab_states(run_id,user_id,scenario) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",[a.run,a.id,scenario]);
   const result=await db.query("SELECT data FROM store.lab_states WHERE run_id=$1 AND user_id=$2 AND scenario=$3 FOR UPDATE",[a.run,a.id,scenario]);

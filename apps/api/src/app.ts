@@ -15,7 +15,7 @@ import {
   HttpError,
 } from "./security.ts";
 import { createCustomer, newRun } from "./seed.ts";
-import { activeTrainingProfiles, hasWeakness, classroomColleagueEmail } from "./policy.ts";
+import { activeTrainingProfiles, hasWeakness, classroomAccountEmail, classroomUsername, classroomColleagueEmail, type ClassroomUsername } from "./policy.ts";
 import { registerExtendedLabs, extendedLabels } from "./extendedLabs.ts";
 import {
   cart,
@@ -172,17 +172,15 @@ export async function buildApp(config: Config) {
       transaction(pool, async (db) => {
         try {
           const a = await actor(db, req);
-          const colleagueEmail=classroomColleagueEmail(a.id);
-          const colleagueExists=!!(await db.query(
-            "SELECT 1 FROM store.users WHERE run_id=$1 AND email=$2",[a.run,colleagueEmail]
-          )).rowCount;
+          const username=classroomUsername(a.email);
+          const colleagueEmail=classroomColleagueEmail(a.email);
           return {
             user: {
               id: a.id,
               name: a.name,
               email: a.email,
               verified: a.verified,
-              ...(colleagueExists ? {colleagueEmail} : {}),
+              ...(username ? {username,colleagueEmail} : {}),
             },
             csrf: a.csrf,
           };
@@ -239,20 +237,34 @@ export async function buildApp(config: Config) {
       async (req, reply) => {
         const shared = sharedCredentials.safeParse(req.body);
         if (shared.success) {
-          if (shared.data.username !== "rvu" || shared.data.password !== "rvucamp")
+          const username=shared.data.username;
+          if ((username !== "rvu" && username !== "rvu_2") || shared.data.password !== "rvucamp")
             throw new HttpError(401, "Username or password is incorrect");
           return transaction(pool, async (db) => {
             const run = await activeRun(db);
-            const mailbox = "rvu-" + randomUUID().replaceAll("-", "") + "@learner.rvu.test";
-            const u = await createCustomer(db, run, "RVU Hunter", mailbox, await passwordHash("rvucamp"), true);
-            const colleagueEmail=classroomColleagueEmail(u.id);
-            await createCustomer(db,run,"Workspace Colleague",colleagueEmail,await passwordHash("rvucamp"),true);
+            // Two concurrent first logins must not provision duplicate wallets.
+            // Lock only the local credential-provisioning step, never checkout.
+            await db.query("SELECT pg_advisory_xact_lock(814731)");
+            const identities:ClassroomUsername[]=["rvu","rvu_2"];
+            for(const name of identities){
+              const email=classroomAccountEmail(name);
+              const existing=await db.query(
+                "SELECT id FROM store.users WHERE run_id=$1 AND email=$2",[run,email]
+              );
+              if(!existing.rowCount)
+                await createCustomer(db,run,name==="rvu"?"RVU Customer":"RVU Customer Two",email,
+                  await passwordHash("rvucamp"),true);
+            }
+            const account=(await db.query(
+              "SELECT id,name,email,verified FROM store.users WHERE run_id=$1 AND email=$2",
+              [run,classroomAccountEmail(username)]
+            )).rows[0];
             await db.query("DELETE FROM store.sessions WHERE token_hash=$1", [
               hash(req.cookies[cname] ?? ""),
             ]);
             return {
-              ...(await session(db, reply, run, u.id)),
-              user: {...u,colleagueEmail},
+              ...(await session(db, reply, run, account.id)),
+              user: {...account,username,colleagueEmail:classroomColleagueEmail(account.email)},
             };
           });
         }

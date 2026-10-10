@@ -39,8 +39,14 @@ export function hasWeakness(profile:string, scenario:string):boolean {
   return profile === "open-playground" || profile === scenario;
 }
 
-// A separate fictional teammate is provisioned for each RVU sign-in.
-// All cross-account exercises use this predictable-internally but non-guessable
-// identity rather than mutating one shared seeded target for all learners.
-export const classroomColleagueEmail = (userId:string):string =>
-  "colleague-"+userId.replaceAll("-","")+"@learner.rvu.test";
+// Two stable classroom customers share one local storefront but retain
+// separate identities, baskets, wallets, sessions, inboxes and order history.
+export type ClassroomUsername = "rvu" | "rvu_2";
+export const classroomAccountEmail = (username:ClassroomUsername):string =>
+  username+"@learner.rvu.test";
+export const classroomUsername = (email:string):ClassroomUsername | undefined =>
+  email===classroomAccountEmail("rvu") ? "rvu" :
+  email===classroomAccountEmail("rvu_2") ? "rvu_2" : undefined;
+export const classroomColleagueEmail = (email:string):string | undefined =>
+  email===classroomAccountEmail("rvu") ? classroomAccountEmail("rvu_2") :
+  email===classroomAccountEmail("rvu_2") ? classroomAccountEmail("rvu") : undefined;
