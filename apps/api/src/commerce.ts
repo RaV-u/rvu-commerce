@@ -22,7 +22,7 @@ export async function cart(db: DB, a: Actor) {
   const items = (
     await db.query(
       `SELECT p.id,
-        CASE WHEN q.id IS NULL THEN p.name ELSE 'Vista Studio Workstation Package' END AS name,
+        CASE WHEN q.id IS NULL OR q.options->>'cartOverride'='true' THEN p.name ELSE 'Vista Studio Workstation Package' END AS name,
         p.category,p.description,COALESCE(q.accepted_price,p.price) AS price,
         p.kind,p.image,p.badge,p.specs,i.quantity,q.id AS quote_id
        FROM store.cart_items i JOIN store.products p ON p.id=i.product_id
