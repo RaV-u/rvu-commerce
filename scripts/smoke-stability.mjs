@@ -20,13 +20,14 @@ async function call(user,method,path,body,headers={}){
   if(value.csrf)user.csrf=value.csrf;
   return value;
 }
-const accounts=await Promise.all(Array.from({length:3},async(_,n)=>{
-  const user=client(),email="stability-"+randomUUID().slice(0,8)+"@learner.rvu.test";
-  await call(user,"POST","/api/register",{name:"Independent Buyer "+n,email,password:"Stable-Local-2026!"});
-  const messages=await call(user,"GET","/api/inbox");
-  await call(user,"POST","/api/verify",{code:messages.messages[0].body.split(": ").at(-1).trim()});
+const accounts=await Promise.all(Array.from({length:3},async()=>{
+  const user=client();
+  const loggedIn=await call(user,"POST","/api/login",{username:"rvu",password:"rvucamp"});
+  assert.equal(loggedIn.user.verified,true);
+  user.id=loggedIn.user.id;
   return user;
 }));
+assert.equal(new Set(accounts.map(x=>x.id)).size,3,"Separate sign-ins must have separate workspaces");
 const start=performance.now();
 await Promise.all(accounts.flatMap(user=>Array.from({length:8},async()=>{
   const [catalog,cart,wallet]=await Promise.all([
@@ -49,6 +50,6 @@ for(const user of accounts){
   assert.equal((await call(user,"GET","/api/wallet")).balance,1500000);
 }
 samples.sort((a,b)=>a-b);
-console.log("PASS: 3 independent customers, parallel catalog/cart/wallet browsing, valid checkout/refund");
+console.log("PASS: 3 isolated RVU sign-ins, parallel browsing, checkout/refund and separate balances");
 console.log(JSON.stringify({requests:samples.length,totalMs:Math.round(performance.now()-start),
   p95ResponseMs:Math.round(samples[Math.ceil(samples.length*.95)-1])}));
