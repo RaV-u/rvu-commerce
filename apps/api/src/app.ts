@@ -172,13 +172,17 @@ export async function buildApp(config: Config) {
       transaction(pool, async (db) => {
         try {
           const a = await actor(db, req);
+          const colleagueEmail=classroomColleagueEmail(a.id);
+          const colleagueExists=a.profile==="open-playground" && !!(await db.query(
+            "SELECT 1 FROM store.users WHERE run_id=$1 AND email=$2",[a.run,colleagueEmail]
+          )).rowCount;
           return {
             user: {
               id: a.id,
               name: a.name,
               email: a.email,
               verified: a.verified,
-              ...(sharedLoginOnly && a.profile === "open-playground" ? {colleagueEmail:classroomColleagueEmail(a.id)} : {}),
+              ...(colleagueExists ? {colleagueEmail} : {}),
             },
             csrf: a.csrf,
           };
