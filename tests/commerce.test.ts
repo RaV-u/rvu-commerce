@@ -86,6 +86,22 @@ before(async () => {
   control.pool.options.verify = (client, done) => {
     void client.query("SET ROLE rvu_control").then(() => done(), done);
   };
+  // A PostgreSQL pool verifies only newly created connections. The socket-backed
+  // PGlite adapter can reuse a physical session between the two application pools,
+  // so pin each logical checkout to the correct least-privileged role.
+  for (const [pool, role] of [[store.pool, "rvu_store"], [control.pool, "rvu_control"]] as const) {
+    const originalConnect = pool.connect.bind(pool);
+    pool.connect = (async (...args: Parameters<typeof originalConnect>) => {
+      const client = await originalConnect(...args);
+      try {
+        await client.query("SET ROLE " + role);
+      } catch (error) {
+        client.release();
+        throw error;
+      }
+      return client;
+    }) as typeof pool.connect;
+  }
 });
 after(async () => {
   await store?.app.close();
