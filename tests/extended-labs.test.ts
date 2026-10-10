@@ -12,12 +12,16 @@ const alex:Client={cookie:"",csrf:""},admin:Client={cookie:"",csrf:""},target:Cl
 const password="Local-Instructor-Test-2026!";
 let url=process.env.TEST_DATABASE_URL??"",wasm:PGlite|undefined,socket:PGLiteSocketServer|undefined;
 let store:Awaited<ReturnType<typeof buildApp>>,control:Awaited<ReturnType<typeof buildApp>>;
+let loginCounter=0;
 const pause=(ms:number)=>new Promise<void>(resolve=>setTimeout(resolve,ms));
 async function call(c:Client,method:string,path:string,body?:unknown,status=200){
   const isAdmin=path.startsWith("/api/instructor");
   const r=await (isAdmin?control:store).app.inject({
     method:method as "POST",
     url:path,
+    // Each instructor reset starts a fresh fictional learner client. Avoid
+    // conflating its global per-IP login limiter with the R02 quota experiment.
+    remoteAddress:path==="/api/login"?"192.0.2."+String(10+(loginCounter++%240)):"127.0.0.1",
     headers:{origin:isAdmin?"http://127.0.0.1:8081":"http://localhost:8080",cookie:c.cookie,"x-csrf-token":c.csrf},
     ...(body===undefined?{}:{payload:body as object}),
   });
@@ -38,7 +42,7 @@ async function act(action:string,fields:Record<string,unknown>={},status=200) {
 }
 async function latestCode(){
   const inbox=await call(alex,"GET","/api/inbox");
-  return String(inbox.messages[0].body).split(": ").at(-1).trim();
+  return String(inbox.messages[0]?.body??"").split(": ").at(-1)?.trim()??"";
 }
 async function proof(profile:string){
   const result=await call(admin,"GET","/api/instructor/evidence");
