@@ -40,9 +40,17 @@ const credentials = z
   .object({ email, password: z.string().min(12).max(128) })
   .strict();
 const uuid = z.string().uuid();
+// The local classroom installation accepts one published login pair.
+// Each successful sign-in creates a separately scoped learner workspace.
+// Regression-test applications can retain the historical customer flows.
+const sharedCredentials = z.object({
+  username: z.string().trim().max(40),
+  password: z.string().max(128),
+}).strict();
 export async function buildApp(config: Config) {
   const app = Fastify({ logger: config.logger ?? false, bodyLimit: 16384 });
   const pool = createPool(config.databaseUrl);
+  const sharedLoginOnly = config.mode === "store" && process.env.RVU_SINGLE_LOGIN === "1";
   await app.register(cookie);
   await app.register(helmet, {
     strictTransportSecurity: false, // This installation is intentionally loopback HTTP.
@@ -184,6 +192,7 @@ export async function buildApp(config: Config) {
       "/api/register",
       { config: { rateLimit: { max: 12, timeWindow: "1 minute" } } },
       async (req, reply) => {
+        if (sharedLoginOnly) throw new HttpError(404, "Account registration is not available");
         const input = credentials
             .extend({ name: z.string().trim().min(2).max(80) })
             .parse(req.body),
@@ -221,8 +230,26 @@ export async function buildApp(config: Config) {
     );
     app.post(
       "/api/login",
-      { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
+      { config: { rateLimit: { max: 40, timeWindow: "1 minute" } } },
       async (req, reply) => {
+        const shared = sharedCredentials.safeParse(req.body);
+        if (shared.success) {
+          if (shared.data.username !== "rvu" || shared.data.password !== "rvucamp")
+            throw new HttpError(401, "Username or password is incorrect");
+          return transaction(pool, async (db) => {
+            const run = await activeRun(db);
+            const mailbox = "rvu-" + randomUUID().replaceAll("-", "") + "@learner.rvu.test";
+            const u = await createCustomer(db, run, "RVU Hunter", mailbox, await passwordHash(token()), true);
+            await db.query("DELETE FROM store.sessions WHERE token_hash=$1", [
+              hash(req.cookies[cname] ?? ""),
+            ]);
+            return {
+              ...(await session(db, reply, run, u.id)),
+              user: u,
+            };
+          });
+        }
+        if (sharedLoginOnly) throw new HttpError(401, "Username or password is incorrect");
         const input = credentials.parse(req.body);
         return transaction(pool, async (db) => {
           const run = await activeRun(db),
