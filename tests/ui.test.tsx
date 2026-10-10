@@ -194,6 +194,8 @@ test("Shared classroom sign-in opens a personal shopping account", async () => {
 });
 
 test("Business services are inside My Account on the only storefront", async () => {
+  // Reset the in-process browser session left by the preceding UI test.
+  await store.pool.query("DELETE FROM store.sessions");
   const user = userEvent.setup({document:dom.window.document});
   render(<App />);
   await screen.findByRole("button",{name:"View Form 75 Mechanical Keyboard"});
