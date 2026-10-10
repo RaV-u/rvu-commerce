@@ -433,11 +433,16 @@ export async function buildApp(config: Config) {
         return {cartId:c.id,amount:Number(voucher.amount),run:a.run};
       };
       const claim = async (db:DB,a:Actor,checked:{cartId:string;amount:number;run:string}) => {
+        // Lock the cart before inserting child claims. PostgreSQL FK checks
+        // otherwise acquire KEY SHARE on the cart in multiple transactions,
+        // then deadlock when each tries to upgrade to UPDATE.
+        // R01 remains vulnerable: the uniqueness check happened in a previous
+        // transaction, so serializing this *write* does not re-check the claim.
+        await db.query("UPDATE store.carts SET version=version+1 WHERE run_id=$1 AND id=$2",[a.run,checked.cartId]);
         await db.query(
           "INSERT INTO store.voucher_claims(id,run_id,cart_id,code,amount) VALUES($1,$2,$3,$4,$5)",
           [randomUUID(),a.run,checked.cartId,code,checked.amount],
         );
-        await db.query("UPDATE store.carts SET version=version+1 WHERE run_id=$1 AND id=$2",[a.run,checked.cartId]);
         return cart(db,a);
       };
       const prepared=await transaction(pool,async db=>{
