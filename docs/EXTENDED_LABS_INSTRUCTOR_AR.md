@@ -1,5 +1,8 @@
 # RVU Commerce — دليل المدرب للـ13 لاب الإضافية
 
+> **تنبيه إصدار موحد (10 أكتوبر 2026):** هذا الملف يصف آلية Profiles القديمة التي لا تُستخدم في المتجر المنشور محليًا. الآن كل العائلات الـ18 تعمل معًا في `open-playground`، ولا توجد لوحة مدرب على 8081. `/api/lab/*` أصبح تاريخيًا، ومسارات الطالب الحالية في `/api/business/*` وعمليات السلة العادية. للتقييم المعتمد اقرأ [FINAL_UNIFIED_AUDIT_AR.md](FINAL_UNIFIED_AUDIT_AR.md) و[README](../README.md). لا تتبع تعليمات تغيير Profile أدناه على النسخة الجديدة.
+
+
 > Internal instructor reference — intentionally vulnerable, fictional, **local-loopback-only** test application. لا تنشر نسخة اللابات على سيرفر عام. جميع المبالغ افتراضية، ولا تستخدم بيانات مستخدمين حقيقية.
 
 ## التشغيل والمراجعة
