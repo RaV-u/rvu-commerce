@@ -180,3 +180,11 @@ select {width:100%;font:inherit;padding:13px;border:1px solid #cbd2c3;background
 .reset .profile-select {grid-column:1/-1;}
 .evidence-refresh {margin-top:22px;background:transparent;color:#244933;border:1px solid #99ad99;}
 .roadmap-note {border-top:1px solid #d5dccf;padding-top:16px;margin-top:27px;font-size:11px;}
+
+
+.evidence-history{margin:24px 0 0;padding:20px;border:1px solid #b2b8aa;background:rgba(12,35,28,.035);max-height:520px;overflow:auto}
+.evidence-history h3{font-size:17px;margin:0 0 16px}
+.evidence-history article{padding:14px 0;border-bottom:1px solid #ccd0c5}
+.evidence-history article strong{display:block;font-size:13px}
+.evidence-history time{display:block;font-size:11px;opacity:.7;margin:5px 0}
+.evidence-history pre{background:#edf0e9;padding:12px;font-size:11px;line-height:1.5;overflow-wrap:anywhere;white-space:pre-wrap;overflow:auto}
