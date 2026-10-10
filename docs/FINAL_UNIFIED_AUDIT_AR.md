@@ -50,3 +50,11 @@
 ## الحكم
 
 **صالح كبداية قوية لتدريب عملي محلي على التفكير في Business Logic وRace Conditions، مع 18 مفهومًا متاحًا في متجر موحد.** لكنه **ليس بعدُ مطابقًا تمامًا لكل PortSwigger Lab ولا مثبتًا بأنه بلا تداخلات على كل الأزواج أو بلا Lag على كل أجهزة الطلاب**. قبل تسليمه كهدف Bug Bounty واقعي مكتمل، الأولوية لتحسين الأثر الدائم لثغرات الصلاحيات، Discoverability، والعزل عند مشاركة بيئة واحدة.
+
+## Update: Single learner login and company-team isolation (10 October 2026)
+
+- Published login only: `rvu` / `rvucamp` on loopback. Each sign-in creates an individual practice wallet, inbox and fictional colleague.
+- The live account-services form prepopulates the student's actual mailbox and shows their colleague in the directory; this prevents a legitimate self-service flow from accidentally targeting the obsolete common Alex account.
+- R02's quota and verified target are scoped to that colleague for the unified storefront, while older per-profile regression tests retain their historical seeded target.
+- A company-registration reference is generated before submission, allowing the normal registration-confirmation flow to be tested during the provisioning window.
+- Tests must establish these properties in both PGlite and native PostgreSQL, plus the Docker/browser workflow, before instructor use.

@@ -18,7 +18,7 @@ The setup script creates local `.env` credentials on first run and preserves exi
 - Business services: http://localhost:8080/services
 - No instructor website; port 8081 is no longer published
 - Single learner login: **Username `rvu` / Password `rvucamp`** (localhost classroom only)
-- Each sign-in provisions a fresh, verified fictional workspace and separate basket/wallet/inbox. No registration or email verification step is needed.
+- Each sign-in provisions a fresh, verified fictional workspace, its own basket/wallet/inbox, and an isolated company-colleague account visible under Account/Business services. No registration or email verification step is needed.
 - Opening fictional wallet credit: **EGP 15,000**
 
 **Upgrade an already-running local installation:**
@@ -78,7 +78,7 @@ Real PostgreSQL concurrency tests, account workflow regressions and Docker proxy
 
 - One local Docker installation runs **all conceptual weaknesses at once**; each student should use a separate local installation for repeatable blind-hunting practice when possible.
 - The deliberately simple `rvucamp` password is intended strictly for loopback-only training. It must never be used for an internet-facing deployment.
-- The shared fictional `target@learner.rvu.test` account and its login-attempt quota are stateful. Password changes and repeated sign-in tests against that account can interfere with another learner on the same installation. Signing in again **does not reset** the shared quota; use the local operator reset command above when this happens.
+- Every `rvu` sign-in also receives a distinct fictional company colleague and corresponding login-attempt quota. This lets learners investigate account maintenance, recovery, and concurrent login controls without competing for one shared test identity. Publicly guessing another trainee's randomly generated address remains theoretically possible in this intentionally vulnerable local software, so separate Docker installations are still preferable for classes.
 - Current CI gates include individual regression tests for all 18 families, a real-Docker combined smoke covering 10 families, and a separate parallel browsing plus legitimate checkout/refund test for three independent customers. This is **not** a guarantee that every pairwise interaction across the 18 has been tested.
 - The HTTP performance measurements come from a disposable GitHub Actions runner. They do not measure CPU/RAM contention or browser responsiveness on students' Windows/WSL laptops.
 - Certain specialized workflows demonstrate the trust-boundary failure without recreating a real SMTP parser or a full administrative account session. Review the original PortSwigger learning goals before promising identical learner outcomes.
