@@ -39,6 +39,7 @@ assert.equal(catalog.products.length, 8);
 assert.equal(catalog.promotions.length, 3, "Integrated storefront exposes the store promotion family");
 const signedIn = await request("/api/login", "POST", { username: "rvu", password: "rvucamp" });
 assert.equal(signedIn.user.verified, true);
+assert.match(signedIn.user.colleagueEmail,/^colleague-[a-f0-9]{32}@learner\.rvu\.test$/);
 const directory = await request("/api/business/status");
 assert.equal(directory.profile, undefined, "Learner must not discover internal profile");
 assert.equal(directory.states, undefined, "Learner must not receive lab state or tokens");

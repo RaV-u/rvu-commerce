@@ -25,9 +25,12 @@ const accounts=await Promise.all(Array.from({length:3},async()=>{
   const loggedIn=await call(user,"POST","/api/login",{username:"rvu",password:"rvucamp"});
   assert.equal(loggedIn.user.verified,true);
   user.id=loggedIn.user.id;
+  user.colleagueEmail=loggedIn.user.colleagueEmail;
+  assert.match(user.colleagueEmail,/^colleague-[a-f0-9]{32}@learner\.rvu\.test$/);
   return user;
 }));
 assert.equal(new Set(accounts.map(x=>x.id)).size,3,"Separate sign-ins must have separate workspaces");
+assert.equal(new Set(accounts.map(x=>x.colleagueEmail)).size,3,"Workspace colleague accounts must be independent");
 const start=performance.now();
 await Promise.all(accounts.flatMap(user=>Array.from({length:8},async()=>{
   const [catalog,cart,wallet]=await Promise.all([
