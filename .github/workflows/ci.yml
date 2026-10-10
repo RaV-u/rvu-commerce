@@ -153,6 +153,14 @@ jobs:
             echo 'The student package unexpectedly contains source or instructor material'
             exit 1
           fi
+      - name: Publish downloadable student package
+        uses: actions/upload-artifact@v4
+        with:
+          name: RVU-Commerce-Student-Installer
+          path: dist-packages/RVU-Commerce-Student.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
       - name: Test installation directly from the distributed student archive
         run: |
           docker compose down --remove-orphans
