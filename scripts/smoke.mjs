@@ -58,7 +58,7 @@ await request("/api/register", "POST", {
   email: `smoke-${randomUUID().slice(0, 8)}@learner.rvu.test`,
   password: "Fictional-Smoke-2026!",
 });
-const directory = await request("/api/lab/status");
+const directory = await request("/api/business/status");
 assert.equal(directory.profile, undefined, "Learner must not discover instructor training profile");
 assert.equal(directory.states, undefined, "Learner must not receive lab state or tokens");
 const inbox = await request("/api/inbox");
