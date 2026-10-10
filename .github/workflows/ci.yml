@@ -84,8 +84,7 @@ jobs:
       - name: Wait for published HTTP ports
         run: |
           for attempt in $(seq 1 30); do
-            if curl -fsS -H 'Host: localhost:8080' http://127.0.0.1:8080/api/health >/dev/null &&
-               curl -fsS -H 'Host: 127.0.0.1:8081' http://127.0.0.1:8081/api/health >/dev/null; then
+            if curl -fsS -H 'Host: localhost:8080' http://127.0.0.1:8080/api/health >/dev/null; then
               exit 0
             fi
             sleep 2
@@ -94,11 +93,10 @@ jobs:
           exit 1
       - name: Exercise real proxy, application and PostgreSQL
         run: node scripts/smoke.mjs
-      - name: Exercise eight extended profiles through the real Docker proxy
+      - name: Exercise integrated commerce weaknesses through the real Docker proxy
         run: node scripts/smoke-extended.mjs
         env:
           RVU_DISPOSABLE_CI: 'yes'
-          RVU_CI_INSTRUCTOR_PASSWORD: CI-local-instructor-Password-Only-2026
       - name: Render storefront and account services in headless Chrome
         run: |
           browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
