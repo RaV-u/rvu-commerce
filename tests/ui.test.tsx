@@ -200,6 +200,12 @@ test("Business services are inside My Account on the only storefront", async () 
   assert.equal(screen.queryByRole("link",{name:"Account services"}),null);
   await user.click(screen.getByRole("button",{name:"Your account"}));
   let dialog=within(screen.getByRole("dialog"));
+  if (!dialog.queryByLabelText("Username")) {
+    await user.click(dialog.getByRole("button",{name:"Sign out"}));
+    await waitFor(()=>assert.ok(!screen.queryByRole("dialog")));
+    await user.click(screen.getByRole("button",{name:"Your account"}));
+    dialog=within(screen.getByRole("dialog"));
+  }
   await user.type(dialog.getByLabelText("Username"),"rvu_2");
   await user.type(dialog.getByLabelText("Password"),"rvucamp");
   await user.click(dialog.getByRole("button",{name:"Sign in"}));
