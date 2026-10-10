@@ -43,6 +43,7 @@ services:
       DATABASE_URL: postgresql://rvu_store:${STORE_DB_PASSWORD}@postgres:5432/rvu
       APP_MODE: store
       APP_ORIGIN: http://localhost:8080
+      RVU_SINGLE_LOGIN: "1"
     depends_on:
       migrate: { condition: service_completed_successfully }
       mailpit: { condition: service_started }
