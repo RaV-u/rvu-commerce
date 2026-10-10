@@ -33,6 +33,7 @@ services:
     environment:
       DATABASE_URL: postgresql://rvu_owner:${DB_PASSWORD}@postgres:5432/rvu
       INSTRUCTOR_PASSWORD: ${INSTRUCTOR_PASSWORD:?Run setup first}
+      RVU_INTEGRATED_MODE: "1"
     depends_on:
       postgres: { condition: service_healthy }
     mem_limit: 384m
@@ -57,26 +58,6 @@ services:
       interval: 10s
       timeout: 3s
       retries: 10
-  instructor:
-    <<: *app
-    environment:
-      DATABASE_URL: postgresql://rvu_control:${CONTROL_DB_PASSWORD}@postgres:5432/rvu
-      APP_MODE: control
-      APP_ORIGIN: http://127.0.0.1:8081
-    depends_on:
-      migrate: { condition: service_completed_successfully }
-    mem_limit: 256m
-    healthcheck:
-      test:
-        [
-          CMD,
-          node,
-          -e,
-          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
-        ]
-      interval: 10s
-      timeout: 3s
-      retries: 10
   mailpit:
     image: axllent/mailpit:v1.27.7
     environment:
@@ -86,11 +67,10 @@ services:
     mem_limit: 128m
   edge:
     image: nginx:1.28.3-alpine
-    ports: ["127.0.0.1:8080:8080", "127.0.0.1:8081:8081"]
+    ports: ["127.0.0.1:8080:8080"]
     volumes: ["./infra/nginx.conf:/etc/nginx/nginx.conf:ro"]
     depends_on:
       store: { condition: service_healthy }
-      instructor: { condition: service_healthy }
     # Only the proxy attaches to the host-reachable ingress bridge.
     # Application and database services remain isolated on 'private'.
     networks: [private, ingress]
