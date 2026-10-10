@@ -309,7 +309,7 @@ export async function buildApp(config: Config) {
       const product = (await db.query("SELECT price,kind FROM store.products WHERE id=$1",[input.productId])).rows[0];
       if (!product) throw new HttpError(404, "Product not found");
       if (input.price !== undefined && input.price !== Number(product.price) && !hasWeakness(a.profile,"B01"))
-        throw new HttpError(409, "The current product price has changed");
+        throw new HttpError(400, "The current product price has changed");
       if (hasWeakness(a.profile,"B04")) {
         await db.query("DELETE FROM store.cart_discount_applications WHERE run_id=$1 AND cart_id=$2 AND order_id IS NULL",[a.run,c.id]);
         await db.query("DELETE FROM store.cart_coupons WHERE run_id=$1 AND cart_id=$2",[a.run,c.id]);
