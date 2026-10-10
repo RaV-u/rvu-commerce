@@ -9,6 +9,13 @@ export const baseline = Object.freeze({
 export const activeTrainingProfiles = ["secure-baseline", "B01", "B04", "B08", "B10", "R01", "B02", "B03", "B05", "B06", "B07", "B09", "B11", "B12", "R02", "R03", "R04", "R05", "R06", "open-playground"] as const;
 export type TrainingProfile = (typeof activeTrainingProfiles)[number];
 export const plannedCore = Object.freeze(["B01", "B04", "B08", "B10", "R01"]);
+export const productWorkflows = Object.freeze({
+  clientPrice:"form-75", signedAdjustment:"arc-light", promotionalStack:"hush-pro",
+  bulkOrder:"vista-27", voucherRace:"bridge-8", checkoutRace:"lift-stand",
+  paymentProof:"field-pack", giftCredit:"gift-500",
+});
+export const focusedCart=(items:{id:string}[],sku:string):boolean =>
+  items.length===1 && items[0].id===sku;
 export function totalFor(
   items: { price: string | number; quantity: number; kind: string }[],
   promotion?: { percent: number; minimum: string | number },

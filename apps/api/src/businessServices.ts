@@ -9,7 +9,7 @@ import type { Actor } from "./commerce.ts";
 import { cart } from "./commerce.ts";
 import { HttpError, hash, token, passwordHash, passwordValid } from "./security.ts";
 import { transfer } from "./seed.ts";
-import { hasWeakness, classroomColleagueEmail } from "./policy.ts";
+import { hasWeakness, focusedCart, productWorkflows, classroomColleagueEmail } from "./policy.ts";
 
 type Handler = (db: DB, actor: Actor, req: FastifyRequest) => Promise<unknown>;
 type UserRoute = (method:"GET"|"POST"|"PUT"|"DELETE", path:string, handler:Handler, verified?:boolean) => unknown;
@@ -97,7 +97,7 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
         if(profile==="open-playground")throw new HttpError(404,"Use the standard shopping cart");
         requireProfile(a,["B02"]);
         const lines=z.array(z.object({sku:z.string().max(40),quantity:z.number().int().min(-10).max(10)}).strict()).min(1).max(8).parse(p.lines);
-        if(!hasWeakness(a.profile,"B02")&&lines.some(x=>x.quantity<0)) fail("Negative quantities are not permitted");
+        if(lines.some(x=>x.quantity<0 && (!hasWeakness(a.profile,"B02") || x.sku!==productWorkflows.signedAdjustment))) fail("Negative quantities are not permitted for this product");
         let charged=0,delivered=0;
         for(const x of lines){
           const item=(await db.query("SELECT price,kind FROM store.products WHERE id=$1",[x.sku])).rows[0];
@@ -338,14 +338,14 @@ export function registerExtendedLabs({app,pool,userRoute,actor}:Context) {
       const a=await actor(db,req,true);requireProfile(a,["R03"]);
       const c=await cart(db,a);
       if(!c.items.length)fail("Add a physical product first");
-      return {run:a.run,version:c.version,charged:c.total,actorId:a.id};
+      return {run:a.run,version:c.version,charged:c.total,actorId:a.id,focused:focusedCart(c.items,productWorkflows.checkoutRace)};
     });
     await sleep(p.delayMs);
     return transaction(pool,async db=>{
       const a=await actor(db,req,true);
       if(a.run!==initial.run||a.id!==initial.actorId) fail("Your account session has changed");
       const c=await cart(db,a);
-      if(!hasWeakness(a.profile,"R03") && c.version!==initial.version)fail("Cart changed while payment was being authorized");
+      if((!hasWeakness(a.profile,"R03") || !initial.focused || !focusedCart(c.items,productWorkflows.checkoutRace)) && c.version!==initial.version)fail("Cart changed while payment was being authorized");
       const delivered=c.items.reduce((n:number,x:{price:string;quantity:number})=>n+Number(x.price)*x.quantity,0);
       if(delivered<=0)fail("Empty cart");
       const receipt=await purchase(db,a,"R03",initial.charged,delivered,c.items);

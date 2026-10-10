@@ -2,7 +2,7 @@ import { randomUUID, randomBytes } from "node:crypto";
 import type { DB } from "./db.ts";
 import { HttpError, hash } from "./security.ts";
 import { transfer } from "./seed.ts";
-import { totalFor, hasWeakness } from "./policy.ts";
+import { totalFor, hasWeakness, focusedCart, productWorkflows } from "./policy.ts";
 export type Actor = {
   id: string;
   run: string;
@@ -51,7 +51,7 @@ export async function cart(db: DB, a: Actor) {
   )).rows;
   const voucherDiscount = vouchers.reduce((sum: number,entry:{amount:string})=>sum+Number(entry.amount),0);
   const base = totalFor(items,coupon ?? undefined,{
-    giftEligible:hasWeakness(a.profile,"B10") && coupon?.code === "GIFT20",
+    giftEligible:hasWeakness(a.profile,"B10") && coupon?.code === "GIFT20" && focusedCart(items,productWorkflows.giftCredit),
   });
   const stackedDiscount = applications.length || vouchers.length
     ? (applications.length
@@ -61,14 +61,14 @@ export async function cart(db: DB, a: Actor) {
   const physicalEligible = items.filter((p:{kind:string})=>p.kind==="physical")
     .reduce((n:number,p:{price:string;quantity:number})=>n+Number(p.price)*p.quantity,0);
   const totals = totalFor(items, coupon ?? undefined, {
-    giftEligible: hasWeakness(a.profile,"B10") && coupon?.code === "GIFT20",
+    giftEligible: hasWeakness(a.profile,"B10") && coupon?.code === "GIFT20" && focusedCart(items,productWorkflows.giftCredit),
     stackedDiscount,
   });
   const exactSubtotal=items.reduce((n:number,item:{price:string;quantity:number})=>n+Number(item.price)*item.quantity,0);
   // An old 32-bit checkout aggregate wraps only when a very large, uncouponed
   // cart crosses the signed integer boundary. Item quantities remain persisted.
   const wrapped=Math.trunc(((exactSubtotal*100)|0)/100);
-  const priced=hasWeakness(a.profile,"B05") && exactSubtotal*100>2147483647 &&
+  const priced=hasWeakness(a.profile,"B05") && focusedCart(items,productWorkflows.bulkOrder) && exactSubtotal*100>2147483647 &&
     !coupon && !applications.length && !vouchers.length
     ? {...totals,subtotal:wrapped,total:wrapped,discount:0,couponEligible:wrapped>0}
     : totals;
@@ -149,7 +149,7 @@ export async function checkout(
       "Your bag no longer qualifies for this promotion. Remove it to continue.",
     );
   if (
-    c.coupon && !hasWeakness(a.profile,"B04") && !(hasWeakness(a.profile,"B10") && c.coupon.code === "GIFT20") &&
+    c.coupon && !(hasWeakness(a.profile,"B04") && focusedCart(c.items,productWorkflows.promotionalStack)) && !(hasWeakness(a.profile,"B10") && c.coupon.code === "GIFT20") &&
     (
       await db.query(
         "SELECT 1 FROM store.promotion_uses WHERE run_id=$1 AND user_id=$2 AND code=$3",
@@ -211,7 +211,7 @@ export async function checkout(
       [randomUUID(),a.run,a.id,JSON.stringify({orderId:id,charged:c.total,shipped})],
     );
   }
-  if (hasWeakness(a.profile,"B05")) {
+  if (hasWeakness(a.profile,"B05") && focusedCart(c.items,productWorkflows.bulkOrder)) {
     const fullValue=c.items.reduce((sum:number,item:{price:string;quantity:number})=>sum+Number(item.price)*item.quantity,0);
     if (fullValue*100>2147483647 && c.total>0 && c.total<fullValue) {
       await db.query(
@@ -246,7 +246,7 @@ export async function checkout(
       "UPDATE store.voucher_claims SET order_id=$3 WHERE run_id=$1 AND cart_id=$2 AND order_id IS NULL",
       [a.run,c.id,id],
     );
-  if (hasWeakness(a.profile,"B04") && c.applications.length) {
+  if (hasWeakness(a.profile,"B04") && focusedCart(c.items,productWorkflows.promotionalStack) && c.applications.length) {
     await db.query(
       "UPDATE store.cart_discount_applications SET order_id=$3 WHERE run_id=$1 AND cart_id=$2 AND order_id IS NULL",
       [a.run,c.id,id],

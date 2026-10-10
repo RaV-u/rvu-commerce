@@ -15,7 +15,7 @@ import {
   HttpError,
 } from "./security.ts";
 import { createCustomer, newRun } from "./seed.ts";
-import { activeTrainingProfiles, hasWeakness, classroomAccountEmail, classroomUsername, classroomColleagueEmail, type ClassroomUsername } from "./policy.ts";
+import { activeTrainingProfiles, hasWeakness, focusedCart, productWorkflows, classroomAccountEmail, classroomUsername, classroomColleagueEmail, type ClassroomUsername } from "./policy.ts";
 import { registerExtendedLabs, extendedLabels } from "./businessServices.ts";
 import {
   cart,
@@ -361,13 +361,13 @@ export async function buildApp(config: Config) {
       // Existing items may be removed with a negative delta. Persisting a
       // negative physical line is the distinct reconciliation weakness.
       if (input.quantity < 0 && (req.method!=="POST" ||
-          (nextQuantity < 0 && (!hasWeakness(a.profile,"B02") || product.kind!=="physical"))))
+          (nextQuantity < 0 && (!hasWeakness(a.profile,"B02") || input.productId!==productWorkflows.signedAdjustment))))
         throw new HttpError(400,"Quantity must be positive");
-      if(input.quantity>10 && (req.method!=="POST" || !hasWeakness(a.profile,"B05") || product.kind!=="physical"))
+      if(input.quantity>10 && (req.method!=="POST" || !hasWeakness(a.profile,"B05") || input.productId!==productWorkflows.bulkOrder))
         throw new HttpError(400,"Requested quantity exceeds the normal per-request limit");
-      if(nextQuantity < -99 || nextQuantity > (hasWeakness(a.profile,"B05") && product.kind==="physical"?100000:10))
+      if(nextQuantity < -99 || nextQuantity > (hasWeakness(a.profile,"B05") && input.productId===productWorkflows.bulkOrder?100000:10))
         throw new HttpError(400,"The cart quantity is outside the permitted range");
-      if (input.price !== undefined && input.price !== Number(product.price) && !hasWeakness(a.profile,"B01"))
+      if (input.price !== undefined && input.price !== Number(product.price) && !(hasWeakness(a.profile,"B01") && input.productId===productWorkflows.clientPrice))
         throw new HttpError(400, "The current product price has changed");
       if (hasWeakness(a.profile,"B04")) {
         await db.query("DELETE FROM store.cart_discount_applications WHERE run_id=$1 AND cart_id=$2 AND order_id IS NULL",[a.run,c.id]);
@@ -418,16 +418,20 @@ export async function buildApp(config: Config) {
         await db.query("SELECT * FROM store.promotions WHERE code=$1", [code])
       ).rows[0];
       if (!p) throw new HttpError(404, "Promotion not found");
-      if (c.coupon && !hasWeakness(a.profile,"B04"))
+      const canStack=hasWeakness(a.profile,"B04") && focusedCart(c.items,productWorkflows.promotionalStack);
+       if (c.coupon && !canStack)
         throw new HttpError(
           409,
           "Remove the current promotion before applying another",
         );
       if (code === "GIFT20" && !hasWeakness(a.profile,"B10"))
         throw new HttpError(404, "Promotion not found");
-      if (hasWeakness(a.profile,"B04") && c.coupon?.code === code)
+      if (canStack && c.coupon?.code === code)
         throw new HttpError(409, "This promotion is already applied");
-      const eligible = hasWeakness(a.profile,"B10") && code === "GIFT20" ? c.subtotal : c.eligible;
+      const giftPromotion=hasWeakness(a.profile,"B10") && code==="GIFT20";
+       if(giftPromotion && !focusedCart(c.items,productWorkflows.giftCredit))
+         throw new HttpError(409,"This offer only applies to the selected gift card");
+       const eligible = giftPromotion ? c.subtotal : c.eligible;
       if (eligible < Number(p.minimum))
         throw new HttpError(
           409,
@@ -443,7 +447,7 @@ export async function buildApp(config: Config) {
         ).rowCount
       )
         throw new HttpError(409, "This promotion has already been used");
-      if (hasWeakness(a.profile,"B04")) {
+      if (canStack) {
         const amount = Math.floor(eligible * p.percent / 100);
         if (amount <= 0 || c.discount + amount >= c.subtotal)
           throw new HttpError(409, "Promotion exceeds the eligible order value");
@@ -519,7 +523,10 @@ export async function buildApp(config: Config) {
       };
       const prepared=await transaction(pool,async db=>{
         const a=await actor(db,req,true);
-        if(!hasWeakness(a.profile,"R01")) {
+        const skuRows=hasWeakness(a.profile,"R01")
+           ? (await db.query("SELECT i.product_id AS id FROM store.cart_items i JOIN store.carts c ON c.run_id=i.run_id AND c.id=i.cart_id WHERE c.run_id=$1 AND c.user_id=$2",[a.run,a.id])).rows
+           : [];
+         if(!hasWeakness(a.profile,"R01") || !focusedCart(skuRows,productWorkflows.voucherRace)) {
           const checked=await check(db,a,true);
           return {result:await claim(db,a,checked)};
         }
@@ -612,7 +619,7 @@ export async function buildApp(config: Config) {
       const c=await cart(db,a);
       if(c.version!==intent.cart_version || c.total!==Number(intent.quoted_total))
         throw new HttpError(409,"The checkout details no longer match your bag");
-      const previousPaid = hasWeakness(a.profile,"B08") && !!(await db.query(
+      const previousPaid = hasWeakness(a.profile,"B08") && focusedCart(c.items,productWorkflows.paymentProof) && !!(await db.query(
         "SELECT 1 FROM store.payments p JOIN store.orders o ON o.run_id=p.run_id AND o.id=p.order_id WHERE p.run_id=$1 AND o.user_id=$2 LIMIT 1",
         [a.run,a.id],
       )).rowCount;

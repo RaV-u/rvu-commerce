@@ -30,7 +30,7 @@ export const products = [
     "Hush Pro Headphones",
     "Audio",
     "Find your focus. Over-ear comfort and a balanced sound for the working day.",
-    3100,
+    5200,
     "physical",
     "headphones",
     "New arrival",
