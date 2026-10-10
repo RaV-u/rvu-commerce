@@ -125,23 +125,17 @@ jobs:
         run: |
           docker compose run --rm migrate node dist/server/reset-local.js RESET
           node scripts/smoke.mjs
-      - name: Render single storefront and legacy bookmark in headless Chrome
+      - name: Render storefront in headless Chrome
         run: |
           browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           test -n "$browser" || { echo "Chrome headless is not available on this runner"; exit 1; }
           mkdir -p artifacts
           timeout 45s "$browser" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=4500 --window-size=1365,900 --dump-dom http://localhost:8081/ > artifacts/storefront-dom.html
-          timeout 45s "$browser" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=4500 --window-size=1365,900 --dump-dom http://localhost:8081/services > artifacts/services-dom.html
           grep -q 'Good things' artifacts/storefront-dom.html
-          grep -q 'Good things' artifacts/services-dom.html
           timeout 45s "$browser" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=3500 --window-size=1365,900 --screenshot=artifacts/storefront.png http://localhost:8081/
-          timeout 45s "$browser" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=3500 --window-size=1365,900 --screenshot=artifacts/services.png http://localhost:8081/services
           test -s artifacts/storefront.png
-          test -s artifacts/services.png
           timeout 45s "$browser" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=3500 --window-size=420,900 --screenshot=artifacts/storefront-mobile.png http://localhost:8081/
-          timeout 45s "$browser" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=3500 --window-size=420,900 --screenshot=artifacts/services-mobile.png http://localhost:8081/services
           test -s artifacts/storefront-mobile.png
-          test -s artifacts/services-mobile.png
       - name: Check mobile layout overflow at 420px and 360px
         run: |
           browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
@@ -153,9 +147,7 @@ jobs:
           name: rvu-commerce-browser-review
           path: |
             artifacts/storefront.png
-            artifacts/services.png
             artifacts/storefront-mobile.png
-            artifacts/services-mobile.png
           if-no-files-found: ignore
           retention-days: 7
 

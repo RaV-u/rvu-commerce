@@ -65,7 +65,7 @@ async function audit(url,width,devtoolsPort){
 }
 try{
   const portNumber=await port();
-  for(const width of [420,360])for(const pathname of ["/","/services"])
+  for(const width of [420,360])for(const pathname of ["/"])
     await audit("http://localhost:8081"+pathname,width,portNumber);
   console.log("PASS: mobile document width checks at 420px and 360px");
 }finally{

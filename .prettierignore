@@ -2,4 +2,3 @@ node_modules
 dist
 package-lock.json
 apps/web/public/products
-docs/RVU_Commerce_Research_and_Architecture.md

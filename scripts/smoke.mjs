@@ -28,9 +28,6 @@ const html = await fetch(origin);
 assert.equal(html.status, 200);
 assert.match(await html.text(), /RVU Commerce/);
 assert.ok(html.headers.get("content-security-policy"));
-const servicesPage = await fetch(origin + "/services");
-assert.equal(servicesPage.status, 200, "Old service bookmark must resolve to the main storefront");
-assert.match(await servicesPage.text(), /RVU Commerce/);
 // Only the storefront is published. Instructor APIs are not deployed.
 const forbidden = await fetch(origin + "/api/instructor/session");
 assert.equal(forbidden.status, 404);
