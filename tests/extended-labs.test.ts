@@ -256,11 +256,27 @@ test("R06: registration is exploitable only while token provisioning is incomple
 },async()=>{
   await fresh("R06");
   const registrationId=randomUUID();
-  const pending=call(alex,"POST","/api/business/registration",{email:"hire@corp.rvu.test",registrationId,delayMs:260});
-  await pause(60);
-  const confirmed=await act("registration.confirm",{registrationId,code:[""]});
-  assert.equal(confirmed.verified,true);
-  await pending;
+  const pending=call(alex,"POST","/api/business/registration",{email:"hire@corp.rvu.test",registrationId,delayMs:500});
+  // Observe the committed registration before submitting its confirmation:
+  // a fixed 60ms guess can race ahead of slower native PostgreSQL runners.
+  let observed=false;
+  try{
+    for(let attempt=0;attempt<60;attempt++){
+      const row=await store.pool.query(
+        "SELECT token,completed FROM store.lab_registrations WHERE id=$1",[registrationId]
+      );
+      if(row.rowCount && !row.rows[0].completed && row.rows[0].token===null){
+        observed=true;break;
+      }
+      await pause(5);
+    }
+    assert.ok(observed,"Registration did not enter its partially provisioned state");
+    const confirmed=await act("registration.confirm",{registrationId,code:[""]});
+    assert.equal(confirmed.verified,true);
+  }finally{
+    // The first request must always settle before the next test rotates the run.
+    await pending;
+  }
   const db=await store.pool.query("SELECT verified,completed FROM store.lab_registrations WHERE id=$1",[registrationId]);
   assert.equal(db.rows[0].verified,true);
   assert.equal(db.rows[0].completed,true);
