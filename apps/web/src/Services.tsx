@@ -26,7 +26,7 @@ const operations:Operation[]=[
 ];
 function pretty(value:unknown){return JSON.stringify(value,null,2);}
 function humanize(name:string):string {
-  return name.replace(/([a-z])([A-Z])/g,"$1 $2").replace(/(^|\\s)\\w/g,c=>c.toUpperCase());
+  return name.replace(/([a-z])([A-Z])/g,"$1 $2").replace(/(^|\s)\w/g,c=>c.toUpperCase());
 }
 export function Services(){
   const [session,setSession]=useState<Session>({user:null});
