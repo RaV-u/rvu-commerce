@@ -506,9 +506,10 @@ export function App() {
             Delivery, returns & store information <ArrowUpRight size={16} />
           </button>
         </div>
-        <div className="footer-bottom">
-          <span>© RVU Commerce · Local training edition</span>
-          <span>Fictional products. Virtual payments. Thoughtful design.</span>
+        <div className="footer-bottom footer-mentorship">
+          <span>RVU Mentorship Camp</span>
+          <span>By: Ramez Medhat</span>
+          <a href="https://rv-u.tech" target="_blank" rel="noopener noreferrer">rv-u.tech <ArrowUpRight size={13} aria-hidden="true" /></a>
         </div>
       </footer>
       {notice && (
