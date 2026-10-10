@@ -38,7 +38,7 @@ async function fresh(profile:string) {
   await call(alex,"POST","/api/login",{email:"alex@learner.rvu.test",password:"Studio-Local-2026!"});
 }
 async function act(action:string,fields:Record<string,unknown>={},status=200) {
-  return call(alex,"POST","/api/lab/action",{action,...fields},status);
+  return call(alex,"POST","/api/business/actions",{action,...fields},status);
 }
 async function latestCode(){
   const inbox=await call(alex,"GET","/api/inbox");
@@ -90,7 +90,7 @@ test("baseline denies negative quantities and signed-32 arithmetic wrap",async()
   await act("email.update",{address:"fake@corp.rvu.test"},409);
   await act("workspace.admin",{},403);
   assert.equal(await proof("B02"),0);
-  const neutral=await call(alex,"GET","/api/lab/status");
+  const neutral=await call(alex,"GET","/api/business/status");
   assert.equal(neutral.profile,undefined);
   assert.equal(neutral.states,undefined);
   assert.equal(neutral.proofs,undefined);
@@ -111,7 +111,7 @@ test("secure baseline rejects a cart update during authorization",{
 },async()=>{
   await fresh("secure-baseline");
   await call(alex,"PUT","/api/cart/items",{productId:"arc-light",quantity:1});
-  const pending=call(alex,"POST","/api/lab/race/checkout",{delayMs:200},409);
+  const pending=call(alex,"POST","/api/business/checkout",{delayMs:200},409);
   await pause(40);
   await call(alex,"PUT","/api/cart/items",{productId:"vista-27",quantity:1});
   await pending;
@@ -122,7 +122,7 @@ test("secure baseline rejects corporate confirmation before provisioning complet
 },async()=>{
   await fresh("secure-baseline");
   const registrationId=randomUUID();
-  const pending=call(alex,"POST","/api/lab/race/registration",{email:"hire@corp.rvu.test",registrationId,delayMs:200});
+  const pending=call(alex,"POST","/api/business/registration",{email:"hire@corp.rvu.test",registrationId,delayMs:200});
   await pause(40);
   await act("registration.confirm",{registrationId,code:[""]},409);
   await pending;
@@ -198,7 +198,7 @@ test("R02: native PostgreSQL counts actual password checks beyond the three-atte
   skip:!process.env.TEST_DATABASE_URL?"Concurrent authentications require native PostgreSQL":false,
 },async()=>{
   await fresh("R02");
-  const entries=await Promise.all(Array.from({length:5},()=>call(alex,"POST","/api/lab/race/login",{password:"Target-Only-2026!",delayMs:120})));
+  const entries=await Promise.all(Array.from({length:5},()=>call(alex,"POST","/api/business/login-verification",{password:"Target-Only-2026!",delayMs:120})));
   assert.equal(entries.filter(x=>x.authenticated).length,5);
   assert.ok(await proof("R02")>=1);
   assert.equal((await act("auth.target")).authenticated,true);
@@ -208,7 +208,7 @@ test("R03: adding a product during payment produces durable undercharged fulfill
 },async()=>{
   await fresh("R03");
   await call(alex,"PUT","/api/cart/items",{productId:"arc-light",quantity:1});
-  const pending=call(alex,"POST","/api/lab/race/checkout",{delayMs:220});
+  const pending=call(alex,"POST","/api/business/checkout",{delayMs:220});
   await pause(60);
   await call(alex,"PUT","/api/cart/items",{productId:"vista-27",quantity:1});
   const sale=await pending;
@@ -220,9 +220,9 @@ test("R04: two overlapping email-change workers deliver the new corporate verifi
   skip:!process.env.TEST_DATABASE_URL?"Parallel email transactions require native PostgreSQL":false,
 },async()=>{
   await fresh("R04");
-  const owned=call(alex,"POST","/api/lab/race/email-change",{address:"alex@learner.rvu.test",delayMs:240});
+  const owned=call(alex,"POST","/api/business/email-change",{address:"alex@learner.rvu.test",delayMs:240});
   await pause(35);
-  const corporate=call(alex,"POST","/api/lab/race/email-change",{address:"buyer@corp.rvu.test",delayMs:50});
+  const corporate=call(alex,"POST","/api/business/email-change",{address:"buyer@corp.rvu.test",delayMs:50});
   await Promise.all([owned,corporate]);
   await act("email.confirm",{code:await latestCode()});
   await act("corporate.orders");
@@ -250,7 +250,7 @@ test("R06: registration is exploitable only while token provisioning is incomple
 },async()=>{
   await fresh("R06");
   const registrationId=randomUUID();
-  const pending=call(alex,"POST","/api/lab/race/registration",{email:"hire@corp.rvu.test",registrationId,delayMs:260});
+  const pending=call(alex,"POST","/api/business/registration",{email:"hire@corp.rvu.test",registrationId,delayMs:260});
   await pause(60);
   const confirmed=await act("registration.confirm",{registrationId,code:[""]});
   assert.equal(confirmed.verified,true);
