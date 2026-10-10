@@ -52,7 +52,7 @@ All **18 conceptual vulnerability families** are active together in the integrat
 
 ### Important fidelity boundary
 
-This is a purpose-built educational application, not a byte-for-byte recreation of 18 PortSwigger lab implementations. Some mechanics remain separate business-service adapters (especially B05, B06, B11, B12, R02, R05 and R06), and some scenarios can be reached by alternative routes when all weaknesses coexist. The original challenge recipes and unique-only solve paths are **not guaranteed**. Do not market this site as an exact PortSwigger clone.
+This is a purpose-built educational application, not a byte-for-byte recreation of 18 PortSwigger lab implementations. Some mechanics remain separate business-service adapters (especially B06, B11, B12, R05 and R06), and some scenarios can be reached by alternative routes when all weaknesses coexist. The original challenge recipes and unique-only solve paths are **not guaranteed**. Do not market this site as an exact PortSwigger clone.
 
 Integration test coverage and instructor notes are kept in this **source repository**. If it remains public, students can inspect these files and Git history. **Make the repository private and distribute a runnable image or local installation rather than source code** if you want discovery to be a genuine blind exercise.
 
@@ -79,10 +79,14 @@ Real PostgreSQL concurrency tests, account workflow regressions and Docker proxy
 - One local Docker installation runs **all conceptual weaknesses at once**; each student should use a separate local installation for repeatable blind-hunting practice when possible.
 - The deliberately simple `rvucamp` password is intended strictly for loopback-only training. It must never be used for an internet-facing deployment.
 - Every `rvu` sign-in also receives a distinct fictional company colleague and corresponding login-attempt quota. This lets learners investigate account maintenance, recovery, and concurrent login controls without competing for one shared test identity. Publicly guessing another trainee's randomly generated address remains theoretically possible in this intentionally vulnerable local software, so separate Docker installations are still preferable for classes.
-- Current CI gates include individual regression tests for all 18 families, a real-Docker combined smoke covering 10 families, and a separate parallel browsing plus legitimate checkout/refund test for three independent customers. This is **not** a guarantee that every pairwise interaction across the 18 has been tested.
+- Current CI gates include individual regression tests for all 18 families, real-Docker checks for 14 families, and a native PostgreSQL combined account-workflow regression for the remaining four. A separate stability smoke tests parallel browsing plus legitimate checkout/refund for three independently signed-in customers. This is **not** a guarantee that every pairwise interaction across the 18 has been tested.
 - The HTTP performance measurements come from a disposable GitHub Actions runner. They do not measure CPU/RAM contention or browser responsiveness on students' Windows/WSL laptops.
 - Certain specialized workflows demonstrate the trust-boundary failure without recreating a real SMTP parser or a full administrative account session. Review the original PortSwigger learning goals before promising identical learner outcomes.
 
 ## Instructor / internal notes
 
 Instructor guides in `docs/` are internal implementation reference material, **not** learner handouts. The former instructor UI remains in the repository for historical and regression-test reasons but is not built as a running Compose service or exposed on any host port.
+
+### Five-pass review
+
+The current [five-pass QA report](docs/FIVE_PASS_QA_AR.md) documents login/session restoration, discoverability, all 18 conceptual weaknesses, cross-flow persistence, Docker/Chrome and stability tests. This is a training target, not a claim of vulnerability-free production software or perfect PortSwigger equivalence.

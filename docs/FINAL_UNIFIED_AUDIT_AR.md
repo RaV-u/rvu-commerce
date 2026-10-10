@@ -1,4 +1,6 @@
-# RVU Commerce — مراجعة قبول المتجر الموحد
+# RVU Commerce — مراجعة قبول المتجر الموحد (أرشيف أولي)
+
+> **تنبيه تحديث:** ده تقرير أولي اتكتب قبل تنفيذ الدخول الموحد وعزل الزملاء واختبارات الـ14 سيناريو عبر Docker. بعض الأعداد والملاحظات أدناه قديمة، وأحدث مرجع معتمد هو [FIVE_PASS_QA_AR.md](FIVE_PASS_QA_AR.md).
 
 **التاريخ:** 10 أكتوبر 2026  
 **النطاق:** نسخة Docker المحلية المتصلة بـPostgreSQL، وليست أي موقع منشور للإنترنت.
@@ -58,3 +60,5 @@
 - R02's quota and verified target are scoped to that colleague for the unified storefront, while older per-profile regression tests retain their historical seeded target.
 - A company-registration reference is generated before submission, allowing the normal registration-confirmation flow to be tested during the provisioning window.
 - Tests must establish these properties in both PGlite and native PostgreSQL, plus the Docker/browser workflow, before instructor use.
+
+
