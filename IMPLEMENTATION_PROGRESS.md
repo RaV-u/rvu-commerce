@@ -2,7 +2,7 @@
 
 **Status:** All **18 of 18** instructor-selected scenarios have executable training code and automated scenario tests (five original core plus thirteen new extended). B06 and B12 use explicit teaching parser/legacy-email adapters rather than external SMTP equivalence. Browser and student-machine acceptance remain outstanding.
 
-**Verified in GitHub Actions:** TypeScript, both production builds, **35/35 backend tests on native PostgreSQL 17**, including concurrent independent connections, atomic checkout, permissions and the R01 race; **3/3 connected React UI tests**. Earlier PGlite role leakage and native R01 lock-upgrade deadlock were addressed in the CI integration and runtime code. The Docker Compose + HTTP proxy smoke test passed against PostgreSQL 18 and the local nginx edge, including register → verify → coupon → payment → refund.
+**Verified in GitHub Actions:** TypeScript, both production builds, **39/39 backend tests on native PostgreSQL 17**, including concurrent independent connections, atomic checkout, permissions and the R01 race; **4/4 connected React UI tests**. Earlier PGlite role leakage and native R01 lock-upgrade deadlock were addressed in the CI integration and runtime code. The Docker Compose + HTTP proxy smoke test passed against PostgreSQL 18 and the local nginx edge, including register → verify → coupon → payment → refund.
 
 **Current specialist instructor guide:** `docs/EXTENDED_LABS_INSTRUCTOR_AR.md` documents all new paths, evidence and limitations.
 
@@ -18,7 +18,7 @@ This source package updates M1. New code: horizontal logo, favicon, mobile navig
 
 **Validation:** 24 JS/TS source and test files parsed with TypeScript 5.8.3 without syntax errors. This sandbox has no Docker or resolvable npm registry, so M2 `npm ci`, strict typecheck, DB execution, native race checks, bundle build, visual browser QA and security regression tests are **unverified**. All previous PASS labels below belong to **M1, not M2**.
 
-**Next strict order:** execute `docker compose --profile test ...` on the real WSL/Docker environment; fix any migrations, typecheck and native tests; perform visible store/control journeys and acceptance screenshots; record evidence in `docs/VERIFICATION.md`; only then label these five profiles `verified`. The other 13 of the specified 18 labs are still unimplemented.
+**Next strict order:** execute `docker compose --profile test ...` on the real WSL/Docker environment; fix any migrations, typecheck and native tests; perform visible store/control journeys and acceptance screenshots; record evidence in `docs/VERIFICATION.md`; only then label the installation fully accepted for your student devices. All 18 now have regression-tested implementations; review the new `docs/EXTENDED_LABS_INSTRUCTOR_AR.md` teaching-adapter limits.
 
 ---
 
@@ -52,7 +52,7 @@ Approved foundation: `docs/RVU_Commerce_Research_and_Architecture.md`, read in f
 
 - `npm run typecheck`: passed.
 - `npm test`: 12 passed, 2 skipped, 0 failed.
-- `npm run test:ui`: 3 passed, 0 failed.
+- `npm run test:ui`: 4 passed, 0 failed on the extended source.
 - `npm run build`: both production frontends built.
 - Shell and setup/smoke JavaScript syntax checks: passed.
 - `npm audit --omit=dev --json`: zero reported production advisories at this checkpoint. Not a full audit/container scan; initial runtime retains development dependencies.

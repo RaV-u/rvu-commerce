@@ -1,3 +1,12 @@
+# RVU Commerce — M3 Extended Scenarios (2026-10-10)
+
+- The remaining thirteen training scenario implementations are now present, selectable from the instructor console and documented in `docs/EXTENDED_LABS_INSTRUCTOR_AR.md`.
+- Current test gates: **39 native PostgreSQL backend tests, 4 React/Fastify/PGlite UI tests, portable PGlite backend tests**, plus Docker Compose and host-to-proxy smoke.
+- Run-scoped SQL state, financial journals, evidence and corporate workflow records have regression coverage; student access to instructor evidence and tokens is restricted.
+- These are intentionally vulnerable **fictional training simulations**. Specialist B06/B12 email adapters do not claim literal third-party SMTP parser behavior. The following M2 notes are archived history.
+
+---
+
 # RVU Commerce M2 — change log
 
 **Implemented in source, not yet runtime-accepted:**

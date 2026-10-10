@@ -2,9 +2,9 @@
 
 - `npm run typecheck`: PASS on Node.js 24.
 - `npm run build`: PASS for storefront and instructor bundles.
-- `npm test` against **native PostgreSQL 17**: **35 PASS, 0 FAIL, 0 SKIP**, including all original five and thirteen extended profiles (B02/B03/B05/B06/B07/B09/B11/B12/R02/R03/R04/R05/R06), genuine simultaneous PostgreSQL race tests, and persisted permission/evidence controls.
+- `npm test` against **native PostgreSQL 17**: **39 PASS, 0 FAIL, 0 SKIP**, including all original five and thirteen extended profiles (B02/B03/B05/B06/B07/B09/B11/B12/R02/R03/R04/R05/R06), genuine simultaneous PostgreSQL race tests, and persisted permission/evidence controls.
 - Portable PGlite backend suite: verifies the portable cases; skips native-only database role and race gates deliberately.
-- `npm run test:ui`: **3 PASS, 0 FAIL** via React → Fastify → PGlite SQL.
+- `npm run test:ui`: **4 PASS, 0 FAIL** via React → Fastify → PGlite SQL.
 - Docker Compose startup, published ingress/proxy port checks and purchase/refund smoke tests are a **separate CI job**. This test has passed against the local nginx proxy and PostgreSQL 18, with a registration → coupon → purchase → refund journey; [GitHub Actions](https://github.com/RaV-u/rvu-commerce/actions) contains the verification.
 - These checks do **not** replace real-browser responsive inspection and local student laptop/WSL2 measurements.
 - See `docs/EXTENDED_LABS_INSTRUCTOR_AR.md` for teaching-adapter limitations (notably B06/B12), exact scenarios and instructor acceptance.
@@ -24,7 +24,7 @@ Checkpoint: 2026-10-09. Authoring runtime: Linux / Node 24.19.0. Target: Windows
 | --- | --- | --- |
 | TypeScript strict typecheck | PASS | API, frontends and tests |
 | API/SQL/infrastructure | 12 PASS, 2 SKIP | Fastify + PostgreSQL/WASM; SQL grants via SET ROLE; real local SMTP sink; parsed Compose assertions |
-| React integration | 3 PASS | JSDOM → in-process HTTP adapter → Fastify → PostgreSQL/WASM; no mocked business responses |
+| React integration | 4 PASS | JSDOM → in-process HTTP adapter → Fastify → PostgreSQL/WASM; no mocked business responses |
 | Store build | PASS | JS approximately 250.5 KB / 78.1 KB gzip |
 | Instructor build | PASS | Independent output; JS approximately 227.3 KB / 71.7 KB gzip |
 | Shell/setup/smoke syntax | PASS | Parsing only, not Docker execution |

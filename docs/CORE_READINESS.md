@@ -10,7 +10,7 @@ All **18** instructor-selectable lab profiles have executable training workflows
 | B10 — Gift promotion cycle | Baseline excludes gift cards from promotions; B10 permits repeatable discounted purchase and one-time full-value redemption | Net positive wallet change, double-redemption rejection, evidence |
 | R01 — Voucher race | Baseline claim is atomic; R01 intentionally separates check and write | Native PostgreSQL simultaneous requests produce multiple claims without deadlock, order discount and instructor evidence |
 
-**Automation:** `npm run typecheck`, `npm run build`, 35 native backend/database tests and 3 connected React UI tests have passed. The Docker Compose and HTTP proxy smoke job has also passed, confirming container startup, host access and a complete purchase/refund journey; see the [CI results](https://github.com/RaV-u/rvu-commerce/actions).
+**Automation:** `npm run typecheck`, `npm run build`, 39 native backend/database tests and 4 connected React UI tests have passed. The Docker Compose and HTTP proxy smoke job has also passed, confirming container startup, host access and a complete purchase/refund journey; see the [CI results](https://github.com/RaV-u/rvu-commerce/actions).
 
 **Scope and limitations:** This is an intentionally vulnerable **local-only** teaching application; do not deploy these profiles to public networks. Full desktop/mobile browser visual QA, instructor-led walkthroughs, local WSL2 performance and repeated timing reliability on student machines remain manual acceptance work. CI success verifies the coded scenario paths, but does not certify manual playability, timing repeatability on every student laptop, or a line-for-line clone of original external labs.
 
