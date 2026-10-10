@@ -156,7 +156,7 @@ export async function buildApp(config: Config) {
       transaction(pool, async (db) => ({
         products: (await db.query("SELECT * FROM store.products ORDER BY id")).rows,
         promotions: (await db.query(
-          "SELECT * FROM store.promotions WHERE code!='GIFT20' OR EXISTS(SELECT 1 FROM store.runs WHERE id=(SELECT active_run FROM store.runtime) AND profile='B10') ORDER BY code"
+          "SELECT * FROM store.promotions WHERE code!='GIFT20' OR EXISTS(SELECT 1 FROM store.runs WHERE id=(SELECT active_run FROM store.runtime) AND profile IN ('B10','open-playground')) ORDER BY code"
         )).rows,
       })),
     );
