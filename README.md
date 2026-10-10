@@ -2,7 +2,7 @@
 
 A local commerce training application for RVU Camp, built on the approved blueprint at `docs/RVU_Commerce_Research_and_Architecture.md`.
 
-**Milestone 2 verification (2026-10-10):** Five instructor-selected training scenarios are implemented: **B01, B04, B08, B10, R01**, alongside `secure-baseline`. The other **13 of 18** planned labs are not implemented. GitHub Actions now verifies strict TypeScript checks, both Vite builds, **20/20 backend tests on native PostgreSQL 17 (including real concurrent transactions and R01)** and **3/3 connected React UI tests**. A separate Docker Compose end-to-end CI gate has been added; see the latest Actions run for its result. These checks do not replace interactive browser acceptance on the student's device.
+**Milestone 2 verification (2026-10-10):** Five instructor-selected training scenarios are implemented: **B01, B04, B08, B10, R01**, alongside `secure-baseline`. The other **13 of 18** planned labs are not implemented. GitHub Actions now verifies strict TypeScript checks, both Vite builds, **21/21 backend tests on native PostgreSQL 17 (including real concurrent transactions and R01)** and **3/3 connected React UI tests**. The Docker Compose end-to-end CI gate has passed; see the latest Actions run for verification. These checks do not replace interactive browser acceptance on the student's device.
 
 A rebuilt horizontal SVG logo replaces the previously misaligned vertical wordmark, and the storefront adds a responsive mobile navigation, custom workstation quotes, two-step checkout review and one-use store vouchers. Instructor-only evidence metrics are derived from persisted server data.
 
@@ -63,20 +63,20 @@ There is no real shipment, external payment gateway, stock reservation, password
 
 ## Verification and its limits
 
-The files in `docs/verification/` are historical **M1 snapshots**, not results of the current M2 code. **Current M2 evidence is in [GitHub Actions](https://github.com/RaV-u/rvu-commerce/actions):** typecheck and builds pass, backend integration tests run on PostgreSQL 17 with all 20 passing (including native concurrency and R01), and all three connected React/PGlite UI tests pass. An additional Compose smoke job exercises the actual proxy and local service stack. Real-browser layout/responsive appearance and your Windows/WSL2 resource usage still require local acceptance.
+The files in `docs/verification/` are historical **M1 snapshots**, not results of the current M2 code. **Current M2 evidence is in [GitHub Actions](https://github.com/RaV-u/rvu-commerce/actions):** typecheck and builds pass, backend integration tests run on PostgreSQL 17 with all 21 passing (including native concurrency and R01), and all three connected React/PGlite UI tests pass. An additional Compose smoke job has passed, exercising the actual proxy and local service stack. Real-browser layout/responsive appearance and your Windows/WSL2 resource usage still require local acceptance.
 
-Functional API/SQL and React interaction tests use **PGlite (PostgreSQL/WASM)** via the PostgreSQL wire protocol. They run the real migrations, handlers, transactions and ledger logic. The React tests use JSDOM and an in-process HTTP adapter to Fastify; they do not mock business responses. This verifies connected functional behavior, **not browser rendering, independent PostgreSQL backends, Docker startup, network isolation or Windows performance**.
+Backend integration tests run against **native PostgreSQL 17 in GitHub Actions**, including real independent transactions, account and instructor database roles, all five training scenarios and their persisted evidence. React tests run with **PGlite (PostgreSQL/WASM)** using JSDOM and an in-process Fastify adapter; no mocked business responses. Separately, Docker Compose has successfully booted the actual nginx proxy, PostgreSQL 18, API services and UIs and passed a host-to-proxy purchase/refund smoke test in CI. Real-browser visual QA and Windows/WSL2 resource use remain local acceptance work.
 
 ### Required native PostgreSQL gate
 
-Run the test profile on your WSL2 Docker environment before adding any race lab:
+Repeat the real PostgreSQL tests on your own WSL2 Docker installation before teaching the race lab:
 
 ```sh
 docker compose --profile test up --build --force-recreate --abort-on-container-exit --exit-code-from tests tests
 docker compose --profile test rm -sf tests test-postgres
 ```
 
-Tests use a separate ephemeral `rvu_test` database, not the store database. Explicitly recreating the test database ensures a clean seed. In this mode, `TEST_DATABASE_URL` enables two normally skipped gates:
+Tests use a separate ephemeral `rvu_test` database, not the store database. Explicitly recreating the test database ensures a clean seed. In this mode, `TEST_DATABASE_URL` enables three native-only gates:
 
 1. Two real HTTP requests hold overlapping database transactions and return different `pg_backend_pid()` values. A rendezvous fails if they are serialized.
 2. Twelve concurrent ordinary coupon requests produce one benefit, then twelve identical checkouts produce one order and one wallet debit.

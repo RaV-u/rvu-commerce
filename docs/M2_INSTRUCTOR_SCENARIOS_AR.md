@@ -1,6 +1,6 @@
 # RVU Commerce M2 — Instructor-only test cases
 
-> لا ترسل الملف للطلاب: يحتوي Expected behaviors وطرق التحقق. الاختبارات مكتوبة في `tests/commerce.test.ts`، ونجحت الـ20 Backend tests (ومنها سيناريوهات M2) على PostgreSQL حقيقي في GitHub Actions بتاريخ 10 أكتوبر 2026. ما زال لازم تتأكد من التشغيل على Docker/WSL قبل السيشن.
+> لا ترسل الملف للطلاب: يحتوي Expected behaviors وطرق التحقق. الاختبارات مكتوبة في `tests/commerce.test.ts`، ونجحت الـ21 Backend tests (ومنها سيناريوهات M2) على PostgreSQL حقيقي في GitHub Actions بتاريخ 10 أكتوبر 2026. ما زال لازم تتأكد من التشغيل على Docker/WSL قبل السيشن.
 
 ## قاعدة البداية
 
