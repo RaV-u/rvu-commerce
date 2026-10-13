@@ -58,6 +58,37 @@ jobs:
       - name: Verify portable business workflows
         run: npm test
 
+  cart-wallet-regression:
+    name: Independent two-account cart and refund check
+    needs: [portable-checks, portable-pglite]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - name: Prepare disposable database credentials
+        run: |
+          cat > .env <<'EOF'
+          DB_PASSWORD=CI-money-owner-Password-Only-2026
+          STORE_DB_PASSWORD=CI-money-store-Password-Only-2026
+          CONTROL_DB_PASSWORD=CI-money-control-Password-Only-2026
+          EOF
+          chmod 600 .env
+      - name: Start a clean commerce installation
+        run: docker compose up --build --wait --wait-timeout 180
+      - name: Verify basket changes and financial transactions
+        run: node scripts/smoke-money-cart.mjs
+        env:
+          RVU_DISPOSABLE_CI: 'yes'
+      - name: Collect service diagnostics
+        if: failure()
+        run: docker compose logs --tail=100
+      - name: Remove test environment
+        if: always()
+        run: docker compose down -v --remove-orphans
+
   docker-smoke:
     name: Docker Compose, proxy and purchase smoke test
     needs: [portable-checks, portable-pglite]
@@ -202,7 +233,7 @@ jobs:
 
   publish-common-release:
     name: Publish universal GitHub download
-    needs: [docker-smoke]
+    needs: [docker-smoke, cart-wallet-regression]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 10

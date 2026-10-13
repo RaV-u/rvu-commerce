@@ -680,7 +680,7 @@ export async function buildApp(config: Config) {
         balance: Number(account.balance),
         transactions: (
           await db.query(
-            "SELECT e.id,e.amount,j.kind,j.reference,j.created_at FROM store.entries e JOIN store.journals j ON j.run_id=e.run_id AND j.id=e.journal_id WHERE e.run_id=$1 AND e.account_id=$2 ORDER BY e.id DESC",
+            "SELECT e.id,e.amount,j.kind,j.reference,j.created_at FROM store.entries e JOIN store.journals j ON j.run_id=e.run_id AND j.id=e.journal_id WHERE e.run_id=$1 AND e.account_id=$2 ORDER BY j.created_at DESC,e.id DESC",
             [a.run, account.id],
           )
         ).rows,

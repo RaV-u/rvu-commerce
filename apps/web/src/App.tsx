@@ -160,9 +160,9 @@ export function App() {
     else void perform(() => account());
   }
   async function quantity(p: Product, n: number) {
-    setCart(
-      await api<Cart>("/cart/items", "POST", { productId: p.id, quantity: n - (cart.items.find(i => i.id === p.id)?.quantity ?? 0), price: Number(p.price) }),
-    );
+    // Bag +/- and remove set a final quantity; no client price is required.
+    // This also makes quoted items removable without sending their quote price as a catalog price.
+    setCart(await api<Cart>("/cart/items", "PUT", { productId: p.id, quantity: n }));
   }
   function add(p: Product) {
     if (!session.user) {
@@ -174,10 +174,11 @@ export function App() {
       return;
     }
     void perform(async () => {
-      await quantity(
-        p,
-        (cart.items.find((i) => i.id === p.id)?.quantity ?? 0) + 1,
-      );
+      // Preserve the storefront's original add-to-cart POST workflow for security labs.
+      // The server applies +1 against the current database state under the cart lock.
+      setCart(await api<Cart>("/cart/items", "POST", {
+        productId: p.id, quantity: 1, price: Number(p.price),
+      }));
       setNotice(`${p.name} added to your bag`);
     });
   }
@@ -659,7 +660,7 @@ export function App() {
           title={`Your bag (${count})`}
           close={() => setPanel(null)}
         >
-          {!count ? (
+          {!cart.items.length ? (
             <div className="empty">
               <ShoppingBag size={32} />
               <h3>A little space for something good.</h3>
@@ -675,7 +676,7 @@ export function App() {
                   <div>
                     <strong>{p.name}</strong>
                     <span>{money(Number(p.price) * p.quantity)}</span>
-                    <div className="quantity">
+                    {p.quantity > 0 ? <div className="quantity">
                       <button
                         aria-label={`Decrease ${p.name}`}
                         disabled={busy}
@@ -695,7 +696,7 @@ export function App() {
                       >
                         <Plus size={14} />
                       </button>
-                    </div>
+                    </div> : <span className="form-note">Signed quantity adjustment · {p.quantity}. Remove to clear.</span>}
                   </div>
                   <button
                     className="icon-btn"
@@ -762,6 +763,7 @@ export function App() {
                 <p className="form-note">{cart.applications.length} promotion {cart.applications.length === 1 ? "entry" : "entries"} on this bag.</p>
               )}
               <Totals cart={cart} />
+              {cart.total <= 0 && <p className="warning">Your bag has no positive payable total. Adjust or remove items to continue.</p>}
               {!cart.couponEligible && (
                 <p className="warning">
                   This bag no longer qualifies for the promotion. Remove it to
@@ -770,7 +772,7 @@ export function App() {
               )}
               <button
                 className="primary full"
-                disabled={busy || !cart.couponEligible}
+                disabled={busy || !cart.couponEligible || cart.total <= 0 || !cart.items.some(p => p.quantity > 0)}
                 onClick={() => {
                   checkoutKey.current = crypto.randomUUID();
                   setPanel("checkout");
