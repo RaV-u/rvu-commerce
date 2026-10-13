@@ -82,6 +82,17 @@ export function AccountServices({user}:{user:User}){
       if(!parsed||typeof parsed!=="object"||Array.isArray(parsed))throw new Error("Request body must be a JSON object.");
       const result=await api<unknown>(op.path,"POST",parsed);
       setResponse(pretty(result));
+      // A committed lab message can arrive after My Account initially loads.
+      // Tell the account inbox to refresh without revealing any verification code
+      // through a different account or through the service response.
+      const action=(parsed as Record<string,unknown>).action;
+      const generatesMailboxMessage = (
+        op.path==="/business/actions" &&
+        ["legacy.register","parser.register","reset.request"].includes(String(action))
+      ) || (op.path==="/business/email-change" &&
+        typeof result==="object" && result!==null &&
+        (result as {delivered?:boolean}).delivered===true);
+      if(generatesMailboxMessage) window.dispatchEvent(new window.Event("rvu:inbox-updated"));
     }catch(e){setError((e as Error).message);}
     finally{setSending(false);}
   }
