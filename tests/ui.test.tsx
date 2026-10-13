@@ -260,3 +260,30 @@ test("Pinned account dialog ignores backdrop and Escape until the X is clicked",
   assert.equal(closed,true,"Only the explicit X closes account");
   cleanup();
 });
+
+test("Bag stays open after decrement from 1 to 0", async () => {
+  await store.pool.query("DELETE FROM store.sessions");
+  const user=userEvent.setup({document:dom.window.document});
+  render(<App />);
+  await screen.findByRole("button",{name:"View Arc Task Light"});
+  await user.click(screen.getByRole("button",{name:"Your account"}));
+  const signIn=within(screen.getByRole("dialog"));
+  await user.type(signIn.getByLabelText("Username"),"rvu_2");
+  await user.type(signIn.getByLabelText("Password"),"rvucamp");
+  await user.click(signIn.getByRole("button",{name:"Sign in"}));
+  await waitFor(()=>assert.equal(screen.queryByRole("dialog"),null));
+  await user.click(screen.getByRole("button",{name:"Add Arc Task Light to bag"}));
+  await screen.findByRole("button",{name:"Shopping bag, 1 items"});
+  await user.click(screen.getByRole("button",{name:"Shopping bag, 1 items"}));
+  const bag=await screen.findByRole("dialog",{name:"Your bag (1)"});
+  assert.ok(bag.classList.contains("pinned"));
+  await user.click(within(bag).getByRole("button",{name:"Decrease Arc Task Light"}));
+  await within(bag).findByText("Your bag is empty.");
+  assert.ok(screen.getByRole("dialog",{name:"Your bag (0)"}));
+  await user.click(bag);
+  bag.dispatchEvent(new dom.window.Event("cancel",{cancelable:true}));
+  assert.ok(screen.getByRole("dialog",{name:"Your bag (0)"}));
+  await user.click(within(bag).getByRole("button",{name:"Close dialog"}));
+  await waitFor(()=>assert.equal(screen.queryByRole("dialog"),null));
+  cleanup();
+});
