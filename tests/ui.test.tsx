@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
@@ -7,6 +8,7 @@ import { migrate } from "../apps/api/src/migrate.ts";
 import { buildApp } from "../apps/api/src/app.ts";
 import { App } from "../apps/web/src/App.tsx";
 import { Modal } from "../apps/web/src/components/Modal.tsx";
+import { AccountServices } from "../apps/web/src/AccountServices.tsx";
 
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", {
@@ -258,5 +260,73 @@ test("Pinned account dialog ignores backdrop and Escape until the X is clicked",
   assert.equal(closed,false,"Escape/cancel must not close account");
   await user.click(within(dialog).getByRole("button",{name:"Close dialog"}));
   assert.equal(closed,true,"Only the explicit X closes account");
+  cleanup();
+});
+
+test("Pinned basket remains open after removing the final line", async () => {
+  let closed=false;
+  const user=userEvent.setup({document:dom.window.document});
+  function BagHarness() {
+    const [quantity,setQuantity]=useState(1);
+    return <Modal title={"Your bag ("+quantity+")"} pinned close={()=>{closed=true;}}>
+      {quantity===1
+        ? <button onClick={()=>setQuantity(0)}>Decrease last item</button>
+        : <p>Your bag is empty.</p>}
+    </Modal>;
+  }
+  render(<BagHarness />);
+  const bag=screen.getByRole("dialog",{name:"Your bag (1)"});
+  assert.ok(bag.classList.contains("pinned"));
+  await user.click(within(bag).getByRole("button",{name:"Decrease last item"}));
+  assert.ok(screen.getByRole("dialog",{name:"Your bag (0)"}));
+  assert.ok(within(bag).getByText("Your bag is empty."));
+  await user.click(bag);
+  bag.dispatchEvent(new dom.window.Event("cancel",{cancelable:true}));
+  assert.equal(closed,false);
+  await user.click(within(bag).getByRole("button",{name:"Close dialog"}));
+  assert.equal(closed,true);
+  cleanup();
+});
+
+test("Main product buttons, search and theme have real effects", async () => {
+  const user=userEvent.setup({document:dom.window.document});
+  render(<App />);
+  await screen.findByRole("button",{name:"View Arc Task Light"});
+  await user.click(screen.getByRole("button",{name:"View Arc Task Light"}));
+  const detail=screen.getByRole("dialog");
+  assert.ok(within(detail).getByText("Arc Task Light"));
+  await user.click(within(detail).getByRole("button",{name:"Close dialog"}));
+  const search=screen.getByRole("textbox",{name:"Search products"});
+  await user.type(search,"headphones");
+  assert.equal(screen.queryByRole("button",{name:"View Arc Task Light"}),null);
+  await user.clear(search);
+  await user.click(screen.getByRole("button",{name:"Switch to dark mode"}));
+  assert.equal(dom.window.document.documentElement.dataset.theme,"dark");
+  await user.click(screen.getByRole("button",{name:"Switch to light mode"}));
+  assert.equal(dom.window.document.documentElement.dataset.theme,"light");
+  cleanup();
+});
+
+test("Every account service menu control opens its real form without UI errors", async () => {
+  const user=userEvent.setup({document:dom.window.document});
+  render(<AccountServices user={{
+    id:"local-learner",name:"RVU Customer",email:"rvu@learner.rvu.test",
+    username:"rvu",colleagueEmail:"rvu_2@learner.rvu.test",verified:true
+  }}/>);
+  const titles=[
+    "Express purchase","Update contact email","Password maintenance",
+    "Business account registration","Confirm business address",
+    "Request password recovery","Complete password recovery",
+    "Register company contact","Verify company contact",
+    "Select workspace","Approve company order","Company orders",
+    "Company approval history","Update company contact","Confirm changed email",
+    "Invite a team member","Confirm corporate email",
+    "Send delivery notice","Restore remembered access","Support case queue",
+    "Company account sign-in"
+  ];
+  for(const title of titles){
+    await user.click(screen.getByRole("button",{name:title}));
+    assert.ok(screen.getByRole("heading",{name:title}),"Missing form for "+title);
+  }
   cleanup();
 });

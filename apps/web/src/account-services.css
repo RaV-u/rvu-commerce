@@ -100,3 +100,37 @@
   .account-services .service-group button { font-size: 14px; }
   .account-services .service-workspace { padding: 18px; }
 }
+
+/* Contrast for the full account-services workflow editor in Dark Mode. */
+:root[data-theme="dark"] .account-services,
+:root[data-theme="dark"] .service-workspace h2,
+:root[data-theme="dark"] .service-intro h1,
+:root[data-theme="dark"] .service-result strong,
+:root[data-theme="dark"] .service-overview dd {color:#edf5ee;}
+:root[data-theme="dark"] .account-services .service-group h2,
+:root[data-theme="dark"] .account-services .service-menu > p,
+:root[data-theme="dark"] .account-services .service-workspace .service-field > span,
+:root[data-theme="dark"] .account-services .service-workspace label.service-field {color:#d6e4d8;}
+:root[data-theme="dark"] .account-services .service-eyebrow {color:#e2c994;}
+:root[data-theme="dark"] .account-services .service-hint,
+:root[data-theme="dark"] .account-services .service-intro p,
+:root[data-theme="dark"] .account-services .service-workspace > p,
+:root[data-theme="dark"] .account-services .service-result p,
+:root[data-theme="dark"] .account-services .service-result summary {color:#c2d5c8;}
+:root[data-theme="dark"] .account-services .service-group button {background:transparent;color:#ebf3ed;}
+:root[data-theme="dark"] .account-services .service-group button.chosen,
+:root[data-theme="dark"] .account-services .service-group button:hover {background:#446650;color:#fff;}
+:root[data-theme="dark"] .account-services .service-workspace {background:#20372a;border:1px solid #5a755f;}
+:root[data-theme="dark"] .account-services .service-workspace .service-field > input,
+:root[data-theme="dark"] .account-services .service-workspace .service-field > select,
+:root[data-theme="dark"] .account-services .service-workspace .service-field > textarea {background:#12251b;border:1px solid #728d79;color:#f0f4eb;}
+:root[data-theme="dark"] .account-services .service-workspace .service-field > input:focus,
+:root[data-theme="dark"] .account-services .service-workspace .service-field > textarea:focus,
+:root[data-theme="dark"] .account-services .service-workspace .service-field > select:focus {outline:2px solid #dcbf86;outline-offset:2px;}
+:root[data-theme="dark"] .account-services .service-workspace form button {background:#466d51;color:#fff;border:1px solid #8ba58b;}
+:root[data-theme="dark"] .account-services .service-workspace form button:hover:not(:disabled) {background:#577d60;}
+:root[data-theme="dark"] .account-services .service-overview > div,
+:root[data-theme="dark"] .account-services .service-result pre {background:#12291e;color:#e6f3e8;border-color:#536d59;}
+:root[data-theme="dark"] .account-services .service-overview dt {color:#c5d4c5;}
+:root[data-theme="dark"] .account-services .service-result.error pre {background:#482b25;color:#ffe4d5;border:1px solid #966a5c;}
+:root[data-theme="dark"] .account-services .service-result summary:hover {color:#f5d8a4;}

@@ -89,6 +89,37 @@ jobs:
         if: always()
         run: docker compose down -v --remove-orphans
 
+  remaining-lab-regression:
+    name: Additional security lab and unexpected-input tests
+    needs: [portable-checks, portable-pglite]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - name: Provision disposable Docker credentials
+        run: |
+          cat > .env <<'EOF'
+          DB_PASSWORD=CI-labs-owner-Password-Only-2026
+          STORE_DB_PASSWORD=CI-labs-store-Password-Only-2026
+          CONTROL_DB_PASSWORD=CI-labs-control-Password-Only-2026
+          EOF
+          chmod 600 .env
+      - name: Start isolated lab instance
+        run: docker compose up --build --wait --wait-timeout 180
+      - name: Exercise account and time-window bugs alongside input validation
+        run: node scripts/smoke-remaining-labs.mjs
+        env:
+          RVU_DISPOSABLE_CI: 'yes'
+      - name: Collect diagnostics on failures
+        if: failure()
+        run: docker compose logs --tail=100
+      - name: Remove disposable data
+        if: always()
+        run: docker compose down -v --remove-orphans
+
   docker-smoke:
     name: Docker Compose, proxy and purchase smoke test
     needs: [portable-checks, portable-pglite]
@@ -233,7 +264,7 @@ jobs:
 
   publish-common-release:
     name: Publish universal GitHub download
-    needs: [docker-smoke, cart-wallet-regression]
+    needs: [docker-smoke, cart-wallet-regression, remaining-lab-regression]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 10

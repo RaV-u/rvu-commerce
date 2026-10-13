@@ -82,7 +82,10 @@ for(const user of users){
   assert.equal(quote.authorizedPrice,18300);
   const bag=await call(user,"POST",`/api/quotes/${quote.id}/accept`,{quotedTotal:quote.authorizedPrice});
   assert.equal(Number(bag.items[0].price),18300);
-  assert.equal((await set(user,"vista-27",2)).items[0].quantity,2);
+  const doubledQuote=await set(user,"vista-27",2);
+  assert.equal(doubledQuote.items[0].quantity,2);
+  assert.equal(Number(doubledQuote.items[0].price),18300,"Changing quantity must preserve accepted quote price");
+  assert.equal(Number(doubledQuote.total),36600,"Quote total must scale with quantity");
   assertCart(await set(user,"vista-27",0),{});
 }
 const [a,b]=users;

@@ -373,10 +373,14 @@ export async function buildApp(config: Config) {
         await db.query("DELETE FROM store.cart_discount_applications WHERE run_id=$1 AND cart_id=$2 AND order_id IS NULL",[a.run,c.id]);
         await db.query("DELETE FROM store.cart_coupons WHERE run_id=$1 AND cart_id=$2",[a.run,c.id]);
       }
-      await db.query(
-        "DELETE FROM store.cart_quotes WHERE run_id=$1 AND cart_id=$2 AND product_id=$3",
-        [a.run,c.id,input.productId],
-      );
+      // A quantity-only PUT must retain an already accepted workstation quote.
+      // Removing an item or supplying a new browser price starts a new price context.
+      if (nextQuantity === 0 || req.method === "POST" || input.price !== undefined) {
+        await db.query(
+          "DELETE FROM store.cart_quotes WHERE run_id=$1 AND cart_id=$2 AND product_id=$3",
+          [a.run,c.id,input.productId],
+        );
+      }
       if (nextQuantity === 0)
         await db.query(
           "DELETE FROM store.cart_items WHERE run_id=$1 AND cart_id=$2 AND product_id=$3",
