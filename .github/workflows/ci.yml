@@ -119,6 +119,12 @@ jobs:
         run: node scripts/smoke-stability.mjs
         env:
           RVU_DISPOSABLE_CI: 'yes'
+      - name: Start clean run for cart, wallet and refund stress
+        run: docker compose run --rm migrate node dist/server/reset-local.js RESET
+      - name: Stress two accounts, cart mutations, refunds and ledger via real Docker
+        run: node scripts/smoke-money-cart.mjs
+        env:
+          RVU_DISPOSABLE_CI: 'yes'
       - name: Verify repeatable local reset without the instructor website
         run: |
           docker compose run --rm migrate node dist/server/reset-local.js RESET
