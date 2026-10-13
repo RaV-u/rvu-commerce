@@ -34,6 +34,7 @@ export type Order = {
   id: string;
   order_number: string;
   state: string;
+  payment_state?: "settled" | "unsettled";
   subtotal: Money;
   discount: Money;
   total: Money;
