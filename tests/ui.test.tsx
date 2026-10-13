@@ -330,3 +330,27 @@ test("Every account service menu control opens its real form without UI errors",
   }
   cleanup();
 });
+
+test("Verification mail sent from Services is visible in Inbox without closing My Account", async () => {
+  await store.pool.query("DELETE FROM store.sessions");
+  const response=await globalThis.fetch("http://localhost:8081/api/login",{
+    method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({username:"rvu_2",password:"rvucamp"})
+  });
+  assert.equal(response.status,200,"Classroom login required");
+  const user=userEvent.setup({document:dom.window.document});
+  render(<App />);
+  await screen.findByRole("button",{name:"View Form 75 Mechanical Keyboard"});
+  await user.click(screen.getByRole("button",{name:"Your account"}));
+  const dialog=within(await screen.findByRole("dialog"));
+  await user.click(dialog.getByRole("button",{name:"Services"}));
+  await user.click(dialog.getByRole("button",{name:"Business account registration"}));
+  await user.click(dialog.getByRole("button",{name:"Continue →"}));
+  await dialog.findByText("Request completed");
+  await user.click(dialog.getByRole("button",{name:"Inbox"}));
+  await dialog.findByText("Business address verification");
+  assert.match(dialog.getByText(/Your verification code:/).textContent??"",/[A-Fa-f0-9]{64}/);
+  await user.click(dialog.getByRole("button",{name:"Refresh inbox"}));
+  assert.ok(dialog.getByText("Business address verification"));
+  cleanup();
+});

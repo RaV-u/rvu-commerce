@@ -1646,3 +1646,32 @@ footer {
   .hero h1 { font-size: 31px; }
   .hero h1 em { font-size: 1em; letter-spacing: 0.035em; }
 }
+
+/* Private account mail: explicit refresh for delayed verification/recovery codes. */
+.inbox-tools {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:14px;
+  padding:12px 0 18px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:16px;
+}
+.inbox-tools strong {font-size:15px;line-height:1.35;}
+.inbox-tools p {margin:5px 0 0;font-size:13px;line-height:1.5;}
+.inbox-tools .secondary {
+  flex-shrink:0;
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  justify-content:center;
+  font-size:13px;
+  padding:10px 14px;
+}
+:root[data-theme="dark"] .inbox-tools strong {color:#eef4ec;}
+:root[data-theme="dark"] .inbox-tools p {color:#c3d0c5;}
+@media(max-width:500px){
+ .inbox-tools {align-items:flex-start;}
+ .inbox-tools .secondary {width:100%;}
+}
