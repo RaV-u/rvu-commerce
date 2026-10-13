@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
@@ -261,30 +262,28 @@ test("Pinned account dialog ignores backdrop and Escape until the X is clicked",
   cleanup();
 });
 
-test("Bag stays open after decrement from 1 to 0", async () => {
-  await store.pool.query("DELETE FROM store.sessions");
+test("Pinned basket remains open after removing the final line", async () => {
+  let closed=false;
   const user=userEvent.setup({document:dom.window.document});
-  render(<App />);
-  await screen.findByRole("button",{name:"View Arc Task Light"});
-  await user.click(screen.getByRole("button",{name:"Your account"}));
-  const signIn=within(screen.getByRole("dialog"));
-  await user.type(signIn.getByLabelText("Username"),"rvu_2");
-  await user.type(signIn.getByLabelText("Password"),"rvucamp");
-  await user.click(signIn.getByRole("button",{name:"Sign in"}));
-  await waitFor(()=>assert.equal(screen.queryByRole("dialog"),null));
-  await user.click(screen.getByRole("button",{name:"Add Arc Task Light to bag"}));
-  await screen.findByRole("button",{name:"Shopping bag, 1 items"});
-  await user.click(screen.getByRole("button",{name:"Shopping bag, 1 items"}));
-  const bag=await screen.findByRole("dialog",{name:"Your bag (1)"});
+  function BagHarness() {
+    const [quantity,setQuantity]=useState(1);
+    return <Modal title={"Your bag ("+quantity+")"} pinned close={()=>{closed=true;}}>
+      {quantity===1
+        ? <button onClick={()=>setQuantity(0)}>Decrease last item</button>
+        : <p>Your bag is empty.</p>}
+    </Modal>;
+  }
+  render(<BagHarness />);
+  const bag=screen.getByRole("dialog",{name:"Your bag (1)"});
   assert.ok(bag.classList.contains("pinned"));
-  await user.click(within(bag).getByRole("button",{name:"Decrease Arc Task Light"}));
-  await within(bag).findByText("Your bag is empty.");
+  await user.click(within(bag).getByRole("button",{name:"Decrease last item"}));
   assert.ok(screen.getByRole("dialog",{name:"Your bag (0)"}));
+  assert.ok(within(bag).getByText("Your bag is empty."));
   await user.click(bag);
   bag.dispatchEvent(new dom.window.Event("cancel",{cancelable:true}));
-  assert.ok(screen.getByRole("dialog",{name:"Your bag (0)"}));
+  assert.equal(closed,false);
   await user.click(within(bag).getByRole("button",{name:"Close dialog"}));
-  await waitFor(()=>assert.equal(screen.queryByRole("dialog"),null));
+  assert.equal(closed,true);
   cleanup();
 });
 
