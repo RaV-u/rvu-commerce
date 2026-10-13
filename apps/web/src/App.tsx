@@ -12,10 +12,8 @@ import {
   Check,
   Package,
   ShieldCheck,
-  Truck,
   Mail,
   LogOut,
-  Leaf,
   X,
   Menu,
   Moon,
@@ -517,7 +515,7 @@ export function App() {
       <footer>
         <div className="footer-top">
           <a className="brand" href="#" aria-label="RVU Commerce home">
-            <img src="/brand/rvu-commerce.svg" alt="RVU Commerce" width="230" height="58" />
+            <img src="/brand/rvu-commerce-footer.svg" alt="RVU Commerce" width="230" height="58" />
           </a>
           <p>Understand the workflow. Find the flaw.</p>
           <button onClick={() => setPanel("policy")}>
