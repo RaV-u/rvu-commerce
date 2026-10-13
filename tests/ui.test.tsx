@@ -287,3 +287,22 @@ test("Bag stays open after decrement from 1 to 0", async () => {
   await waitFor(()=>assert.equal(screen.queryByRole("dialog"),null));
   cleanup();
 });
+
+test("Main product buttons, search and theme have real effects", async () => {
+  const user=userEvent.setup({document:dom.window.document});
+  render(<App />);
+  await screen.findByRole("button",{name:"View Arc Task Light"});
+  await user.click(screen.getByRole("button",{name:"View Arc Task Light"}));
+  const detail=screen.getByRole("dialog");
+  assert.ok(within(detail).getByText("Arc Task Light"));
+  await user.click(within(detail).getByRole("button",{name:"Close dialog"}));
+  const search=screen.getByRole("textbox",{name:"Search products"});
+  await user.type(search,"headphones");
+  assert.equal(screen.queryByRole("button",{name:"View Arc Task Light"}),null);
+  await user.clear(search);
+  await user.click(screen.getByRole("button",{name:"Switch to dark mode"}));
+  assert.equal(dom.window.document.documentElement.dataset.theme,"dark");
+  await user.click(screen.getByRole("button",{name:"Switch to light mode"}));
+  assert.equal(dom.window.document.documentElement.dataset.theme,"light");
+  cleanup();
+});
