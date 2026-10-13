@@ -229,3 +229,39 @@ test("Business services are inside My Account on the only storefront", async () 
   assert.match(dialog.getByText(/Application reference:/).textContent??"",/[a-f0-9]{8}-[a-f0-9-]{27,}/);
   cleanup();
 });
+
+test("Theme switch changes document colors and persists the chosen mode", async () => {
+  dom.window.localStorage.removeItem("rvu-theme");
+  const user = userEvent.setup({document:dom.window.document});
+  render(<App />);
+  await screen.findByRole("button",{name:"View Form 75 Mechanical Keyboard"});
+  await user.click(screen.getByRole("button",{name:"Switch to dark mode"}));
+  assert.equal(dom.window.document.documentElement.dataset.theme,"dark");
+  assert.equal(dom.window.localStorage.getItem("rvu-theme"),"dark");
+  await user.click(screen.getByRole("button",{name:"Switch to light mode"}));
+  assert.equal(dom.window.document.documentElement.dataset.theme,"light");
+  cleanup();
+});
+
+test("My Account remains open on backdrop clicks and cancel; only explicit close dismisses", async () => {
+  await store.pool.query("DELETE FROM store.sessions");
+  const user = userEvent.setup({document:dom.window.document});
+  render(<App />);
+  await screen.findByRole("button",{name:"View Form 75 Mechanical Keyboard"});
+  await user.click(screen.getByRole("button",{name:"Your account"}));
+  const signIn = within(screen.getByRole("dialog"));
+  await user.type(signIn.getByLabelText("Username"),"rvu");
+  await user.type(signIn.getByLabelText("Password"),"rvucamp");
+  await user.click(signIn.getByRole("button",{name:"Sign in"}));
+  await waitFor(()=>assert.equal(screen.queryByRole("dialog"),null));
+  await user.click(screen.getByRole("button",{name:"Your account"}));
+  const accountDialog=await screen.findByRole("dialog");
+  assert.ok(accountDialog.classList.contains("pinned"));
+  await user.click(accountDialog);
+  assert.ok(screen.queryByRole("dialog"),"Backdrop should not dismiss My Account");
+  accountDialog.dispatchEvent(new dom.window.Event("cancel",{bubbles:false,cancelable:true}));
+  assert.ok(screen.queryByRole("dialog"),"Escape/cancel should not dismiss My Account");
+  await user.click(within(accountDialog).getByRole("button",{name:"Close dialog"}));
+  await waitFor(()=>assert.equal(screen.queryByRole("dialog"),null));
+  cleanup();
+});
