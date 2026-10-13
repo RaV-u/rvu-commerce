@@ -12,12 +12,12 @@ import {
   Check,
   Package,
   ShieldCheck,
-  Truck,
   Mail,
   LogOut,
-  Leaf,
   X,
   Menu,
+  Moon,
+  Sun,
 } from "lucide-react";
 import {
   api,
@@ -64,7 +64,15 @@ export function App() {
   const [orders, setOrders] = useState<Order[]>([]),
     [messages, setMessages] = useState<Message[]>([]),
     [tab, setTab] = useState("orders");
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    try { return window.localStorage.getItem("rvu-theme") === "dark" ? "dark" : "light"; }
+    catch { return "light"; }
+  });
   const checkoutKey = useRef("");
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try { window.localStorage.setItem("rvu-theme", theme); } catch { /* Storage may be restricted. */ }
+  }, [theme]);
   async function refresh(s = session) {
     if (s.user?.verified) {
       const [c, w] = await Promise.all([
@@ -236,11 +244,11 @@ export function App() {
           ? Number(b.price) - Number(a.price)
           : 0,
     );
-  const count = cart.items.reduce((n, p) => n + p.quantity, 0);
+  const count = cart.items.reduce((n, p) => n + Math.max(0, p.quantity), 0);
   return (
     <>
       <div className="announcement">
-        A little more considered. A lot more you.{" "}
+        RVU COMMERCE · THE BUSINESS LOGIC TRAINING STORE{" "}
         <span>WELCOME10 · 10% off eligible orders</span>
       </div>
       <header className="site-header">
@@ -283,6 +291,16 @@ export function App() {
             </span>
           </button>
           <button
+            className="theme-toggle icon-btn"
+            type="button"
+            onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            title={theme === "dark" ? "Light mode" : "Dark mode"}
+            aria-pressed={theme === "dark"}
+          >
+            {theme === "dark" ? <Sun size={19} /> : <Moon size={19} />}
+          </button>
+          <button
             className="bag-button"
             onClick={() =>
               session.user?.verified ? setPanel("bag") : openAccount()
@@ -308,26 +326,25 @@ export function App() {
         <section className="hero">
           <div className="hero-copy">
             <span className="eyebrow">
-              <i /> THE EVERYDAY, RECONSIDERED
+              <i /> RVU MENTORSHIP CAMP · REAL-WORLD PRACTICE
             </span>
             <h1>
-              Good things.
+              Learn the logic.
               <br />
-              Better <em>workdays.</em>
+              Hunt the <em>flaws.</em>
             </h1>
             <p>
-              Thoughtful essentials for the space you make your own. Find your
-              focus, settle in, and do your thing.
+              A realistic commerce training ground for RVU Camp. Follow customer
+              journeys, inspect requests, and learn where business rules break.
             </p>
             <a className="primary" href="#collection">
-              Find your essentials <ArrowUpRight size={19} />
+              Explore the training store <ArrowUpRight size={19} />
             </a>
             <button className="hero-quote-link" onClick={() => session.user?.verified ? setPanel("quote") : openAccount()}>
-              Build your own workstation <ArrowRight size={16}/>
+              Test a custom order <ArrowRight size={16}/>
             </button>
             <div className="hero-note">
-              <span className="tiny-line" /> Made for a more considered
-              workspace.
+              <span className="tiny-line" /> Practice the workflow. Question every assumption.
             </div>
           </div>
           <div className="hero-art">
@@ -336,31 +353,31 @@ export function App() {
               alt="A considered workspace with a studio display, keyboard and sculptural desk light"
             />
             <div className="art-label">
-              <span>THE STUDIO EDIT</span>
-              <strong>Room for your best ideas.</strong>
+              <span>THE RVU TRAINING STORE</span>
+              <strong>Every workflow has a lesson.</strong>
             </div>
-            <span className="art-index">01 / EVERYDAY ESSENTIALS</span>
+            <span className="art-index">01 / COMMERCE WORKFLOWS</span>
           </div>
         </section>
-        <section className="benefits" aria-label="Store benefits">
+        <section className="benefits" aria-label="Training lab capabilities">
           <span>
-            <Truck size={19} /> Complimentary local delivery
+            <UserRound size={19} /> Two separate learner accounts
           </span>
           <span>
-            <ShieldCheck size={19} /> Secure wallet checkout
+            <ShieldCheck size={19} /> Virtual wallet and order history
           </span>
           <span>
-            <Leaf size={19} /> A thoughtfully edited collection
+            <Search size={19} /> Inspect real HTTP workflows
           </span>
         </section>
         <section id="collection" className="collection">
           <div className="section-top">
             <div>
-              <span className="eyebrow">LESS NOISE. MORE PURPOSE.</span>
-              <h2>Your next everyday favourite.</h2>
+              <span className="eyebrow">REAL PRODUCTS. TESTABLE RULES.</span>
+              <h2>Explore the commerce workflows.</h2>
             </div>
             <span className="collection-count">
-              {products.length} considered essentials <ArrowDownIcon />
+              {products.length} training-store products <ArrowDownIcon />
             </span>
           </div>
           <div className="catalog-tools">
@@ -383,7 +400,7 @@ export function App() {
                 <Search size={17} />
                 <input
                   aria-label="Search products"
-                  placeholder="Find something good…"
+                  placeholder="Search the training store…"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
@@ -475,11 +492,12 @@ export function App() {
             <span className="eyebrow">GOOD TASTE. THEIR CHOICE.</span>
             <h2>A little room to choose.</h2>
             <p>
-              For a new desk, a new chapter, or just because.
+              Follow a gift card from purchase to wallet redemption.
               <br />
-              Give them EGP 500 towards something they’ll love.
+              This virtual card carries EGP 500 of training-store credit.
             </p>
-            {promotions.some((p)=>p.code === "GIFT20") && <p className="promo-hint">Seasonal gift card promotion: use <strong>GIFT20</strong> at checkout.</p>}
+            <div className="gift-banner-actions">
+              {promotions.some((p)=>p.code === "GIFT20") && <p className="promo-hint">Training offer <strong>GIFT20</strong> · 20% off this gift card at checkout.</p>}
             <button
               className="text-link"
               onClick={() => {
@@ -490,17 +508,18 @@ export function App() {
             >
               Explore the gift card <ArrowRight size={18} />
             </button>
+            </div>
           </div>
         </section>
       </main>
       <footer>
         <div className="footer-top">
           <a className="brand" href="#" aria-label="RVU Commerce home">
-            <img src="/brand/rvu-commerce.svg" alt="RVU Commerce" width="230" height="58" />
+            <img src="/brand/rvu-commerce-footer.svg" alt="RVU Commerce" width="230" height="58" />
           </a>
-          <p>Make room for good things.</p>
+          <p>Understand the workflow. Find the flaw.</p>
           <button onClick={() => setPanel("policy")}>
-            Delivery, returns & store information <ArrowUpRight size={16} />
+            Lab terms, refunds & virtual wallets <ArrowUpRight size={16} />
           </button>
         </div>
         <div className="footer-bottom footer-mentorship">
@@ -831,6 +850,7 @@ export function App() {
           error={error}
           title={`Hello, ${session.user?.name.split(" ")[0]}.`}
           wide
+          pinned
           close={() => setPanel(null)}
         >
           <div className="account-top">
@@ -1027,12 +1047,16 @@ export function App() {
               <strong>
                 {selected.state === "refunded"
                   ? "Refund complete"
-                  : "Order confirmed"}
+                  : selected.payment_state === "unsettled"
+                    ? "Order confirmed · payment pending"
+                    : "Order confirmed"}
               </strong>
               <span>
                 {selected.state === "refunded"
                   ? "Your payment is back in your wallet."
-                  : "Paid with your RVU Wallet."}
+                  : selected.payment_state === "unsettled"
+                    ? "No settled wallet payment is attached to this order."
+                    : "Paid with your RVU Wallet."}
               </span>
             </div>
           </div>
@@ -1048,7 +1072,7 @@ export function App() {
             </div>
           ))}
           <div className="total-line">
-            <strong>Total paid</strong>
+            <strong>{selected.payment_state === "unsettled" ? "Order total · unpaid" : "Total paid"}</strong>
             <strong>{money(selected.total)}</strong>
           </div>
           {selected.giftCards.map((g) => (
@@ -1063,6 +1087,7 @@ export function App() {
             </div>
           ))}
           {selected.state === "confirmed" &&
+            selected.payment_state !== "unsettled" &&
             !selected.items.some((p) => p.kind === "gift_card") && (
               <button
                 className="secondary full"
@@ -1099,23 +1124,23 @@ export function App() {
         >
           <div className="policy">
             <p>
-              RVU brings together a small collection of workspace essentials.
-              This local showroom uses store credit. No bank card details or
-              real payments are collected.
+              RVU Commerce is a local training store for RVU Mentorship Camp.
+              The product catalog, orders and wallet provide realistic workflows
+              for web application security exercises. No real payments are collected.
             </p>
             <h3>Delivery & returns</h3>
             <p>
-              Delivery is complimentary. Orders are recorded against your
-              account, but no physical products are dispatched.
+              No physical deliveries take place. Orders are recorded against your
+              training account and fulfilled virtually.
               Physical-product orders can be returned in full from your account
               for the exact amount paid. Orders containing gift cards are final
               sale.
             </p>
             <h3>Wallet & gift cards</h3>
             <p>
-              New accounts receive EGP 15,000 of virtual credit. Gift cards cost
-              their full face value and can be redeemed once. No real payment
-              details are requested.
+              Each classroom account receives EGP 15,000 of virtual credit.
+              Gift cards can be redeemed once. Training promotions may apply;
+              no real payment details are requested.
             </p>
             <h3>A little welcome</h3>
             <p>

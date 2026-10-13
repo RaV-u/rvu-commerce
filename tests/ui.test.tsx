@@ -6,6 +6,7 @@ import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 import { migrate } from "../apps/api/src/migrate.ts";
 import { buildApp } from "../apps/api/src/app.ts";
 import { App } from "../apps/web/src/App.tsx";
+import { Modal } from "../apps/web/src/components/Modal.tsx";
 
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", {
@@ -227,5 +228,35 @@ test("Business services are inside My Account on the only storefront", async () 
   assert.equal((dialog.getByLabelText("Email") as HTMLInputElement).value,"rvu@learner.rvu.test");
   await user.click(dialog.getByRole("button",{name:"Register company contact"}));
   assert.match(dialog.getByText(/Application reference:/).textContent??"",/[a-f0-9]{8}-[a-f0-9-]{27,}/);
+  cleanup();
+});
+
+test("Theme switch changes document colors and persists the chosen mode", async () => {
+  dom.window.localStorage.removeItem("rvu-theme");
+  const user = userEvent.setup({document:dom.window.document});
+  render(<App />);
+  await screen.findByRole("button",{name:"View Form 75 Mechanical Keyboard"});
+  await user.click(screen.getByRole("button",{name:"Switch to dark mode"}));
+  assert.equal(dom.window.document.documentElement.dataset.theme,"dark");
+  assert.equal(dom.window.localStorage.getItem("rvu-theme"),"dark");
+  await user.click(screen.getByRole("button",{name:"Switch to light mode"}));
+  assert.equal(dom.window.document.documentElement.dataset.theme,"light");
+  cleanup();
+});
+
+test("Pinned account dialog ignores backdrop and Escape until the X is clicked", async () => {
+  let closed = false;
+  const user = userEvent.setup({document:dom.window.document});
+  render(<Modal title="Pinned account" pinned close={() => { closed = true; }}>
+    <p>Account details</p>
+  </Modal>);
+  const dialog = screen.getByRole("dialog",{name:"Pinned account"});
+  assert.ok(dialog.classList.contains("pinned"));
+  await user.click(dialog);
+  assert.equal(closed,false,"Backdrop click must not close account");
+  dialog.dispatchEvent(new dom.window.Event("cancel",{cancelable:true}));
+  assert.equal(closed,false,"Escape/cancel must not close account");
+  await user.click(within(dialog).getByRole("button",{name:"Close dialog"}));
+  assert.equal(closed,true,"Only the explicit X closes account");
   cleanup();
 });

@@ -50,3 +50,53 @@
 .service-overview>div{border:1px solid #e1e6dc;background:#f8faf6;padding:13px 15px;min-width:0;border-radius:4px}
 .service-overview dt{color:#758277;font-size:11px;letter-spacing:.025em;margin-bottom:6px}
 .service-overview dd{color:#213b32;font-size:13px;font-weight:600;margin:0;overflow-wrap:anywhere}
+
+/* Account services typography: readable while preserving the two-column lab workspace. */
+.account-services .service-eyebrow { font-size: 12px; }
+.account-services .service-intro p,
+.account-services .service-workspace > p { font-size: 15px; line-height: 1.75; }
+.account-services .service-menu > p { font-size: 12px; font-weight: 700; }
+.account-services .service-group h2 { font-size: 13px; }
+.account-services .service-group button { font-size: 14px; line-height: 1.4; padding: 12px; min-height: 42px; }
+.account-services .service-workspace label.service-field { font-size: 14px; }
+.account-services .service-workspace .service-field > span { font-size: 14px; }
+.account-services .service-workspace .service-field > input,
+.account-services .service-workspace .service-field > select,
+.account-services .service-workspace .service-field > textarea { font-size: 15px; }
+.account-services .service-workspace .service-field > textarea { font-size: 14px; }
+.account-services .service-hint { font-size: 13px; overflow-wrap: anywhere; }
+.account-services .service-result strong { font-size: 15px; }
+.account-services .service-result details { font-size: 14px; }
+.account-services .service-overview dt { font-size: 12px; }
+.account-services .service-overview dd { font-size: 14px; }
+.account-services .service-result pre { font-size: 13px; }
+.account-services .service-workspace form button { font-size: 14px; }
+:root[data-theme="dark"] .account-services .service-intro p,
+:root[data-theme="dark"] .account-services .service-workspace > p,
+:root[data-theme="dark"] .account-services .service-menu > p,
+:root[data-theme="dark"] .account-services .service-hint { color: var(--muted); }
+:root[data-theme="dark"] .account-services .service-menu { border-color: var(--line); }
+:root[data-theme="dark"] .account-services .service-group { border-color: var(--line); }
+:root[data-theme="dark"] .account-services .service-group h2,
+:root[data-theme="dark"] .account-services .service-eyebrow { color: #d2be91; }
+:root[data-theme="dark"] .account-services .service-group button { color: var(--ink); }
+:root[data-theme="dark"] .account-services .service-group button:hover,
+:root[data-theme="dark"] .account-services .service-group button.chosen { color: #f1f4ec; background: #355542; }
+:root[data-theme="dark"] .account-services .service-workspace { background: #203229; border-color: var(--line); }
+:root[data-theme="dark"] .account-services .service-workspace .service-field > span,
+:root[data-theme="dark"] .account-services .service-workspace label.service-field { color: var(--ink); }
+:root[data-theme="dark"] .account-services .service-workspace .service-field > input,
+:root[data-theme="dark"] .account-services .service-workspace .service-field > select,
+:root[data-theme="dark"] .account-services .service-workspace .service-field > textarea { background: var(--field); color: var(--ink); border-color: var(--field-border); }
+:root[data-theme="dark"] .account-services .service-result { border-color: var(--line); }
+:root[data-theme="dark"] .account-services .service-result p,
+:root[data-theme="dark"] .account-services .service-result summary { color: #bed4c3; }
+:root[data-theme="dark"] .account-services .service-overview > div,
+:root[data-theme="dark"] .account-services .service-result pre { background: #15291f; border-color: var(--line); color: var(--ink); }
+:root[data-theme="dark"] .account-services .service-overview dt { color: #bbcbbe; }
+:root[data-theme="dark"] .account-services .service-overview dd { color: var(--ink); }
+@media(max-width:740px) {
+  .account-services .service-menu { max-height: 220px; }
+  .account-services .service-group button { font-size: 14px; }
+  .account-services .service-workspace { padding: 18px; }
+}

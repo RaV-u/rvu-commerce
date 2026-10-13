@@ -1,14 +1,19 @@
 @import url("/fonts.css");
 :root {
   font-family: Arial, Helvetica, sans-serif;
-  color: #213b32;
-  background: #faf9f5;
+  color: var(--ink);
+  background: var(--canvas);
   font-synthesis: none;
   --green: #183e32;
   --muted: #71766d;
   --line: #dedfd5;
   --cream: #f1eee5;
   --gold: #cbb381;
+  --ink: #213b32;
+  --canvas: #faf9f5;
+  --surface: #fcfbf7;
+  --field: #ffffff;
+  --field-border: #cbd4c9;
 }
 * {
   box-sizing: border-box;
@@ -476,15 +481,16 @@ main {
   margin: 16px 0;
 }
 .gift-banner p {
-  font-size: 12px;
-  color: #697263;
+  font-size: 14px;
+  color: #56665b;
+  max-width: 44ch;
 }
 .text-link {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  font-size: 12px;
-  padding: 8px 0;
+  font-size: 14px;
+  padding: 10px 0;
   border-bottom: 1px solid #8f9a87;
 }
 .gift-banner .text-link {
@@ -530,8 +536,8 @@ footer {
   width: min(510px, calc(100vw - 32px));
   max-height: 88vh;
   overflow-y: auto;
-  color: var(--green);
-  background: #fcfbf7;
+  color: var(--ink);
+  background: var(--surface);
   box-shadow: 0 24px 100px #10281e40;
 }
 .modal.wide {
@@ -576,14 +582,14 @@ footer {
 }
 .form input,
 .inline-form input {
-  background: white;
-  border: 1px solid #d6dcd0;
+  background: var(--field);
+  border: 1px solid var(--field-border);
   padding: 13px;
   border-radius: 4px;
   min-width: 0;
   width: 100%;
   font-size: 13px;
-  color: var(--green);
+  color: var(--ink);
 }
 .full {
   width: 100%;
@@ -1302,4 +1308,126 @@ footer {
  .account-services .service-menu {max-height:180px;overflow-y:auto}
  .account-services .service-workspace {padding:15px}
  .account-services .service-fields {grid-template-columns:1fr}
+}
+
+
+/* RVU Commerce — legible functional presentation, including the classroom account workspace. */
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  flex: 0 0 40px;
+}
+.theme-toggle:hover { background: var(--cream); }
+.modal.pinned .modal-head { flex-direction: row-reverse; }
+.modal.pinned .modal-head h2 { flex: 1; min-width: 0; }
+.modal.pinned .modal-head .icon-btn { width: 48px; height: 48px; }
+.modal.pinned .modal-head .icon-btn:hover { background: var(--cream); }
+.modal.pinned .account-top p { font-size: 14px; line-height: 1.65; }
+.modal.pinned .account-tabs button { font-size: 15px; min-height: 52px; }
+.modal.pinned .order-row { font-size: 15px; }
+.modal.pinned .order-row span { font-size: 13px; }
+.modal.pinned .transaction, .modal.pinned .message p { font-size: 14px; }
+.modal.pinned .transaction span { font-size: 12px; }
+.modal.pinned .balance-card span, .modal.pinned .gift-code span { font-size: 12px; }
+.modal.pinned .form-note { font-size: 12px; }
+.modal.pinned .muted { font-size: 14px; }
+.hero p { font-size: 16px; max-width: 45ch; line-height: 1.7; }
+.hero-quote-link { font-size: 14px; }
+.hero-note { font-size: 12px; }
+.benefits { font-size: 13px; gap: 20px; }
+.benefits span { min-width: 0; }
+.gift-banner { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: clamp(22px, 4vw, 64px); }
+.gift-banner > div:last-child { min-width: 0; padding: 36px clamp(24px, 4vw, 68px) 36px 0; }
+.gift-banner-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; margin-top: 24px; }
+.gift-banner-actions .promo-hint { margin: 0; padding: 12px 16px; font-size: 13px; line-height: 1.65; max-width: 100%; overflow-wrap: anywhere; }
+.gift-banner-actions .text-link { margin: 0; white-space: normal; text-align: left; }
+.footer-top .brand img { width: min(245px, 100%); height: auto; }
+/* Original header SVG uses evergreen ink. A light footer wordmark keeps gold accents visible. */
+@media(max-width: 1000px) {
+  .gift-banner { gap: 20px; }
+  .gift-banner > div:last-child { padding-right: 25px; }
+}
+@media(max-width: 760px) {
+  .header-actions { gap: 8px; }
+  .theme-toggle { width: 36px; height: 36px; flex-basis: 36px; }
+  .gift-banner { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .gift-banner > div:last-child { padding: 0 25px 12px; }
+  .gift-banner-actions { gap: 14px; margin-top: 16px; }
+  .benefits { font-size: 12px; }
+  .modal.pinned .account-tabs button { font-size: 14px; }
+  .hero p { font-size: 15px; }
+}
+@media(max-width: 370px) {
+  .header-actions { gap: 3px; }
+  .site-header { padding-inline: 4%; }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #eaf0e8;
+  --canvas: #111c18;
+  --surface: #1c2b24;
+  --field: #14251d;
+  --field-border: #50665a;
+  --muted: #b6c4b8;
+  --line: #3e5347;
+  --cream: #273b30;
+}
+:root[data-theme="dark"] .site-header .brand img { filter: brightness(0) invert(1); }
+:root[data-theme="dark"] .site-header,
+:root[data-theme="dark"] .search input,
+:root[data-theme="dark"] .search-sort select,
+:root[data-theme="dark"] .product-title,
+:root[data-theme="dark"] .categories button:not(.active),
+:root[data-theme="dark"] .icon-btn,
+:root[data-theme="dark"] .theme-toggle { color: var(--ink); }
+:root[data-theme="dark"] .mobile-navigation { background: #1b2a23; }
+:root[data-theme="dark"] .gift-banner { background: #27382f; }
+:root[data-theme="dark"] .gift-banner p { color: #c0cec2; }
+:root[data-theme="dark"] .product-image,
+:root[data-theme="dark"] .tone-1,
+:root[data-theme="dark"] .tone-2,
+:root[data-theme="dark"] .tone-3 { background: #29392f; }
+:root[data-theme="dark"] .product-price { color: #cad9c9; }
+:root[data-theme="dark"] .badge { background: #182a22; color: var(--ink); }
+:root[data-theme="dark"] .quick-add { background: #1b2b23; color: var(--ink); }
+:root[data-theme="dark"] .quick-add:hover { background: #3c674e; }
+:root[data-theme="dark"] .promo-hint { background: #3a3426; border-color: #967d4f; color: #f5e5c2; }
+:root[data-theme="dark"] .modal::backdrop { background: #030c09d9; }
+:root[data-theme="dark"] .modal .secondary { color: var(--ink); border-color: #81978a; }
+:root[data-theme="dark"] .secondary:hover:not(:disabled) { background: #32483a; }
+:root[data-theme="dark"] .modal .form input,
+:root[data-theme="dark"] .modal .inline-form input { background: var(--field); color: var(--ink); border-color: var(--field-border); }
+:root[data-theme="dark"] .wallet-summary,
+:root[data-theme="dark"] .message,
+:root[data-theme="dark"] .order-status,
+:root[data-theme="dark"] .gift-code,
+:root[data-theme="dark"] .coupon-pill { background: #2d4436; color: var(--ink); }
+:root[data-theme="dark"] .empty h3 { color: var(--ink); }
+:root[data-theme="dark"] .totals>div,
+:root[data-theme="dark"] .total-line { color: var(--ink); }
+:root[data-theme="dark"] .positive { color: #9cd29e !important; }
+:root[data-theme="dark"] .warning { background: #45391f; color: #f7dda5; }
+:root[data-theme="dark"] .policy p { color: var(--muted); }
+:root[data-theme="dark"] .bag-row span { color: var(--muted); }
+:root[data-theme="dark"] .search-sort select option { background: var(--surface); }
+:root[data-theme="dark"] .quote-choice,
+:root[data-theme="dark"] .quote-line { border-color: var(--line); }
+:root[data-theme="dark"] .gift-banner h2 { color: var(--ink); }
+
+/* A fifth header control (theme) must never push 360–420px mobile viewports. */
+@media(max-width:600px) {
+  .site-header { gap: 6px; }
+  .site-header .brand img { width: clamp(128px, 38vw, 174px); }
+  .header-actions { gap: 4px; flex-shrink: 0; }
+  .header-actions .account-button span,
+  .header-actions .bag-button span { display: none; }
+  .header-actions .icon-btn { padding: 6px; width: 34px; height: 34px; }
+  .header-actions .theme-toggle { flex-basis: 34px; }
+  .header-actions .bag-button { gap: 4px; padding: 3px 0; }
+  .header-actions .bag-button b { min-width: 20px; height: 20px; font-size: 11px; }
+}
+@media(max-width:370px) {
+  .site-header .brand img { width: 130px; }
 }
