@@ -1415,3 +1415,19 @@ footer {
 :root[data-theme="dark"] .quote-choice,
 :root[data-theme="dark"] .quote-line { border-color: var(--line); }
 :root[data-theme="dark"] .gift-banner h2 { color: var(--ink); }
+
+/* A fifth header control (theme) must never push 360–420px mobile viewports. */
+@media(max-width:600px) {
+  .site-header { gap: 6px; }
+  .site-header .brand img { width: clamp(128px, 38vw, 174px); }
+  .header-actions { gap: 4px; flex-shrink: 0; }
+  .header-actions .account-button span,
+  .header-actions .bag-button span { display: none; }
+  .header-actions .icon-btn { padding: 6px; width: 34px; height: 34px; }
+  .header-actions .theme-toggle { flex-basis: 34px; }
+  .header-actions .bag-button { gap: 4px; padding: 3px 0; }
+  .header-actions .bag-button b { min-width: 20px; height: 20px; font-size: 11px; }
+}
+@media(max-width:370px) {
+  .site-header .brand img { width: 130px; }
+}
