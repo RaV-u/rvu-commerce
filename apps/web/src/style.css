@@ -1454,7 +1454,7 @@ footer {
   letter-spacing:.025em;
   text-transform:none;
   font-size:clamp(14px,1.4vw,18px);
-  color:#ad824a;
+  color:#8c632d;
   border-left:1px solid var(--line);
   padding-left:clamp(10px,1.4vw,18px);
   line-height:1.25;
