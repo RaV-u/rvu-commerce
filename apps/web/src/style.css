@@ -277,6 +277,12 @@ main {
   font-size: 20px;
   font-weight: 400;
 }
+/* This caption always sits over a fixed pale panel, even when Dark Mode is on. */
+.hero-art .art-label,
+.hero-art .art-label span,
+.hero-art .art-label strong {
+  color: #111111;
+}
 .art-index {
   position: absolute;
   bottom: 25px;
