@@ -660,7 +660,7 @@ export function App() {
           title={`Your bag (${count})`}
           close={() => setPanel(null)}
         >
-          {!count ? (
+          {!cart.items.length ? (
             <div className="empty">
               <ShoppingBag size={32} />
               <h3>A little space for something good.</h3>
@@ -676,7 +676,7 @@ export function App() {
                   <div>
                     <strong>{p.name}</strong>
                     <span>{money(Number(p.price) * p.quantity)}</span>
-                    <div className="quantity">
+                    {p.quantity > 0 ? <div className="quantity">
                       <button
                         aria-label={`Decrease ${p.name}`}
                         disabled={busy}
@@ -696,7 +696,7 @@ export function App() {
                       >
                         <Plus size={14} />
                       </button>
-                    </div>
+                    </div> : <span className="form-note">Signed quantity adjustment · {p.quantity}. Remove to clear.</span>}
                   </div>
                   <button
                     className="icon-btn"
@@ -763,6 +763,7 @@ export function App() {
                 <p className="form-note">{cart.applications.length} promotion {cart.applications.length === 1 ? "entry" : "entries"} on this bag.</p>
               )}
               <Totals cart={cart} />
+              {cart.total <= 0 && <p className="warning">Your bag has no positive payable total. Adjust or remove items to continue.</p>}
               {!cart.couponEligible && (
                 <p className="warning">
                   This bag no longer qualifies for the promotion. Remove it to
@@ -771,7 +772,7 @@ export function App() {
               )}
               <button
                 className="primary full"
-                disabled={busy || !cart.couponEligible}
+                disabled={busy || !cart.couponEligible || cart.total <= 0 || !cart.items.some(p => p.quantity > 0)}
                 onClick={() => {
                   checkoutKey.current = crypto.randomUUID();
                   setPanel("checkout");
