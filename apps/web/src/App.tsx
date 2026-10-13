@@ -16,6 +16,7 @@ import {
   LogOut,
   X,
   Menu,
+  RefreshCw,
   Moon,
   Sun,
 } from "lucide-react";
@@ -138,6 +139,26 @@ export function App() {
     const id = setTimeout(() => setNotice(""), 4500);
     return () => clearTimeout(id);
   }, [notice]);
+  // Lab services create mail after the account dialog has already loaded.
+  // Keep its private inbox synchronized when opened, when services send a code,
+  // and while it stays visible (e.g. delayed verification emails).
+  useEffect(() => {
+    if (panel !== "account" || !session.user) return;
+    let active = true;
+    const reloadInbox = () => {
+      void api<{ messages: Message[] }>("/inbox")
+        .then((result) => { if (active) setMessages(result.messages); })
+        .catch((e: Error) => { if (active) setError(e.message); });
+    };
+    window.addEventListener("rvu:inbox-updated", reloadInbox);
+    if (tab === "inbox") reloadInbox();
+    const timer = tab === "inbox" ? window.setInterval(reloadInbox, 10000) : null;
+    return () => {
+      active = false;
+      window.removeEventListener("rvu:inbox-updated", reloadInbox);
+      if (timer !== null) window.clearInterval(timer);
+    };
+  }, [panel, tab, session.user?.id]);
   async function account(nextTab = "orders") {
     setPanel("account");
     setTab(nextTab);
@@ -985,6 +1006,19 @@ export function App() {
           )}
           {tab === "inbox" && (
             <>
+              <div className="inbox-tools">
+                <div>
+                  <strong>Private account inbox</strong>
+                  <p className="form-note">Verification and recovery messages for this signed-in account.</p>
+                </div>
+                <button className="secondary" type="button" disabled={busy}
+                  onClick={() => void perform(async () => {
+                    const inbox = await api<{messages:Message[]}>("/inbox");
+                    setMessages(inbox.messages);
+                  })}>
+                  <RefreshCw size={16} /> Refresh inbox
+                </button>
+              </div>
               {!session.user?.verified && (
                 <p className="warning">
                   Verify your email to unlock your wallet and shopping bag.
@@ -1020,7 +1054,7 @@ export function App() {
                       </button>
                     ) : (
                       <span className="verified">
-                        <Check size={16} /> Email verified
+                        <Check size={16} /> Saved to your inbox
                       </span>
                     )}
                   </article>
