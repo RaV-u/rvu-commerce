@@ -8,6 +8,7 @@ import { migrate } from "../apps/api/src/migrate.ts";
 import { buildApp } from "../apps/api/src/app.ts";
 import { App } from "../apps/web/src/App.tsx";
 import { Modal } from "../apps/web/src/components/Modal.tsx";
+import { AccountServices } from "../apps/web/src/AccountServices.tsx";
 
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", {
@@ -303,5 +304,29 @@ test("Main product buttons, search and theme have real effects", async () => {
   assert.equal(dom.window.document.documentElement.dataset.theme,"dark");
   await user.click(screen.getByRole("button",{name:"Switch to light mode"}));
   assert.equal(dom.window.document.documentElement.dataset.theme,"light");
+  cleanup();
+});
+
+test("Every account service menu control opens its real form without UI errors", async () => {
+  const user=userEvent.setup({document:dom.window.document});
+  render(<AccountServices user={{
+    id:"local-learner",name:"RVU Customer",email:"rvu@learner.rvu.test",
+    username:"rvu",colleagueEmail:"rvu_2@learner.rvu.test",verified:true
+  }}/>);
+  const titles=[
+    "Express purchase","Update contact email","Password maintenance",
+    "Business account registration","Confirm business address",
+    "Request password recovery","Complete password recovery",
+    "Register company contact","Verify company contact",
+    "Select workspace","Approve company order","Company orders",
+    "Company approval history","Update company contact","Confirm changed email",
+    "Invite a team member","Confirm corporate email",
+    "Send delivery notice","Restore remembered access","Support case queue",
+    "Company account sign-in"
+  ];
+  for(const title of titles){
+    await user.click(screen.getByRole("button",{name:title}));
+    assert.ok(screen.getByRole("heading",{name:title}),"Missing form for "+title);
+  }
   cleanup();
 });
