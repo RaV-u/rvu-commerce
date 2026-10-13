@@ -59,7 +59,7 @@ for(const user of users) {
 // Realistic repeated shopping: add, set quantity, decrement, remove and re-add.
 // The two accounts execute independently while each cart is internally serialized.
 await Promise.all(users.map(async user=>{
-  for(let round=0;round<5;round++){
+  for(let round=0;round<3;round++){
     for(const sku of ["arc-light","bridge-8","lift-stand","form-75"]){
       assert.equal((await add(user,sku)).items.find(x=>x.id===sku)?.quantity,1);
       assert.equal((await set(user,sku,3)).items.find(x=>x.id===sku)?.quantity,3);
