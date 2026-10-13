@@ -160,9 +160,9 @@ export function App() {
     else void perform(() => account());
   }
   async function quantity(p: Product, n: number) {
-    setCart(
-      await api<Cart>("/cart/items", "POST", { productId: p.id, quantity: n - (cart.items.find(i => i.id === p.id)?.quantity ?? 0), price: Number(p.price) }),
-    );
+    // Bag +/- and remove set a final quantity; no client price is required.
+    // This also makes quoted items removable without sending their quote price as a catalog price.
+    setCart(await api<Cart>("/cart/items", "PUT", { productId: p.id, quantity: n }));
   }
   function add(p: Product) {
     if (!session.user) {
@@ -174,10 +174,11 @@ export function App() {
       return;
     }
     void perform(async () => {
-      await quantity(
-        p,
-        (cart.items.find((i) => i.id === p.id)?.quantity ?? 0) + 1,
-      );
+      // Preserve the storefront's original add-to-cart POST workflow for security labs.
+      // The server applies +1 against the current database state under the cart lock.
+      setCart(await api<Cart>("/cart/items", "POST", {
+        productId: p.id, quantity: 1, price: Number(p.price),
+      }));
       setNotice(`${p.name} added to your bag`);
     });
   }
