@@ -6,12 +6,15 @@ export function Modal({
   children,
   wide = false,
   error = "",
+  pinned = false,
 }: {
   title: string;
   close: () => void;
   children: ReactNode;
   wide?: boolean;
   error?: string;
+  /** Account workspace remains open until its explicit close button is activated. */
+  pinned?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -27,14 +30,14 @@ export function Modal({
   return (
     <dialog
       ref={ref}
-      className={wide ? "modal wide" : "modal"}
+      className={`modal${wide ? " wide" : ""}${pinned ? " pinned" : ""}`}
       aria-label={title}
       onCancel={(e) => {
         e.preventDefault();
-        close();
+        if (!pinned) close();
       }}
       onClick={(e) => {
-        if (e.target === ref.current) close();
+        if (!pinned && e.target === ref.current) close();
       }}
     >
       <div className="modal-head">
