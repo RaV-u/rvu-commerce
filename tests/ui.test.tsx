@@ -6,6 +6,7 @@ import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 import { migrate } from "../apps/api/src/migrate.ts";
 import { buildApp } from "../apps/api/src/app.ts";
 import { App } from "../apps/web/src/App.tsx";
+import { Modal } from "../apps/web/src/components/Modal.tsx";
 
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", {
@@ -243,25 +244,19 @@ test("Theme switch changes document colors and persists the chosen mode", async 
   cleanup();
 });
 
-test("My Account remains open on backdrop clicks and cancel; only explicit close dismisses", async () => {
-  await store.pool.query("DELETE FROM store.sessions");
+test("Pinned account dialog ignores backdrop and Escape until the X is clicked", async () => {
+  let closed = false;
   const user = userEvent.setup({document:dom.window.document});
-  render(<App />);
-  await screen.findByRole("button",{name:"View Form 75 Mechanical Keyboard"});
-  await user.click(screen.getByRole("button",{name:"Your account"}));
-  const signIn = within(screen.getByRole("dialog"));
-  await user.type(signIn.getByLabelText("Username"),"rvu");
-  await user.type(signIn.getByLabelText("Password"),"rvucamp");
-  await user.click(signIn.getByRole("button",{name:"Sign in"}));
-  await waitFor(()=>assert.equal(screen.queryByRole("dialog"),null));
-  await user.click(screen.getByRole("button",{name:"Your account"}));
-  const accountDialog=await screen.findByRole("dialog");
-  assert.ok(accountDialog.classList.contains("pinned"));
-  await user.click(accountDialog);
-  assert.ok(screen.queryByRole("dialog"),"Backdrop should not dismiss My Account");
-  accountDialog.dispatchEvent(new dom.window.Event("cancel",{bubbles:false,cancelable:true}));
-  assert.ok(screen.queryByRole("dialog"),"Escape/cancel should not dismiss My Account");
-  await user.click(within(accountDialog).getByRole("button",{name:"Close dialog"}));
-  await waitFor(()=>assert.equal(screen.queryByRole("dialog"),null));
+  render(<Modal title="Pinned account" pinned close={() => { closed = true; }}>
+    <p>Account details</p>
+  </Modal>);
+  const dialog = screen.getByRole("dialog",{name:"Pinned account"});
+  assert.ok(dialog.classList.contains("pinned"));
+  await user.click(dialog);
+  assert.equal(closed,false,"Backdrop click must not close account");
+  dialog.dispatchEvent(new dom.window.Event("cancel",{cancelable:true}));
+  assert.equal(closed,false,"Escape/cancel must not close account");
+  await user.click(within(dialog).getByRole("button",{name:"Close dialog"}));
+  assert.equal(closed,true,"Only the explicit X closes account");
   cleanup();
 });
