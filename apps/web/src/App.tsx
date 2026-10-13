@@ -244,7 +244,7 @@ export function App() {
           ? Number(b.price) - Number(a.price)
           : 0,
     );
-  const count = cart.items.reduce((n, p) => n + p.quantity, 0);
+  const count = cart.items.reduce((n, p) => n + Math.max(0, p.quantity), 0);
   return (
     <>
       <div className="announcement">
@@ -1047,12 +1047,16 @@ export function App() {
               <strong>
                 {selected.state === "refunded"
                   ? "Refund complete"
-                  : "Order confirmed"}
+                  : selected.payment_state === "unsettled"
+                    ? "Order confirmed · payment pending"
+                    : "Order confirmed"}
               </strong>
               <span>
                 {selected.state === "refunded"
                   ? "Your payment is back in your wallet."
-                  : "Paid with your RVU Wallet."}
+                  : selected.payment_state === "unsettled"
+                    ? "No settled wallet payment is attached to this order."
+                    : "Paid with your RVU Wallet."}
               </span>
             </div>
           </div>
@@ -1068,7 +1072,7 @@ export function App() {
             </div>
           ))}
           <div className="total-line">
-            <strong>Total paid</strong>
+            <strong>{selected.payment_state === "unsettled" ? "Order total · unpaid" : "Total paid"}</strong>
             <strong>{money(selected.total)}</strong>
           </div>
           {selected.giftCards.map((g) => (
@@ -1083,6 +1087,7 @@ export function App() {
             </div>
           ))}
           {selected.state === "confirmed" &&
+            selected.payment_state !== "unsettled" &&
             !selected.items.some((p) => p.kind === "gift_card") && (
               <button
                 className="secondary full"
