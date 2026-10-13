@@ -140,4 +140,4 @@ for(const user of users){
   assertCart(await call(user,"GET","/api/cart"),{});
 }
 console.log("PASS: refund is once-only, payment is idempotent, 2 accounts are isolated, carts survive repeated add/set/remove, quote edits work, ledger balances reconcile and gift credit redeems once");
-console.log(JSON.stringify({checks,accounts:users.length,refundsVerified:2,parallelAdds:10,productsChangedPerAccount:80}));
+console.log(JSON.stringify({checks,accounts:users.length,refundsVerified:2,parallelAdds:10,productsChangedPerAccount:48}));
