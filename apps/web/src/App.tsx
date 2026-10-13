@@ -327,7 +327,7 @@ export function App() {
         <section className="hero">
           <div className="hero-copy">
             <span className="eyebrow">
-              <i /> RVU MENTORSHIP CAMP · REAL-WORLD PRACTICE
+              <i /> RVU MENTORSHIP CAMP <span className="hero-signature">By: Ramez Medhat</span>
             </span>
             <h1>
               Learn the logic.
@@ -659,14 +659,13 @@ export function App() {
           error={error}
           title={`Your bag (${count})`}
           close={() => setPanel(null)}
+          pinned
         >
           {!cart.items.length ? (
             <div className="empty">
               <ShoppingBag size={32} />
-              <h3>A little space for something good.</h3>
-              <button className="primary" onClick={() => setPanel(null)}>
-                Explore the collection
-              </button>
+              <h3>Your bag is empty.</h3>
+              <p>Add a product from the collection when you are ready. Use the X above to close your bag.</p>
             </div>
           ) : (
             <>
