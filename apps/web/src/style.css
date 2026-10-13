@@ -1599,3 +1599,50 @@ footer {
 :root[data-theme="dark"] .positive {color:#ade1b1!important;}
 :root[data-theme="dark"] .footer-bottom {color:#d5dfd0;}
 :root[data-theme="dark"] button:disabled {opacity:.67;}
+
+
+/*
+ * Hero editorial typography — expressive, Windows-friendly script with clear letter
+ * spacing and an offline fallback. No remote font request is required.
+ * Disabling discretionary/common ligatures keeps the f and l in "flaws" distinct.
+ */
+.hero h1 {
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(40px, 4.4vw, 66px);
+  line-height: 1.22;
+  letter-spacing: -0.032em;
+  text-wrap: balance;
+  margin-block: 26px 30px;
+}
+.hero h1 em {
+  font-family: "Monotype Corsiva", "Segoe Script", "Brush Script MT",
+    "Apple Chancery", "URW Chancery L", cursive;
+  font-size: 1.06em;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0.055em;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "clig" 0, "calt" 0;
+  display: inline-block;
+  white-space: nowrap;
+  padding-inline: 0.045em 0.09em;
+  vertical-align: -0.035em;
+}
+@media (max-width: 760px) {
+  .hero h1 {
+    font-size: clamp(32px, 7.65vw, 48px);
+    line-height: 1.25;
+    letter-spacing: -0.025em;
+  }
+  .hero h1 em {
+    font-size: 1.03em;
+    letter-spacing: 0.04em;
+    padding-inline: 0.025em 0.06em;
+  }
+}
+@media (max-width: 380px) {
+  .hero h1 { font-size: 31px; }
+  .hero h1 em { font-size: 1em; letter-spacing: 0.035em; }
+}
