@@ -36,6 +36,16 @@ await Promise.all(actors.map(async actor=>{
   assert.ok(s.user.verified);
 }));
 const [owner,colleague]=actors;
+// Verify that normal account-notification delivery appears in the private Inbox.
+const inboxBefore=(await request(owner,"GET","/api/inbox")).messages.length;
+const sent=await act(owner,"legacy.register",{address:owner.email});
+assert.equal(sent.codeSent,true);
+const inboxAfter=await request(owner,"GET","/api/inbox");
+assert.equal(inboxAfter.messages.length,inboxBefore+1);
+const verification=await latestCode(owner,"Business address verification");
+assert.equal((await act(owner,"legacy.verify",{code:verification})).verified,true);
+console.log("PASS: account registration verification reaches the account Inbox");
+
 // B07: intentionally unsafe support branch can change the second identity's password.
 const changed=await act(owner,"password.maintain",{
   targetEmail:colleague.email,newPassword:"RVU-Other-Account-2026!"
