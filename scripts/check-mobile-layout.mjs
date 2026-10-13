@@ -61,6 +61,49 @@ async function audit(url,width,devtoolsPort){
     console.log(JSON.stringify({path:new URL(url).pathname,requestedWidth:width,...result}));
     assert.ok(result.scrollWidth<=result.viewport+1,
       "Horizontal document overflow on "+url+" at "+width+"px: "+JSON.stringify(result));
+    // Compare computed foregrounds with the nearest opaque ancestor background,
+    // so a CSS token that leaves invisible dark-mode text breaks the CI build.
+    for(const theme of ["light","dark"]){
+      const themeResult=await command("Runtime.evaluate",{
+        expression:`(() => {
+          document.documentElement.dataset.theme=${JSON.stringify(theme)};
+          const selectors=[".hero h1",".hero-signature",".hero-copy p",
+            ".hero-quote-link",".section-top h2",".product-title",
+            ".product-price",".categories button.active",".gift-banner h2",
+            ".gift-banner p",".gift-banner .text-link",".search input"];
+          function rgb(color){
+            const nums=String(color).match(/[0-9.]+/g)?.slice(0,4).map(Number)||[];
+            return nums.length>=3?nums:null;
+          }
+          function lum(vals){
+            const channels=vals.slice(0,3).map(x=>{
+              x/=255;return x<=.04045?x/12.92:Math.pow((x+.055)/1.055,2.4);
+            });return channels[0]*.2126+channels[1]*.7152+channels[2]*.0722;
+          }
+          return selectors.map(selector=>{
+            const el=document.querySelector(selector);
+            if(!el)return {selector,missing:true};
+            const fore=rgb(getComputedStyle(el).color);
+            let back=null,parent=el;
+            while(parent){
+              const candidate=rgb(getComputedStyle(parent).backgroundColor);
+              if(candidate && (candidate.length<4 || candidate[3]>.99)){
+                back=candidate;break;
+              }
+              parent=parent.parentElement;
+            }
+            const a=fore&&lum(fore),b=back&&lum(back);
+            const ratio=a===null||b===null?0:(Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+            return {selector,ratio:Math.round(ratio*100)/100};
+          });
+        })()`,
+        returnByValue:true
+      });
+      const samples=themeResult.result?.value||[];
+      const weak=samples.filter(x=>x.missing||x.ratio<4.5);
+      console.log(JSON.stringify({contrastTheme:theme,requestedWidth:width,samples}));
+      assert.equal(weak.length,0,theme+" theme has hidden or low-contrast text: "+JSON.stringify(weak));
+    }
   }finally{ws.close();}
 }
 try{
